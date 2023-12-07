@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-  <title>Sound Absorption in Helmholtz Resonator</title>
+  <title>Ray Tracing Engine</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
 
@@ -26,6 +26,7 @@
 
   <!-- Template Main CSS File -->
   <link href="../assets/css/style.css" rel="stylesheet">
+
 </head>
 
 <body>
@@ -37,27 +38,52 @@
       <div class="container">
 
         <div class="row">
-            <h3>Sound Absorption in Helmholtz Resonator</h3>
-            <p><em>Helmholtz resonator (HR)</em> is used to study and analyze resonant frequencies of air cavities. Resonator consists of a cavity with an opening, and it is designed to vibrate at specific frequencies when exposed to sound waves.</p>
-            <p><em>How HR reduce noice</em></p>
+
+          <div class="col-lg-4">
+            <h2 class="portfolio-title">Ray Tracing Engine</h2>
+
+            <div class="portfolio-details-slider swiper">
+              <div class="swiper-wrapper align-items-center">
+
+                <div class="swiper-slide">
+                  <img src="../assets/img/Projects/RT-1.jpg" alt="">
+                </div>
+
+                <div class="swiper-slide">
+                  <img src="../assets/img/Projects/RayTracing.png" alt="">
+                </div>
+              </div>
+              <div class="swiper-pagination"></div>
+            </div>
+
+          </div>
+
+          <div class="col-lg-8 ">
+            <!-- <h3>Ray Tracing Engine</h3> -->
+            <p> <em>Ray Tracing</em> simulates the behavior of light rays as they travel through a scene, interacting with surfaces, materials, and light sources.</p>
+            <p>Project Description</p>
             <ul>
-                <li>A resonance occurs when sound with frequency close to resonant frequency passes.</li>
-                <li>At resonance HR absorbts acoustic energy from incoming sound wave.</li>
-                <li>Absorbed energy is dissipated through heat converting kinetic energy to thermal.</li>
+                <li>First we divided the screen to capture image into pixels.</li>
+                <li>From each pixel a light ray starts parallel to normal of the plane of screen.</li>
+                <li>We have given limit on number of reflections a ray can make.</li>
+                <li>When ray intersects a object, the intensity of color of object it absorbs reduces as number of reflections increase.</li>
+                <li>When number of intersections reach the limit we add the intensities of the objects to form a final image for that pixel.</li>
+                <li>We then ran a loop for all the pixels doing the above thing.</li>
             </ul>
-            <p><em>How viscous boundary layer aid in sound absorption</em></p>
+            <p>Objects considered</p>
             <ul>
-                <li>When sound waves impinge on the surface of a HR, a boundary layer is formed due to the interaction between the vibrating fluid (air) and the solid surface.</li>
-                <li>As the sound wave interacts with the resonator's surface, some of its energy is transferred to the boundary layer, leading to frictional losses and heat generation.</li>
-                <li> This process contributes to the overall absorption of acoustic energy.</li>
-                <li>At resonance frequency, the amplitude of vibration is typically higher, leading to increased interaction with the boundary layer and enhanced energy dissipation.</li>
+                <li>Written algebraic equations for reflection of light rays for these particular objects and to calculate the intensity absorbed by the light ray.</li>
+                <li>Triange, Sphere, Plane</li>
             </ul>
+          </div>
+
         </div>
 
       </div>
     </div><!-- End Portfolio Details -->
 
   </main><!-- End #main -->
+
 
 
   <!-- Vendor JS Files -->
