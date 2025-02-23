@@ -1,0 +1,170 @@
+body {
+    display: flex;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.sidebar {
+    width: 250px;
+    background: #1e1e2f;
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    position: fixed;
+}
+
+.profile img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 20px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+}
+
+.nav-links li {
+    margin: 15px 0;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #aaa;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #4caf50;
+}
+
+.social-media {
+    margin-top: auto;
+    padding-bottom: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-icon {
+    color: #aaa;
+    font-size: 20px;
+    transition: color 0.3s;
+}
+
+.social-icon:hover {
+    color: #4caf50;
+}
+
+.content {
+    margin-left: 250px;
+    padding: 20px;
+}
+
+/* Timeline Styles */
+.timeline {
+    position: relative;
+    margin: 30px 0;
+    padding: 20px;
+    border-left: 3px solid #4caf50;
+}
+
+.timeline-item {
+    position: relative;
+    margin: 20px 0;
+    padding-left: 20px;
+}
+
+.timeline-dot {
+    width: 12px;
+    height: 12px;
+    background: #4caf50;
+    border-radius: 50%;
+    position: absolute;
+    left: -8px;
+    top: 5px;
+}
+
+.timeline-content {
+    background: #f4f4f9;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.timeline-content:hover {
+    transform: translateX(10px);
+}
+
+.timeline-content h2 {
+    margin: 0;
+    color: #333;
+}
+
+.timeline-content h4 {
+    margin: 5px 0;
+    color: #666;
+    font-weight: normal;
+}
+
+.timeline-content span {
+    display: block;
+    color: #999;
+    margin-bottom: 5px;
+}
+
+.timeline-content p {
+    color: #555;
+    line-height: 1.6;
+}
+/* Experience Cards Styles */
+.experience-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.experience-card {
+    background: #fff;
+    border-left: 4px solid #4caf50;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s;
+}
+
+.experience-card:hover {
+    transform: translateY(-5px);
+}
+
+.experience-card h2 {
+    margin: 0;
+    color: #333;
+}
+
+.experience-card h4 {
+    margin: 5px 0;
+    color: #666;
+    font-weight: normal;
+}
+
+.experience-card span {
+    display: block;
+    color: #999;
+    margin-bottom: 10px;
+}
+
+.experience-card p {
+    color: #555;
+    line-height: 1.6;
+}
