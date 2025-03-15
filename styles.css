@@ -427,3 +427,51 @@ body {
 .cta-button:hover {
     background: #0056b3;
 }
+
+/* Default: Hide Menu Toggle Button on larger screens */
+.menu-toggle {
+    display: none;
+}
+
+/* Show menu toggle button on smaller screens */
+@media (max-width: 768px) {
+    .menu-toggle {
+        display: block;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        background: #1e1e2f;
+        color: white;
+        border: none;
+        font-size: 24px;
+        padding: 10px;
+        cursor: pointer;
+        z-index: 1000;
+        border-radius: 5px;
+    }
+
+    /* Hide sidebar by default */
+    .sidebar {
+        width: 0;
+        overflow: hidden;
+        position: fixed;
+        height: 100vh;
+        background: #1e1e2f;
+        top: 0;
+        left: 0;
+        transition: width 0.3s ease-in-out;
+        z-index: 999;
+    }
+
+    /* Show sidebar when menu is clicked */
+    .sidebar.show {
+        width: 250px;
+        overflow: visible;
+    }
+
+    /* Adjust main content when sidebar is hidden */
+    .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}

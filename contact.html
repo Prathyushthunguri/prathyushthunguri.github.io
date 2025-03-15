@@ -32,6 +32,9 @@
             <a href="https://docs.google.com/spreadsheets/d/1MUz-FdP3QpFUD22dCVTth17yB1rmD1AmZjGA_72ahNw/edit?usp=sharing" class="social-icon"><i class="fas fa-file-excel"></i></a>  
         </div>
     </nav>
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
     <main class="content">
         <h1>Contact Me</h1>
         <div class="contact-info">
@@ -60,7 +63,10 @@
             </ul>
         </div>
     </main>
-    
-    
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+        }
+    </script>
 </body>
 </html>

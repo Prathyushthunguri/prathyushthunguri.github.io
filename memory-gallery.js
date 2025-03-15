@@ -35,42 +35,38 @@ const memoryImages = {
     ]
 };
 
-// function openLightbox(category) {
-//     const lightbox = document.getElementById("lightbox");
-//     const lightboxContent = document.getElementById("lightbox-content");
+// Get category from URL
+const urlParams = new URLSearchParams(window.location.search);
+const category = urlParams.get("category");
 
-//     // Clear existing images
-//     lightboxContent.innerHTML = "";
+// Set title
+document.getElementById("gallery-title").textContent = category + " Memories";
 
-//     // Populate grid with images and captions
-//     memoryImages[category].forEach(item => {
-//         const container = document.createElement("div");
-//         container.classList.add("lightbox-item");
+// Load images
+const galleryGrid = document.getElementById("gallery-grid");
 
-//         const img = document.createElement("img");
-//         img.src = item.src;
-//         img.alt = category;
+if (memoryImages[category]) {
+    memoryImages[category].forEach(item => {
+        const container = document.createElement("div");
+        container.classList.add("memory-item");
 
-//         const caption = document.createElement("p");
-//         caption.textContent = item.caption;
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.caption;
 
-//         container.appendChild(img);
-//         container.appendChild(caption);
-//         lightboxContent.appendChild(container);
-//     });
+        const caption = document.createElement("p");
+        caption.textContent = item.caption;
 
-//     lightbox.style.display = "flex";
-// }
-function openLightbox(category) {
-    // Redirect to a new page with the category name as a query parameter
-    window.location.href = `memory-gallery.html?category=${category}`;
+        container.appendChild(img);
+        container.appendChild(caption);
+        galleryGrid.appendChild(container);
+    });
+} else {
+    galleryGrid.innerHTML = "<p>No images found for this category.</p>";
 }
-
-
-function closeLightbox() {
-    document.getElementById("lightbox").style.display = "none";
+function goBack() {
+    window.location.href = "memories.html"; // Redirect back to Memories page
 }
-
 function toggleSidebar() {
     document.querySelector('.sidebar').classList.toggle('show');
 }

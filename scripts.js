@@ -33,3 +33,6 @@ setInterval(() => {
         showSlide(carousel, currentIndex + 1);
     });
 }, 5000);
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('show');
+}

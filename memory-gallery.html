@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prathyush Thunguri</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Font Awesome -->
+    <title>Memory Gallery</title>
+    <link rel="stylesheet" href="memory-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -14,14 +13,14 @@
             <img src="img/profile-nav.jpeg" alt="Profile Picture">
         </div>
         <ul class="nav-links">
-            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="index.html" >Home</a></li>
             <li><a href="education.html">Education</a></li>
             <li><a href="experience.html" >Experience</a></li>
             <li><a href="projects.html">Projects</a></li>
             <li><a href="skills.html">Skills</a></li>
             <li><a href="extra-curriculars.html">Extra-Curriculars</a></li>
             <li><a href="contact.html">Contact</a></li>
-            <li><a href="memories.html">Memories</a></li>
+            <li><a href="memories.html" class="active">Memories</a></li>
         </ul>
         <div class="social-media">
             <a href="https://www.linkedin.com/in/prathyush-thunguri-386351194/" class="social-icon"><i class="fab fa-linkedin"></i></a>
@@ -34,24 +33,14 @@
     </nav>
     <button class="menu-toggle" onclick="toggleSidebar()">
         <i class="fas fa-bars"></i>
-    </button>      
+    </button>
     <main class="content">
-        <div class="hero-section">
-            <img src="img/home.jpeg" alt="Your Name" class="hero-image">
-            <div class="overlay">
-                <h1>Prathyush Thunguri</h1>
-                <h3>Mechanical Design Engineer | Tech Enthusiast</h3>
-                <p>Welcome to my personal website! I am passionate about designing innovative solutions and leveraging technology to solve complex challenges. Let's connect and collaborate!</p>
-                <!-- <a href="path/to/your-resume.pdf" class="cta-button" target="_blank">Download Resume</a> -->
-            </div>
-        </div>
+        <div class="gallery-content">
+            <h1 id="gallery-title">Memories</h1>
+            <div id="gallery-grid" class="memory-grid"></div>
+        </div>  
     </main>
-    <script>
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('show');
-        }
-    </script>
+    <button class="back-button" onclick="goBack()">&times;</button>
+    <script src="memory-gallery.js"></script>
 </body>
-
-    
 </html>
