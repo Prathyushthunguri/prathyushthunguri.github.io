@@ -1,0 +1,158 @@
+body {
+    display: flex;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.sidebar {
+    width: 250px;
+    background: #1e1e2f;
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    position: fixed;
+}
+
+.profile img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 20px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+}
+
+.nav-links li {
+    margin: 15px 0;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #aaa;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #4caf50;
+}
+
+.social-media {
+    margin-top: auto;
+    padding-bottom: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.social-icon {
+    color: #aaa;
+    font-size: 20px;
+    transition: color 0.3s;
+}
+
+.social-icon:hover {
+    color: #4caf50;
+}
+
+.content {
+    margin-left: 250px;
+    padding: 20px;
+}
+
+/* Memories css */
+.memories-container {
+    padding: 20px;
+}
+.memory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+.memory-item {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+.memory-item:hover {
+    transform: scale(1.05);
+}
+.memory-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+.memory-item p {
+    margin: 10px 0;
+    font-size: 18px;
+    font-weight: bold;
+    background: white;
+    padding: 5px;
+}
+.lightbox {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    overflow-y: auto;
+}
+.lightbox-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    width: 90%;
+    max-height: 85vh;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+.lightbox img {
+    width: 100%;
+    max-height: 250px;
+    object-fit: contain; /* Change from cover to contain */
+    border-radius: 8px;
+}
+
+.lightbox p {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 5px;
+    color: #333;
+}
+.close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 40px;
+    color: white;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10;
+}
+.close:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: black;
+}
