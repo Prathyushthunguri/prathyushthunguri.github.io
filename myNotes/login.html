@@ -1,0 +1,59 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    body {
+      font-family: Arial;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 100px;
+    }
+    input, button {
+      margin: 10px;
+      padding: 10px;
+      width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button onclick="login()">Login</button>
+  <button onclick="window.location.href='../index.html'">← Back to Home</button>
+  <p id="error" style="color:red;"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+      authDomain: "personal-workspace-d39d0.firebaseapp.com",
+      projectId: "personal-workspace-d39d0",
+      appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.login = () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          window.location.href = "secret.html"; // go to protected page
+        })
+        .catch((error) => {
+          document.getElementById("error").innerText = error.message;
+        });
+    };
+  </script>
+</body>
+</html>
