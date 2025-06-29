@@ -1,0 +1,137 @@
+<!-- secret.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Valves</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <link rel="stylesheet" href="../Notes-styles.css" />
+</head>
+<body>
+    <nav class="top-navbar">
+        <div class="navbar-left">Valves Guide</div>
+        <div class="navbar-right">
+        <button onclick='location.href = "../secret.html"'>Home</button>
+        </div>
+    </nav>
+    <main class="main-container">
+        <h2>Key Considerations for Valve Selection</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Property</th>
+                    <th>Selection</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Fluid Type</td>
+                    <td>Corrosive fluids require materials like stainless steel or PTFE (e.g., diaphragm, plug valves). Slurries favor pinch or diaphragm valves.</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Pressure and Temperature</td>
+                    <td>High-pressure systems need robust valves like gate or trunnion ball valves; high temperatures limit diaphragm and pinch valves.</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Flow Requirements</td>
+                    <td>Full flow (ball, gate) vs. precise throttling (globe, needle).</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>Actuation</td>
+                    <td>Manual, pneumatic, electric, or hydraulic, with control valves often requiring automation.</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>Size and Space</td>
+                    <td>Butterfly valves are ideal for large pipelines; needle and solenoid valves suit compact systems.</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>Maintenance</td>
+                    <td>Diaphragm and pinch valves are low-maintenance; lubricated plug valves require regular upkeep.</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>Cost</td>
+                    <td>Butterfly and pinch valves are cost-effective for large sizes; control valves are expensive due to automation.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Standards & Specifications</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Standard</td>
+                    <td>Specification</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>API 6D:</td>
+                    <td>Pipeline valves (gate, ball).</td>
+                </tr>
+                <tr>
+                    <td>ASME B16.34:</td>
+                    <td>Pressure/temperature ratings for valves.</td>
+                </tr>
+                <tr>
+                    <td>ANSI/ASME B16.10:</td>
+                    <td>Face-to-face dimensions, though diaphragm valves often follow MSS SP-88.</td>
+                </tr>
+                <tr>
+                    <td>FDA 177:2600:</td>
+                    <td>For hygienic valves in food and pharmaceutical industries.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="grid-container">
+            <a href="Gate.html" class="grid-item">
+            <p>Gate Valve</p>
+            </a>
+            <a href="Globe.html" class="grid-item">
+            <p>Globe Valve</p>
+            </a>
+            <a href="Ball.html" class="grid-item">
+            <p>Ball Valve</p>
+            </a>
+            <a href="Check.html" class="grid-item">
+            <p>Check Valve</p>
+            </a>
+            <a href="Butterfly.html" class="grid-item">
+            <p>Butterfly Valve</p>
+            </a>
+            <a href="Plug.html" class="grid-item">
+            <p>Plug Valve</p>
+            </a>
+            <a href="Diaphragm.html" class="grid-item">
+            <p>Diaphragm Valve</p>
+            </a>
+            <a href="Needle.html" class="grid-item">
+            <p>Needle Valve</p>
+            </a>
+            <a href="Pressure-Relief.html" class="grid-item">
+            <p>Pressure Relief / Safety Valve</p>
+            </a>
+            <a href="Control.html" class="grid-item">
+            <p>Control Valve</p>
+            </a>
+            <a href="Solenoid.html" class="grid-item">
+            <p>Solenoid Valve</p>
+            </a>
+            <a href="Pinch.html" class="grid-item">
+            <p>Pinch Valve</p>
+            </a>
+        </div>
+
+        <!-- Add more as needed -->
+    </main>
+</body>
+</html>

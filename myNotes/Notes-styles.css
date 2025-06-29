@@ -1,0 +1,140 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: sans-serif;
+  background-color: #f4f4f4;
+}
+
+.top-navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #222;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  z-index: 1000;
+}
+
+.navbar-left {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.navbar-right button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.navbar-right button:hover {
+  background-color: #666;
+}
+
+.grid-container {
+  margin-top: 70px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.grid-item {
+  background: white;
+  text-align: center;
+  text-decoration: none;
+  color: black;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.grid-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.grid-item p {
+  padding: 10px;
+  font-weight: bold;
+}
+
+.main-container {
+  max-width: 1200px;
+  margin: 80px auto 40px auto;  /* top margin to clear fixed nav, center horizontally */
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* subtle shadow */
+  border-radius: 12px;  /* rounded corners */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-container {
+    margin: 100px 10px 20px 10px;
+    padding: 15px;
+  }
+}
+
+.main-container h2 {
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.main-container h3 {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.main-container ul {
+  padding-left: 30px;
+}
+
+.main-container li {
+  margin-bottom: 5px;
+}
+
+.table-container {
+  max-width: 1000px;
+  margin: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  vertical-align: top;
+  text-align: left;
+  /* border-radius: 12px; */
+}
+
+th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #fafafa;
+}

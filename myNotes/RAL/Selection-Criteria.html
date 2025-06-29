@@ -1,0 +1,125 @@
+<!-- secret.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>RAL</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <link rel="stylesheet" href="../Notes-styles.css" />
+</head>
+<body>
+    <nav class="top-navbar">
+        <div class="navbar-left">RAL Selection Criteria</div>
+        <div class="navbar-right">
+        <button onclick='location.href = "Theory.html"'>RAL Theory</button>
+        </div>
+    </nav>
+    <main class="main-container">  
+        <h2>Basic Performance Requirement:-</h2>
+        <ul>
+            <li>Key Factor - Rotor Speed</li>
+            <li>Normally Accepted - Rotor Tip Speed - 40 meters/min (Max) - above this incease in speed decreases throughput</li>
+            <li>Explanation:
+                <ul>
+                    <li>When the rotary valve is gravity-fed (material simply falls into it), the product must:</li>
+                    <ul>
+                        <li>Accelerate from rest</li>
+                        <li>Fill rotor pockets before they rotate away from the inlet.</li>
+                    </ul>
+                    <li>But if the rotor tip is moving too fast:</li>
+                    <ul>
+                        <li>The product doesn’t have enough time to fill the pockets.</li>
+                        <li>This leads to incomplete pocket filling, reducing the actual amount of material delivered per rotation.</li>
+                        <li>Hence, total throughput drops, even though the speed is higher.</li>
+                    </ul>
+                </ul>
+            </li>
+            <li>Value may be lower if:
+                <ul>
+                    <li>Product has low bulk density
+                        <ul>
+                            <li>Light materials take longer to settle.</li>
+                            <li>At higher rotor speeds, these materials won’t fill pockets fully before being carried away.</li>
+                        </ul>
+                    </li>
+                    <li>Significant pressure differential giving rise to airflow opposing product flow
+                        <ul>
+                            <li>Upward airflow can push product back, reducing the filling efficiency.</li>
+                            <li>Cause aeration (fluidization), making the material behave like a fluid, which worsens filling at higher speeds.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>Value may be higher if:
+                <ul>
+                    <li>Fed under cascade flow conditions such as screw feeders, belt feeders & weighers
+                        <ul>
+                            <li>Material enters rotor pockets more consistently and forcefully.</li>
+                            <li>Rotor doesn’t need to "wait" for the material to fall in.</li>
+                            <li>Higher tip speeds can be used without losing throughput.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>Considering throat size  - it is difficult to achieve good results at smaller sizes with high speeds even though it falls below normally accepted Tip speed.</li>
+            <li>Normal Practice:
+                <ul>
+                    <li>For valve with rotor diameter upto 300 mm - select that gives rotor speeds below 25 RPM</li>
+                    <li>Above 300 mm - go below 40 m/min tip speed</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>Product Physical Characteristics:-</h2>
+        <ul>
+            <li>For materials that become abrasive when entrained by high velocity leakage air - causing erosion
+                <ul>
+                    <li>Lower the Pressure Differential is better</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>System / Duty Requirements:-</h2>
+        <ul>
+            <li>Physical Installation Details
+                <ul>
+                    <li>Flange Details: Square or Round or Combination</li>
+                    <li>Type of drive: chain or direct coupled</li>
+                    <li>Inbuilt venting present or not</li>
+                </ul>
+            </li>
+            <li>Pressure Differential
+                <ul>
+                    <li>Higher Pressure differential - greater leakage of air</li>
+                    <li>High upward leakage causes:
+                        <ul>
+                            <li>Reduced material flow by reducing bulk density through fluidisation</li>
+                            <li>Physically opposing flow</li>
+                            <li>Enhance abrasiveness of hard fine particles</li>
+                            <li>Transfer moisture & create unstable flow conditions</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>Operating Clearances & Temperature
+                <ul>
+                    <li>For minimal leakage under ambient temperature condittions - nominal clearance is:
+                        <ul>
+                            <li>Cast Iron / Carbon Steel - 0.13 mm</li>
+                            <li>Stainless Steel - 0.18 mm - To minimise the risk of galling / siezing should the Rotor make contact with the Housing under extreme load conditions or due to bearing failure etc.</li>
+                        </ul>
+                    </li>
+                    <li>Where the operating temperature exceeds ambient by more than 30 deg C then clearances start to need to be increased.</li>
+                    <li>Rotor & Housing expand at different rates with temperature fluctuations
+                        <ul>
+                            <li>Rotor is lighter component and is not subject to surface heat loss unlike the Housing</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+        <!-- Add more as needed -->
+    </main>
+</body>
+</html>
