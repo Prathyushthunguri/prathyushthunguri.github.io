@@ -12,7 +12,7 @@
     <nav class="top-navbar">
         <div class="navbar-left">RAL Theory</div>
         <div class="navbar-right">
-        <button onclick='location.href = "../secret.html"'>Home</button>
+            <button onclick='location.href = "../secret.html"'>Home</button>
         </div>
     </nav>
     <main class="main-container">  
@@ -80,12 +80,6 @@
             window.location.href = "../login.html"; // Redirect if not logged in
         }
         });
-
-        window.logout = () => {
-        signOut(auth).then(() => {
-            window.location.href = "../login.html";
-        });
-        };
     </script>
 </body>
 </html>
