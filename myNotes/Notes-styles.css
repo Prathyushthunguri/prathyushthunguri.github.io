@@ -120,13 +120,17 @@ table {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
   border-radius: 12px;
+  margin-left: -10px;
 }
 
+thead{
+  color: red;
+}
 th, td {
   border: 1px solid #ccc;
-  padding: 12px;
+  padding: 5px;
   vertical-align: top;
-  text-align: left;
+  text-align: center;
   /* border-radius: 12px; */
 }
 
@@ -137,4 +141,125 @@ th {
 
 tr:nth-child(even) {
   background-color: #fafafa;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+label {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #dddddd;
+    border-radius: 2px;
+    font-size: 14px;
+    color: #000000;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+input {
+    /* max-width: 30%; */
+    flex: 1;
+    padding: 5.5px;
+    border: 1px solid #dddddd;
+    border-radius: 2px;
+    font-size: 12px;
+    color: #333333;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+select{
+    flex: 1;
+    padding: 5.5px;
+    border: 1px solid #dddddd;
+    border-radius: 2px;
+    font-size: 12px;
+    color: #333333;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+select:focus, input:focus {
+    border-color: #007bff;
+    background-color: #ffffff;
+    outline: none;
+}
+input[readonly] {
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+.container_two {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: #ffffff;
+    max-width: 1800px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    gap: 20px;
+}
+
+.column-left, .column-right {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.column-left {
+    margin-right: 10px;
+}
+
+.column-right {
+    margin-left: 10px;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 80px auto 40px auto;  /* top margin to clear fixed nav, center horizontally */
+  padding: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* subtle shadow */
+  border-radius: 12px;  /* rounded corners */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  transition: all 0.3s ease-in-out;
+}
+
+.container h2 {
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.container h3 {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  color: #444;
+}
+
+.container ul {
+  padding-left: 30px;
+}
+
+.container li {
+  margin-bottom: 5px;
+}
+
+.table-container-tab {
+  max-width: 1800px;
+  margin: auto;
 }

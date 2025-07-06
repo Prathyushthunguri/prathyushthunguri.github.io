@@ -16,8 +16,55 @@
         </div>
     </nav>
     <main class="main-container">  
-        
-
+        <h2>Coupling Calculations</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Quantity</td>
+                    <td>units</td>
+                    <td>Value</td>
+                    <td>units</td>
+                    <td>Value</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Power</td>
+                    <td>kW</td>
+                    <td><input type="number" id="Power_kW" oninput="TorquekW()"></td>
+                    <td>Hp</td>
+                    <td><input type="number" id="Power_Hp" oninput="TorqueHp()"></td>
+                </tr>
+                <tr>
+                    <td>Speed</td>
+                    <td>rpm</td>
+                    <td><input type="number" id="Rpm" oninput="TorquekW(); TorqueHp()"></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Applied Torque</td>
+                    <td>Nm (power in kW)</td>
+                    <td><input type="number" id="Tor_kW" readonly></td>
+                    <td>Nm (power in Hp)</td>
+                    <td><input type="number" id="Tor_Hp" readonly></td>
+                </tr>
+                <tr>
+                    <td>Factor of Safety</td>
+                    <td>-</td>
+                    <td><input type="number" id="FOS" oninput="TorquekW(); TorqueHp()"></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Compensating Torque</td>
+                    <td>Nm (power in kW)</td>
+                    <td><input type="number" id="Tor_Comp_kW" readonly></td>
+                    <td>Nm (power in Hp)</td>
+                    <td><input type="number" id="Tor__Comp_Hp" readonly></td>
+                </tr>
+            </tbody>
+        </table>
         <!-- Add more as needed -->
     </main>
     <script type="module">
@@ -40,5 +87,6 @@
         }
         });
     </script>
+    <script src="Coupling.js"></script>
 </body>
 </html>

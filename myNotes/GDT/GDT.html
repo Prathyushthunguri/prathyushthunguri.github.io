@@ -1,0 +1,267 @@
+<!-- secret.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>GD & T</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <link rel="stylesheet" href="../Notes-styles.css" />
+</head>
+<body>
+    <nav class="top-navbar">
+        <div class="navbar-left">GD & T Guide</div>
+        <div class="navbar-right">
+        <button onclick='location.href = "../secret.html"'>Home</button>
+        </div>
+    </nav>
+    <main class="main-container">
+        <ul>
+            <li>The engineering drawing is a tool of communication for the designer to convey he intentions in terms of function , relationships, criticality etc.</li>
+            <li>ASME Y14.5 - STANDARD FOR GD&T</li>
+        </ul>
+
+        <h2>Angle of projections</h2>
+
+        <div class="container_two">
+            <div class="column-left">
+                <h3>1st Angle Projection</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td>BV</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>RV</td>
+                            <td>FV</td>
+                            <td>LV</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>TV</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="column-right">
+                <h3>3rd Angle Projection</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td></td>
+                            <td>TV</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>LV</td>
+                            <td>FV</td>
+                            <td>RV</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>BV</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h2>Tolerance</h2>
+        <ul>
+            <li>International Tolerance grade table - ISO 286</li>
+            <li>Tolerance depends on:
+                <ul>
+                    <li>Manufacturing process</li>
+                    <li>Functional requirements
+                        <ul>
+                            <li>Assembly - Assigning fits for mating parts</li>
+                            <li>Aesthetics</li>
+                            <li>Precision</li>
+                        </ul>
+                    </li>
+                    <li>Tolerance stacks</li>
+                </ul>
+            </li>
+        </ul>
+
+        <table>
+            <thead>
+                <tr>
+                    <td>Tolerance grade</td>
+                    <td>Process</td>
+                    <td>Use</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>IT0 to IT4</td>
+                    <td>Super finishing processes, Lapping, diamond boring</td>
+                    <td>Guage design</td>
+                </tr>
+                <tr>
+                    <td>IT5</td>
+                    <td>Fine Grinding</td>
+                    <td>Fits - Ball bearing</td>
+                </tr>
+                <tr>
+                    <td>IT6</td>
+                    <td>Grinding</td>
+                    <td>Fits - Rotating reciprocating machinery, final finishes</td>
+                </tr>
+                <tr>
+                    <td>IT7</td>
+                    <td>Precision turning, Broaching, honing</td>
+                    <td>Fits - Rotating machinery</td>
+                </tr>
+                <tr>
+                    <td>IT8</td>
+                    <td>Turning, Boring & reaming</td>
+                    <td>Fits - Rotating machinery</td>
+                </tr>
+                <tr>
+                    <td>IT9</td>
+                    <td>Boring</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>IT10</td>
+                    <td>Milling, Slotting, planning, rolling</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>IT11</td>
+                    <td>Drilling rough turning</td>
+                    <td>Fits - loose running</td>
+                </tr>
+                <tr>
+                    <td>IT12, IT13, IT14</td>
+                    <td>Metal forming processes - sheet metal, Forging, Extrution</td>
+                    <td>Stampings, Forgings</td>
+                </tr>
+                <tr>
+                    <td>IT15</td>
+                    <td>Die casting, stamping</td>
+                    <td>Die cast models</td>
+                </tr>
+                <tr>
+                    <td>IT16</td>
+                    <td>Sand casting</td>
+                    <td>Sand castings - cast iron</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Inspection</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Guage</td>
+                    <td>Example</td>
+                    <td>Used For</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Attribute guage / Functional guage</td>
+                    <td>Go & No go guage</td>
+                    <td>
+                        <ul>
+                            <li>Position</li>
+                            <li>Orientation</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Variable guage</td>
+                    <td>Vernier callipers</td>
+                    <td>
+                        <ul>
+                            <li>Size</li>
+                            <li>Form</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>CMM - Coordinate measuring machine</td>
+                    <td></td>
+                    <td>
+                        <ul>
+                            <li>Orientation</li>
+                            <li>Form</li>
+                            <li>Location</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>Co ordinate Dimension usage</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Type of dimension</td>
+                    <td>Appropriate use?</td>
+                    <td>Poor use?</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Size</td>
+                    <td>Yes</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Chamfer / Radius</td>
+                    <td>Yes</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Locating Part features</td>
+                    <td></td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Orienting part features</td>
+                    <td></td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Defining form of part features</td>
+                    <td></td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Defining 3D profile</td>
+                    <td></td>
+                    <td>Yes</td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- Add more as needed -->
+    </main>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+</body>
+</html>
