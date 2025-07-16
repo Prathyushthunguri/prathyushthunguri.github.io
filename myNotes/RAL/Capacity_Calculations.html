@@ -17,6 +17,9 @@
     </nav>
     <main class="main-container">
         <h2>Standard Rotor Volume</h2>
+        <ul>
+            <li>V = (PI*(D_O^2 - D_I^2)*W) - (D_O - D_I)*W*Thk*N</li>
+        </ul>
         <table>
             <thead>
                 <tr>
@@ -32,14 +35,147 @@
                 <tr>
                     <td>OD of Rotor</td>
                     <td>mm</td>
-                    <td></td>
+                    <td><input type="number" id="Rotor_OD" oninput="RotorVol()"></td>
                     <td>Area of OD</td>
                     <td>m^2</td>
+                    <td><input type="number" id="Area_OD" readonly></td>
+                </tr>
+                <tr>
+                    <td>ID of Rotor</td>
+                    <td>mm</td>
+                    <td><input type="number" id="Rotor_ID" oninput="RotorVol()"></td>
+                    <td>Area of ID</td>
+                    <td>m^2</td>
+                    <td><input type="number" id="Area_ID" readonly></td>
+                </tr>
+                <tr>
+                    <td>Width of Rotor</td>
+                    <td>mm</td>
+                    <td><input type="number" id="Rotor_Width" oninput="RotorVol()"></td>
+                    <td>Area of Vane</td>
+                    <td>m^2</td>
+                    <td><input type="number" id="Area_Vanes" readonly></td>
+                </tr>
+                <tr>
+                    <td>Thk of Vane</td>
+                    <td>mm</td>
+                    <td><input type="number" id="Vane_Thk" oninput="RotorVol()"></td>
+                    <td>Vol of Rotor</td>
+                    <td>m^3</td>
+                    <td><input type="number" id="Vol_Rotor" readonly></td>
+                </tr>
+                <tr>
+                    <td>No.s of Vane</td>
+                    <td>-</td>
+                    <td><input type="number" id="Vane_Num" oninput="RotorVol()"></td>
+                    <td>Vol of Rotor</td>
+                    <td>Lit</td>
+                    <td><input type="number" id="Vol_Rotor_Lit" readonly></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Capacity calculation</h2>
+        <ul>
+            <li>C = %F * V * BD * RPM</li>
+        </ul>
+        <table>
+            <thead>
+                <tr>
+                    <td>Input Parameters</td>
+                    <td>units</td>
+                    <td>Value</td>
+                    <td>Output Parameters</td>
+                    <td>units</td>
+                    <td>Value</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Rotor Vol</td>
+                    <td>Lit/rev</td>
+                    <td><input type="number" id="Rotor_Vol_cap" oninput="Capacity()"></td>
+                    <td>Capacity</td>
+                    <td>Kg/hr</td>
+                    <td><input type="number" id="Capacity_cap" readonly></td>
+                </tr>
+                <tr>
+                    <td>Bulk Density</td>
+                    <td>Kg/m3</td>
+                    <td><input type="number" id="BulkDensity_cap" oninput="Capacity()"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Filling %</td>
+                    <td>%</td>
+                    <td><input type="number" id="Filling_cap" oninput="Capacity()"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Rotor Speed</td>
+                    <td>RPM</td>
+                    <td><input type="number" id="Rotor_RPM_cap" oninput="Capacity()"></td>
+                    <td></td>
+                    <td></td>
                     <td></td>
                 </tr>
             </tbody>
         </table>
-        <!-- Add more as needed -->
+
+        <h2>Rotor RPM calculation</h2>
+        <ul>
+            <li>RPM = C / (%F * V * BD)</li>
+        </ul>
+        <table>
+            <thead>
+                <tr>
+                    <td>Input Parameters</td>
+                    <td>units</td>
+                    <td>Value</td>
+                    <td>Output Parameters</td>
+                    <td>units</td>
+                    <td>Value</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Rotor Vol</td>
+                    <td>Lit/rev</td>
+                    <td><input type="number" id="Rotor_Vol_rpm" oninput="RotorPRM()"></td>
+                    <td>Rotor Speed</td>
+                    <td>RPM</td>
+                    <td><input type="number" id="Rotor_RPM_rpm" readonly></td>
+                </tr>
+                <tr>
+                    <td>Bulk Density</td>
+                    <td>Kg/m3</td>
+                    <td><input type="number" id="BulkDensity_rpm" oninput="RotorRPM()"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Filling %</td>
+                    <td>%</td>
+                    <td><input type="number" id="Filling_rpm" oninput="RotorRPM()"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Capacity</td>
+                    <td>Kg/hr</td>
+                    <td><input type="number" id="Capacity_rpm" oninput="RotorRPM()"></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
     </main>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -61,5 +197,6 @@
         }
         });
     </script>
+    <script src="Capacity_Calculations.js"></script>
 </body>
 </html>
