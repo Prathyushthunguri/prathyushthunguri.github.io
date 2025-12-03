@@ -1,0 +1,232 @@
+<!-- secret.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Hazardous Area Classification</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <link rel="stylesheet" href="../Notes-styles.css" />
+</head>
+<body>
+    <nav class="top-navbar">
+        <div class="navbar-left">Hazardous Area Classification Guide</div>
+        <div class="navbar-right">
+        <button onclick='location.href = "../secret.html"'>Home</button>
+        </div>
+    </nav>
+    <main class="main-container">
+        <p>Resource: Alison - Hazardous Area Classification Course</p>
+        <h2>Introduction</h2>
+        <ul>
+            <li>Hazardous area classification is usually done in facilities and environments where there is a likelihood of explosive gas mixture either for a limited time or for an extended period of time. This is done to reduce the risk of explosion or fire to ensure the process area or plant is safe for work</li>
+            <li>Hazardous area classification is, therefore, the division of areas around equipment handling flammable fluids or process plants for explosive gases and fluids into hazardous and non-hazardous areas and the sub-division of hazardous areas into zones.</li>
+        </ul>
+        <div style="text-align: center;">
+            <img src="Components.jpeg" alt="Components of Hazardous Area" style="width: 300px; height: auto;">
+        </div>
+        <h2>Common Terms</h2>
+        <table>
+            <thead>
+                <tr>
+                    <td>Term</td>
+                    <td>Explanation</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Hazardous Area</td>
+                    <td>An area in which explosive gas/air mixtures are, or may be expected to be, present in quantities such as to require special precautions for the construction, installation, and use of electrical apparatus or other sources of ignition.</td>
+                </tr>
+                <tr>
+                    <td>Non-Hazardous Area</td>
+                    <td>An area where an explosive atmosphere is not expected to occur in quantities, such as to require special precautions for the construction, installation, and use of electrical apparatus or other sources of ignition.</td>
+                </tr>
+                <tr>
+                    <td>Flash point</td>
+                    <td>The flash point of any liquid is the lowest temperature (at normal air pressure) at which vapors develop in such a quantity that a flammable mixture forms above the liquid. An explosive hazard only results when a flammable liquid evaporates at the surface. This can result in a vapor/air mixture which, under given conditions, forms an explosive atmosphere. In order for that to happen, the liquid temperature must have exceeded its flash point.</td>
+                </tr>
+                <tr>
+                    <td>Auto Ignition Temperature</td>
+                    <td>The auto-ignition temperature or kindling point of a substance is the lowest temperature at which it will spontaneously ignite in a normal atmosphere without an external source of ignition, such as a flame or spark.</td>
+                </tr>
+                <tr>
+                    <td>Ventilation</td>
+                    <td>Ventilation is the movement of air and its replacement with fresh air due to the effects of wind, temperature gradients, or artificial means (for example, fans or extractors). Ventilation could be natural ventilation or artificial ventilation.</td>
+                </tr>
+                <tr>
+                    <td>Ignition Sources</td>
+                    <td>An ignition source is any object or event, or source from which heat, sparks, electricity, flames, or hot surfaces have sufficient energy to start the burning of a flammable or combustible substance.</td>
+                </tr>
+                <tr>
+                    <td>Sources of Release</td>
+                    <td>The sources of release can be defined as any location or spot where a flammable or explosive gas, vapor, mist, or liquid may be released into the atmosphere in such a way that an explosive gas atmosphere could be formed, e.g., storage tank vents. These releases may be in different grades, and a source of release may give rise to any or a combination of grades of release.</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="text-align: center;">
+            <img src="IgnitionSource.jpeg" alt="" style="width: 300px; height: auto;">
+        </div>
+        <h2>Grades Of Release</h2>
+        <p>There are three basic grades of release, as listed below in order of decreasing frequency and likelihood of the explosive gas atmosphere being present:</p>
+        <table>
+            <thead>
+                <tr>
+                    <td>Grade of release</td>
+                    <td>Description</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Primary Grade</td>
+                    <td>
+                        <ul>
+                            <li>This is a form of release that is likely to occur periodically or occasionally in normal operations.</li>
+                            <li>A release of which in normal operating procedures is expected to occur.</li>
+                            <li>These releases are usually more than 10h/year but less than 1000 h/year.</li>
+                            <li>An example is the releases from the seals of pumps and compressors, releases from relief valve leakages discharging into the atmosphere, manual sampling outlets, venting and draining points, automatic instrument gas vents., and vents from a sump.</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Continuous Grade</td>
+                    <td>
+                        <ul>
+                            <li>A continuous release is a form of release that is continuous or almost continuous and usually occurs frequently and for long periods.</li>
+                            <li>This type of release is more than 1000h/year, and it includes. Vents from an open tank or vessel, vents from the seal of a floating rook tank, etc.</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Secondary Grade Release</td>
+                    <td>
+                        <ul>
+                            <li>A secondary release is a form of release that, on normal operation, is unlikely to occur either periodically or even occasionally in any event and will only happen less frequently and for only short time periods.</li>
+                            <li>This type of release is never anticipated in normal operational procedures</li>
+                            <li>The size and quantity of these releases may be known or unknown as their release is usually less than 10h of release per year.</li>
+                            <li>Some examples of secondary releases include pump seal failure, failure of flanged joints, and instrument connections.</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>The grade of release is the likelihood or the rate of the release, while the zone is the area or location to which these releases occur.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Under unrestricted conditions (Open surrounding air), there usually is a direct relationship between “Grade of release” and “type of zone,” as enumerated below.</td>
+                </tr>
+                <tr>
+                    <td>Zones</td>
+                    <td>
+                        <ul>
+                            <li>Continuous grade usually tends to lead to Zone 0</li>
+                            <li>Primary grade usually tends to lead to Zone 1</li>
+                            <li>Secondary grade usually tends to lead to Zone 2</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <img src="Grades of Release.jpeg" alt="" style="width: 300px; height: auto;">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Purpose of Hazardous Area Classification</h2>
+        <p>The main purpose of hazardous area classification is to identify areas around equipment handling flammable fluids into hazardous and non-hazardous areas and the sub-division of hazardous areas into zones.</p>
+        <p>In order to avoid the risk of fire and explosion, hazardous area classification was adopted to ensure the following.</p>
+        <ul>
+            <li>That the right electrical equipment designed and suitable for the location is selected.</li>
+            <li>The identification of a location of equipment or process plant there could be a source of ignition or its selection of the right equipment whose operation will not become the source of ignition for an explosive atmosphere.</li>
+            <li>Determining the maximum allowable surface temperature for particular areas and clearly marking out locations for escape routes.</li>
+            <li>Identify and determine the appropriate location for flammable gas detectors in process plants.</li>
+            <li>Appropriate location of air inlet and outlet for ventilation systems or combustion equipment.</li>
+            <li>Identify, plan, and control all forms of hot work to be carried out within the facility and in the process plant area.</li>
+            <li>Identify the right location to position lifesaving appliances, radioactive stores, and emergency control points in non-hazardous areas of the process plant.</li>
+        </ul>
+        <table>
+            <thead>
+                <tr>
+                    <td>Zone</td>
+                    <td>Description</td>
+                    <td>Examples</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Zone 0</td>
+                    <td>Zone 0 is an area where there is the presence of an explosive gas mixture or atmosphere continuously or for an extended period of time. In this zone, the explosive atmosphere is usually present for more than 1000 hours per year (1000h/yr).</td>
+                    <td>
+                        <p>As a general practice, you can hardly find electrical equipment installed in Zone 0</p>
+                        <ul>
+                            <li>Inside of AGO or PMS tanks Farms. In tank farms, the quantity of oil and gas products stored creates a large presence of a combustible atmosphere.</li>
+                            <li>Areas where there is the presence of combustible gas.</li>
+                            <li>Inside storage tanks: Tanks used for storing volatile substances like gasoline or crude oil can create explosive environments, particularly if there is inadequate ventilation or other safety measures.</li>
+                            <li>Fuel storage areas: Areas, where fuel is stored for generators or other equipment, can also be considered Zone 0 if the atmosphere is continuously or frequently explosive.  </li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Zone 1</td>
+                    <td>Zone 1 is an area where there are explosive gas mixtures or atmosphere is likely to occur in normal operation. The explosive gas mixture or atmosphere in this zone will last for more than 10h/year but will be less than 1000h/yr. This means that in a normal operation, the explosive atmosphere will exist but will not last continuously; it will be limited.</td>
+                    <td>
+                        <p> Some examples of Zone 1 areas are listed below.</p>
+                        <ul>
+                            <li>Wellhead platform: The wellhead platform is a common example of a zone 1 area in an oil and gas facility. This area is highly volatile and constitutes a significant risk of fire or explosion. Thus, it requires special design considerations to ensure the safety of personnel working in the area.</li>
+                            <li>Refinery processing units: The refinery processing units are another common zone 1 area in oil and gas facilities. These units involve the use of high-pressure equipment, intense heat, and volatile chemicals, making it a hazardous area. Thus, careful consideration of equipment and design is necessary to ensure the safety of the personnel working in these areas.</li>
+                            <li>Loading and unloading stations: Loading and unloading stations are also significant zone 1 areas in oil and gas facilities. These areas involve the handling and transfer of highly volatile fluids that can cause fires or explosions. Thus, special safety considerations are necessary to regulate these areas and ensure they comply With safety standards.</li>
+                            <li>Gas processing facilities: Gas processing facilities are also common examples of zone 1 areas in oil and gas facilities. These facilities involve the processing of various gases that can be highly combustible. Thus, the facility requires careful analysis of design and equipment to ensure the safety of the personnel working in the area.</li>
+                            <li>Tank farms: Tank farms, which are used for storing oil or gas, are also considered zone 1 areas in oil and gas facilities. These areas are highly susceptible to fires, explosions, and leakage of hazardous materials, making them a considerable safety concern. Thus, special precautions related to equipment and design are necessary to ensure the safety of personnel in these facility areas.</li>
+                        
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Zone 2</td>
+                    <td>Zone 2 area is an area where an explosive air mixture or atmosphere is likely not to occur during normal operations. If it does occur, it does not stay for an extended period. It only stays for a short time, usually less than 10/yr.</td>
+                    <td>
+                        <p>Below are some examples of areas that fall into Zone 2 with short time periods of explosive atmosphere present in a year's time.</p>
+                        <ul>
+                            <li>Pump houses: Pump houses are used to transport liquids and gases in pipelines. The presence of flammable liquids and gases makes this area a Zone 2 classification.</li>
+                            <li>Chemical storage and processing areas: Chemicals used in the oil and gas industry can be highly volatile and flammable. Chemical storage and processing areas are classified as Zone 2 to protect workers from exposure to hazardous materials and explosive atmospheres.</li>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="text-align: center;">
+            <img src="HAC_Zones-ex1.jpeg" alt="" style="width: 300px; height: auto;">
+            <img src="HAC_Zones-ex2.jpeg" alt="" style="width: 300px; height: auto;">
+        </div>
+
+
+
+
+        
+
+        <!-- Add more as needed -->
+    </main>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+</body>
+</html>

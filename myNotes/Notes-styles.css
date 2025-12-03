@@ -90,6 +90,11 @@ body {
   }
 }
 
+@media (max-width: 1920px) {
+  .main-container {
+    max-width: 1800px;
+  }
+}
 .main-container h2 {
   color: #222;
   margin-bottom: 12px;
@@ -130,7 +135,7 @@ th, td {
   border: 1px solid #ccc;
   padding: 5px;
   vertical-align: top;
-  text-align: center;
+  text-align: left;
   /* border-radius: 12px; */
 }
 
