@@ -77,7 +77,7 @@ function pressureUnits(){
     document.getElementById("Vout_mmH2O_mbar").value = Vout_mmH2O_mbar;
 
     const Vout_mbar_atm = Vin_mbar*0.0009868;
-    const Vout_mbar_Kgcm2 = Vin_mbar*0.0102;
+    const Vout_mbar_Kgcm2 = Vin_mbar*0.00102;
     const Vout_mbar_psi = Vin_mbar*0.0145;
     const Vout_mbar_mmHg = Vin_mbar*0.7501;
     const Vout_mbar_mmH2O = Vin_mbar*10.21;
