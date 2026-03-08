@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOC Hardness & Surface Coating Reference</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background-color: #f4f4f4; }
+
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 80px auto 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      transition: all 0.3s ease-in-out;
+    }
+    @media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+    @media (max-width: 1920px) { .main-container { max-width: 1800px; } }
+
+    .main-container h2 { color: #222; margin-bottom: 12px; }
+    .main-container h3 { margin-top: 24px; margin-bottom: 10px; color: #444; }
+    .main-container ul { padding-left: 30px; }
+    .main-container li { margin-bottom: 5px; }
+
+    .table-container-tab { max-width: 1800px; margin: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px; border-radius: 12px; margin-left: -10px;
+    }
+    thead { color: red; }
+    th, td { border: 1px solid #ccc; padding: 5px; vertical-align: top; text-align: left; }
+    th { background-color: #f2f2f2; font-weight: bold; }
+    tr:nth-child(even) { background-color: #fafafa; }
+
+    .container_two {
+      display: flex; justify-content: space-between; padding: 20px;
+      background-color: #ffffff; max-width: 1800px; margin: 20px auto;
+      border: 1px solid #ccc; border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); gap: 20px;
+    }
+    .column-left, .column-right {
+      flex: 1; padding: 20px; background-color: #fff;
+      border: 1px solid #ddd; border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .column-left { margin-right: 10px; }
+    .column-right { margin-left: 10px; }
+
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active { background: #ffffff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .note-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+    .warn-box {
+      background: #fff8f2; border-left: 4px solid #b85c00;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+    .warn-box strong { color: #b85c00; }
+
+    .badge {
+      display: inline-block; padding: 1px 7px; border-radius: 3px;
+      font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid #ccc;
+    }
+    .bg { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+    .bw { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+    .bb { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+    .bn { background: #f0f0f0; color: #444;    border-color: #ccc; }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">MOC Hardness &amp; Surface Coating / Plating Reference</div>
+  <div class="navbar-right">
+    <button onclick="location.href='material_properties.html'">Properties</button>
+    <button onclick="location.href='moc_welding.html'">MOC &amp; Welding</button>
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <h2>MOC Hardness Levels &amp; Surface Coating / Plating Reference</h2>
+  <ul>
+    <li>Maps each MOC to its base hardness, weld overlay hardness and applicable surface coatings</li>
+    <li>Covers 15 MOCs and 12 coating / plating technologies with hardness and abrasion uplift ratings</li>
+    <li>Hardness scales: HB = Brinell &nbsp;|&nbsp; HRC = Rockwell C &nbsp;|&nbsp; HV = Vickers &nbsp;|&nbsp; Approx: 60 HRC ≈ 746 HV ≈ 697 HB</li>
+  </ul>
+
+  <br>
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('hardness',this)">MOC Hardness &amp; Coatings</button>
+    <button onclick="showTab('coatings',this)">Coating Technologies</button>
+    <button onclick="showTab('conv',this)">Hardness Scale Conversion</button>
+    <button onclick="showTab('rules',this)">MOC Coating Rules</button>
+    <button onclick="showTab('principle',this)">Hardness vs Abrasive Principle</button>
+  </div>
+
+  <!-- HARDNESS & COATINGS TABLE -->
+  <div class="tab-panel active" id="tab-hardness">
+    <h2>MOC — Base Hardness, Overlay Hardness &amp; Applicable Coatings</h2>
+    <ul>
+      <li>Base hardness of each MOC, achievable hardness through weld overlay, and recommended coating methods with abrasion uplift rating</li>
+    </ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>MOC</th>
+            <th>Base Hardness (HB / HRC)</th>
+            <th>Min Overlay Hardness</th>
+            <th>Max Overlay Hardness</th>
+            <th>Applicable Coating / Plating</th>
+            <th>Coating Hardness Achieved</th>
+            <th>Abrasion Uplift</th>
+            <th>Engineering Notes</th>
+          </tr>
+        </thead>
+        <tbody id="hardness-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COATING TECHNOLOGIES -->
+  <div class="tab-panel" id="tab-coatings">
+    <h2>Coating &amp; Plating Technology Comparison</h2>
+    <ul><li>12 major industrial coating technologies — hardness, abrasion / corrosion resistance, compatible MOCs and typical applications</li></ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Technology</th>
+            <th>Hardness Achieved</th>
+            <th>Abrasion Resistance</th>
+            <th>Corrosion Resistance</th>
+            <th>Compatible MOCs</th>
+            <th>Key Characteristics</th>
+            <th>Typical Applications</th>
+          </tr>
+        </thead>
+        <tbody id="coating-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HARDNESS CONVERSION -->
+  <div class="tab-panel" id="tab-conv">
+    <h2>Hardness Scale Quick Reference — HRC / HB / HV Conversion</h2>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr><th>HRC</th><th>HB (approx)</th><th>HV (approx)</th><th>Typical Material / Context</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>20 HRC</td><td>226 HB</td><td>240 HV</td><td>Annealed Alloy Steel</td></tr>
+          <tr><td>30 HRC</td><td>286 HB</td><td>302 HV</td><td>Carbon Steel (normalised)</td></tr>
+          <tr><td>40 HRC</td><td>371 HB</td><td>392 HV</td><td>Low Alloy Steel (Q&T)</td></tr>
+          <tr><td>50 HRC</td><td>481 HB</td><td>513 HV</td><td>Hardox 400 / Tool Steel</td></tr>
+          <tr><td>55 HRC</td><td>560 HB</td><td>595 HV</td><td>Hardox 500 / Hard Chrome</td></tr>
+          <tr><td>60 HRC</td><td>697 HB</td><td>746 HV</td><td>LH 108 Overlay / High-Cr Iron</td></tr>
+          <tr><td>65 HRC</td><td>832 HB</td><td>900 HV</td><td>HVOF WC-Co / Ni-Hard</td></tr>
+          <tr><td>68–72 HRC</td><td>&gt;900 HB</td><td>~1000 HV</td><td>HVOF / TiN / Ceramic coatings</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note-box">Approximate conversions only. Use ASTM E140 certified conversion tables for engineering decisions.</div>
+  </div>
+
+  <!-- MOC COATING RULES -->
+  <div class="tab-panel" id="tab-rules">
+    <h2>MOC-Specific Coating Rules</h2>
+    <br>
+    <h3>Carbon Steel / WCB</h3>
+    <div class="note-box">Most versatile base — accepts hard chrome, HVOF, EN, flame spray and hard-facing overlay. Pre-surface treatment (blast to Sa 2.5) mandatory before thermal spray.</div>
+
+    <h3>Stainless Steel (304 / 316)</h3>
+    <div class="note-box">Avoid hex-chrome plating. Use HVOF WC-CoCr or EN+P. TiN PVD is ideal for precision components. Check galvanic compatibility of coating in service environment.</div>
+
+    <h3>Duplex / Super Duplex</h3>
+    <div class="note-box">High base hardness reduces need for coating. When required, HVOF is the preferred method. Avoid processes requiring temperatures above 280°C to prevent phase transformation.</div>
+
+    <h3>Nickel Alloys (Hastelloy / Inconel)</h3>
+    <div class="note-box">HVOF WC-CoCr is the preferred system. EN+P acceptable for mild service. Avoid hard chrome — galvanic and adhesion issues reported.</div>
+
+    <h3>Hardox Sleeve / WCB Casting</h3>
+    <div class="warn-box"><strong>Always use LH 108 or equivalent hard-facing electrodes at welded interfaces.</strong> HVOF or ceramic spray on bore surface gives outstanding slurry resistance. Rubber lining suitable only for fine particle (&lt;3 mm) abrasive slurry.</div>
+
+    <h3>High Chrome Iron / Ni-Hard</h3>
+    <div class="note-box">Self-sufficient for abrasion. Coatings generally not applied. Localised repairs using Stoody 102 or EFe-Cr4 overlay electrodes. Inspect for sub-surface cracking before overlay.</div>
+
+    <h3>Applicable Standards</h3>
+    <div class="note-box">
+      <strong>ISO 4527</strong> — Autocatalytic nickel-phosphorus coatings (Electroless Nickel) &nbsp;|&nbsp;
+      <strong>ISO 14923</strong> — Thermal spray coating characterisation &nbsp;|&nbsp;
+      <strong>ASTM B177</strong> — Hard chrome electroplating &nbsp;|&nbsp;
+      <strong>AWS C2.18</strong> — Thermal spray application guide &nbsp;|&nbsp;
+      <strong>SSAB Hardox Weld Guide</strong> — Preheat, interpass temperature and filler metal recommendations
+    </div>
+  </div>
+
+  <!-- HARDNESS PRINCIPLE -->
+  <div class="tab-panel" id="tab-principle">
+    <h2>Hardness vs. Abrasive Particle — Selection Principle</h2>
+    <ul>
+      <li>A material surface must be harder than the abrasive particle to resist wear</li>
+      <li>The table below shows minimum coating requirements based on common abrasive hardness values</li>
+    </ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Abrasive Media</th>
+            <th>Approx. Hardness</th>
+            <th>Assessment</th>
+            <th>Recommended Coating</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Coal / Soft Minerals</td><td>&lt;100 HV</td><td><span class="badge bg">Standard CS / SS surface adequate</span></td><td>No coating required (optional)</td></tr>
+          <tr><td>Limestone / Calcite</td><td>~160 HV</td><td><span class="badge bw">Mild protection needed</span></td><td>Hard Chrome or EN+P</td></tr>
+          <tr><td>Iron Ore / Magnetite</td><td>~600 HV</td><td><span class="badge bw">Hard-facing overlay needed</span></td><td>LH 108, Stoody 102, Hard Chrome</td></tr>
+          <tr><td>Sand / Silica (SiO2)</td><td>~1100 HV</td><td><span class="badge bb">High-hardness coating essential</span></td><td>HVOF WC-Co, TiN, Ceramic</td></tr>
+          <tr><td>Alumina (Al2O3)</td><td>~2000 HV</td><td><span class="badge bb">Only ceramic coatings exceed this</span></td><td>Plasma Spray Al2O3, Cr2O3</td></tr>
+          <tr><td>Silicon Carbide (SiC)</td><td>~2500 HV</td><td><span class="badge bb">Extreme — no coating fully resists</span></td><td>Cr2O3 plasma + rubber lining (velocity isolation)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn-box">
+      <strong>For PN 350 WCB + Hardox application:</strong> Silica-based abrasives (~1100 HV) will rapidly erode any uncoated CS or SS surface. Recommended solution — HVOF WC-Co on bore face + LH 108 hard-facing at weld joint = complete protection.
+    </div>
+  </div>
+
+</div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "../login.html"; // Redirect if not logged in
+    }
+    });
+</script>
+<script>
+const hardnessData = [
+  ["Carbon Steel (A216 WCB)","120–180 HB","N/A","~200 HB","Hard Chrome Plating, HVOF WC-Co, Flame Spray, Hard-facing (LH108 overlay)","58–72 HRC (HC) / 1200–1400 HV (HVOF)","High","Most versatile base — accepts hard chrome, HVOF, EN, flame spray, hard-facing overlay."],
+  ["Low Alloy Steel (WC6/WC9)","150–220 HB","N/A","~250 HB","Hard Chrome, HVOF WC-Co, Electroless Nickel (EN), Thermal Spray","58–72 HRC (HC) / 45–50 HRC (EN+P)","High","Excellent base for coatings. Pre-heat required before hard-facing overlay."],
+  ["SS 304 / 304L","150–190 HB","~170 HB","~190 HB","Electroless Nickel (EN), TiN PVD, HVOF WC-Co","45–50 HRC (EN+P) / 2300 HV (TiN)","Moderate – High","Hard chrome adhesion marginal on SS; prefer EN or PVD."],
+  ["SS 316 / 316L","150–190 HB","~170 HB","~190 HB","Electroless Nickel (EN), TiN PVD, HVOF WC-Co, Stellite Overlay","45–50 HRC (EN) / 58–62 HRC (Stellite 6)","Moderate – High","EN+PTFE composite for low friction abrasion. Stellite overlay adds wear + corrosion protection."],
+  ["SS 317L","150–190 HB","~170 HB","~190 HB","Electroless Nickel (EN), HVOF WC-Co","45–50 HRC (EN) / 1200 HV (HVOF)","Moderate – High","Similar to 316L. Coating choices same as 316."],
+  ["Duplex SS 2205","270–310 HB","~290 HB","~310 HB","HVOF WC-Co, Electroless Nickel (EN+P), Plasma Spray Cr2O3","1200–1400 HV (HVOF) / 45–50 HRC (EN)","High","High base hardness. HVOF preferred — adhesion excellent. Avoid hard chrome."],
+  ["Super Duplex 2507","290–330 HB","~310 HB","~330 HB","HVOF WC-Co, Plasma Spray Al2O3, EN+P","1200–1400 HV (HVOF) / 2000 HV (Al2O3)","High","Excellent base hardness without coating. Coating adds life in mixed abrasion+corrosion service."],
+  ["Alloy 20 (CN7M)","150–200 HB","~180 HB","~200 HB","Electroless Nickel (EN+P), HVOF WC-CoCr, Boronizing","45–50 HRC (EN) / 1400–1600 HV (Boron)","Moderate","Boronizing significantly increases surface hardness; check dimensional tolerance impact."],
+  ["Hastelloy C-276","170–240 HB","~210 HB","~240 HB","HVOF WC-CoCr, Plasma Spray Cr2O3, EN+P (High-P)","1200–1400 HV (HVOF) / 2000 HV (Cr2O3)","Moderate – High","Avoid hard chrome — galvanic incompatibility. HVOF WC-CoCr gives best combined protection."],
+  ["Inconel 625","170–240 HB","~200 HB","~240 HB","HVOF WC-CoCr, Plasma Spray, TiN PVD, Stellite Overlay","1200–1400 HV (HVOF) / 58–62 HRC (Stellite)","Moderate – High","HVOF maintains performance at elevated temps."],
+  ["Monel 400","110–150 HB","~140 HB","~160 HB","Electroless Nickel (EN+P), Hard Chrome (limited), Flame Spray NiCrBSi","45–50 HRC (EN) / 58–62 HRC (NiCrBSi)","Moderate","Soft base — coating important for abrasion. EN+P most commonly applied."],
+  ["Titanium Gr 2","120–160 HB","N/A","~160 HB","Titanium Nitride (TiN) PVD, Oxidation Hardening, HVOF WC-CoCr","2300 HV (TiN) / 1200 HV (HVOF)","High","TiN PVD is gold standard for Ti substrates. Thermal spray requires bond coat."],
+  ["WCB + Hardox Sleeve","WCB: 120–180 HB / Hardox 400: 370–430 HB / Hardox 500: 470–540 HB","Hard-face (LH108): 55–65 HRC","Hardox 600: 570–640 HB","LH 108 / Stoody Overlay, HVOF WC-Co, Plasma Spray Cr2O3, Rubber Lining","55–65 HRC (LH108) / 1200–1400 HV (HVOF)","Very High","LH108 weld overlay mandatory for abrasive joints. HVOF on bore face gives outstanding slurry resistance."],
+  ["High Chrome Iron (ASTM A532)","600–800 HB (as-cast) ~58–66 HRC","N/A","700–800 HB","Typically not plated — self-wear-resistant. Wear overlay (Stoody) for local repairs only.","Self: 58–66 HRC / Overlay: 60–68 HRC","Self-sufficient","Already among hardest castings. Coating rarely required except patch repairs."],
+  ["Ni-Hard Iron (ASTM A532 CL II)","550–700 HB ~53–62 HRC","N/A","650–750 HB","Typically not plated. Wear overlay for localised repairs.","Self: 53–62 HRC / Overlay: 58–65 HRC","Self-sufficient","Good impact + abrasion balance. Hard-facing overlays only for repair."],
+];
+
+const coatingData = [
+  ["Hard Chrome Plating (EHC)","58–72 HRC (800–900 HV)","Excellent","Poor – Moderate","CS, Low Alloy, some SS","Environmental (hex Cr); 0.025–0.5 mm thick","Pumps, hydraulic rods, valve stems"],
+  ["Electroless Nickel (EN+P)","45–52 HRC (after heat treat)","Good","Good – Excellent","CS, SS, Alloy 20, Monel, Inconel","Uniform coating; EN+PTFE, EN+SiC composites available","Pump impellers, ball valves, chemical service"],
+  ["HVOF — WC-Co / WC-CoCr","1200–1400 HV (~68–72 HRC equiv.)","Outstanding","Good (CoCr grade)","CS, SS, Duplex, Inconel, Ti","Best overall wear coating; low porosity <1%","Slurry pumps, valve seats, sleeves, plungers"],
+  ["Plasma Spray — Cr2O3 / Al2O3","1800–2500 HV","Outstanding","Moderate","CS, SS, Duplex, Alloy","Ceramic; brittle under impact; excellent sliding wear","Seal faces, bearing surfaces, dry abrasion"],
+  ["Titanium Nitride (TiN) PVD","2000–2300 HV","Excellent","Excellent","SS, Ti, Alloy","Thin film (2–5 µm); decorative gold colour","Valve balls, stems, precision components"],
+  ["Stellite Overlay (PTAW/PTA)","38–62 HRC (Stellite 1: ~58 HRC)","Excellent","Excellent","CS, SS, Inconel, Duplex","Combined wear + corrosion; suitable for high-temp","Valve trim, gate faces, pump wear rings"],
+  ["Hard-facing — LH 108 / Stoody","55–68 HRC (weld overlay)","Outstanding","Poor","CS, Low Alloy, Hardox","Abrasion-specific; multi-layer deposition possible","Chutes, sleeves, buckets, Hardox components"],
+  ["Boronizing (Pack/Paste)","1400–2000 HV","Very High","Moderate","CS, Low Alloy, Alloy 20","Diffusion process; 0.025–0.25 mm depth","Screw conveyors, mixer blades, abrasive media"],
+  ["NiCrBSi Flame Spray / HVOF","55–65 HRC","Excellent","Good","CS, Low Alloy, Monel","Fuse-bond after spray; good bond strength","Pump shafts, sleeves, impellers"],
+  ["Tungsten Carbide (WC) Hardfacing","1400–1800 HV","Outstanding","Moderate","CS, Low Alloy, Hardox","Highest abrasion resistance; weld or thermal spray","Slurry nozzles, impellers, pipe elbows"],
+  ["Rubber Lining","Shore A 40–70","Excellent (fine particles)","Good (acid service)","CS, SS","Best for fine high-velocity slurry; pH 2–12","Pipe linings, pump casings, cyclones"],
+  ["Ceramic Tile Lining (Al2O3 92%)","~1800 HV","Outstanding","Good","CS (bonded)","Brittle; excellent for sliding + impact abrasion combination","Chutes, hoppers, cyclone liners"],
+];
+
+function b(v) {
+  if (!v) return '';
+  if (/Outstanding|Very High|Excellent/.test(v)) return `<span class="badge bg">${v}</span>`;
+  if (/Good|Moderate|High/.test(v))              return `<span class="badge bw">${v}</span>`;
+  if (/Poor|Low/.test(v))                        return `<span class="badge bb">${v}</span>`;
+  if (/Self/.test(v))                            return `<span class="badge bn">${v}</span>`;
+  return v;
+}
+
+document.getElementById('hardness-tbody').innerHTML = hardnessData.map(r =>
+  `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td>${b(r[6])}</td><td>${r[7]}</td></tr>`
+).join('');
+
+document.getElementById('coating-tbody').innerHTML = coatingData.map(r =>
+  `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${b(r[2])}</td><td>${b(r[3])}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td></tr>`
+).join('');
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

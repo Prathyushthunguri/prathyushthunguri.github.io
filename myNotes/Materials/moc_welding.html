@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOC & Welding Electrode Reference Guide</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background-color: #f4f4f4; }
+
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 80px auto 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      transition: all 0.3s ease-in-out;
+    }
+    @media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+    @media (max-width: 1920px) { .main-container { max-width: 1800px; } }
+
+    .main-container h2 { color: #222; margin-bottom: 12px; }
+    .main-container h3 { margin-top: 24px; margin-bottom: 10px; color: #444; }
+    .main-container ul { padding-left: 30px; }
+    .main-container li { margin-bottom: 5px; }
+
+    .table-container-tab { max-width: 1800px; margin: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px; border-radius: 12px; margin-left: -10px;
+    }
+    thead { color: red; }
+    th, td { border: 1px solid #ccc; padding: 5px; vertical-align: top; text-align: left; }
+    th { background-color: #f2f2f2; font-weight: bold; }
+    tr:nth-child(even) { background-color: #fafafa; }
+
+    .container_two {
+      display: flex; justify-content: space-between; padding: 20px;
+      background-color: #ffffff; max-width: 1800px; margin: 20px auto;
+      border: 1px solid #ccc; border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); gap: 20px;
+    }
+    .column-left, .column-right {
+      flex: 1; padding: 20px; background-color: #fff;
+      border: 1px solid #ddd; border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .column-left { margin-right: 10px; }
+    .column-right { margin-left: 10px; }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active {
+      background: #ffffff; color: #222; font-weight: bold;
+      border-bottom: 2px solid #fff; margin-bottom: -2px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Note boxes */
+    .note-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+    .warn-box {
+      background: #fff8f2; border-left: 4px solid #b85c00;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+    .warn-box strong { color: #b85c00; }
+
+    /* Minimal badges */
+    .badge {
+      display: inline-block; padding: 1px 7px; border-radius: 3px;
+      font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid #ccc;
+    }
+    .bg { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+    .bw { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+    .bb { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+    .bn { background: #f0f0f0; color: #444;    border-color: #ccc; }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">MOC &amp; Welding Electrode Reference Guide</div>
+  <div class="navbar-right">
+    <button onclick="location.href='material_properties.html'">Properties</button>
+    <button onclick="location.href='moc_hardness_plating.html'">Hardness &amp; Plating</button>
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <h2>Materials of Construction (MOC) &amp; Welding Electrode Reference</h2>
+  <ul>
+    <li>Covers 15 common MOCs and 15 welding consumables for industrial valves, pumps, piping and castings</li>
+    <li>Abrasion resistance, corrosion resistance ratings and application guidance for each</li>
+    <li>Quick selection matrix by service condition and key engineering notes</li>
+  </ul>
+
+  <br>
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('moc',this)">MOC Performance</button>
+    <button onclick="showTab('welding',this)">Welding Electrodes</button>
+    <button onclick="showTab('selection',this)">Selection Guide</button>
+    <button onclick="showTab('vs',this)">SS309 vs LH108</button>
+    <button onclick="showTab('notes',this)">Engineering Notes</button>
+  </div>
+
+  <!-- MOC TABLE -->
+  <div class="tab-panel active" id="tab-moc">
+    <h2>MOC Performance Overview</h2>
+    <ul><li>Abrasion, corrosion resistance and mechanical strength ratings for 15 common industrial MOCs</li></ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>MOC</th><th>Common Grade / Standard</th>
+            <th>Abrasion Resistance</th><th>Corrosion Resistance</th>
+            <th>Strength</th><th>Typical Application</th>
+          </tr>
+        </thead>
+        <tbody id="moc-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WELDING TABLE -->
+  <div class="tab-panel" id="tab-welding">
+    <h2>Welding Electrodes &amp; Fillers</h2>
+    <ul><li>15 welding consumables matched to compatible MOC with resistance ratings and applications</li></ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Electrode / Filler</th><th>Compatible MOC</th>
+            <th>Abrasion Resistance</th><th>Corrosion Resistance</th>
+            <th>Typical Application</th>
+          </tr>
+        </thead>
+        <tbody id="weld-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SELECTION -->
+  <div class="tab-panel" id="tab-selection">
+    <h2>Quick Selection Guide — by Service Condition</h2>
+    <ul><li>Match service condition directly to the correct MOC and electrode combination</li></ul>
+    <br>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Service Condition</th><th>Recommended MOC</th>
+            <th>Recommended Electrode</th><th>Key Note</th>
+          </tr>
+        </thead>
+        <tbody id="sel-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SS309 VS LH108 -->
+  <div class="tab-panel" id="tab-vs">
+    <h2>SS309 vs LH 108 — Direct Comparison for Abrasive Service</h2>
+    <ul>
+      <li>Review triggered by WCB casting PN 350 Hardox sleeve found welded with SS309</li>
+      <li>SS309 is a dissimilar-metal buffer electrode — not a wear consumable</li>
+    </ul>
+    <br>
+
+    <div class="container_two">
+      <div class="column-left">
+        <h3>SS309 — Stainless Steel 309</h3>
+        <table>
+          <tbody>
+            <tr><td><strong>Type</strong></td><td>Austenitic stainless steel electrode</td></tr>
+            <tr><td><strong>Primary purpose</strong></td><td>High-temperature oxidation resistance &amp; dissimilar metal joining</td></tr>
+            <tr><td><strong>Hardness</strong></td><td>180–220 HB (soft deposit)</td></tr>
+            <tr><td><strong>Abrasion resistance</strong></td><td>Low – Moderate</td></tr>
+            <tr><td><strong>Compatible with Hardox</strong></td><td>Marginal — no wear benefit</td></tr>
+            <tr><td><strong>Typical use</strong></td><td>Furnace parts, heat exchangers, CS-to-SS buffer layer</td></tr>
+            <tr><td><strong>Risk in abrasive service</strong></td><td>Weld zone wears faster than base Hardox — weakest point at joint</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="column-right">
+        <h3>LH 108 — Low Hydrogen Hard-facing Electrode</h3>
+        <table>
+          <tbody>
+            <tr><td><strong>Type</strong></td><td>Low-hydrogen, high-hardness hard-facing / wear electrode</td></tr>
+            <tr><td><strong>Primary purpose</strong></td><td>Severe abrasion and wear resistance overlay</td></tr>
+            <tr><td><strong>Hardness</strong></td><td>55–65 HRC (very hard deposit)</td></tr>
+            <tr><td><strong>Abrasion resistance</strong></td><td>Outstanding</td></tr>
+            <tr><td><strong>Compatible with Hardox</strong></td><td>Yes — purpose-matched</td></tr>
+            <tr><td><strong>Typical use</strong></td><td>Crusher liners, chutes, bucket lips, slurry pumps, Hardox joints</td></tr>
+            <tr><td><strong>Benefit</strong></td><td>Weld deposit matches Hardox wear performance — no weak point at joint</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Head-to-Head Property Comparison</h3>
+    <div class="table-container-tab">
+      <table>
+        <thead><tr><th>Property</th><th>SS309</th><th>LH 108</th></tr></thead>
+        <tbody>
+          <tr><td>Primary purpose</td><td>High-temp / dissimilar metal</td><td>Abrasion &amp; wear resistance</td></tr>
+          <tr><td>Hardness</td><td><span class="badge bb">180–220 HB</span></td><td><span class="badge bg">55–65 HRC</span></td></tr>
+          <tr><td>Abrasion resistance</td><td><span class="badge bb">Low – Moderate</span></td><td><span class="badge bg">Outstanding</span></td></tr>
+          <tr><td>Compatible with Hardox</td><td><span class="badge bb">Marginal</span></td><td><span class="badge bg">Yes — purpose-matched</span></td></tr>
+          <tr><td>Suitable for abrasive media</td><td><span class="badge bb">Not ideal</span></td><td><span class="badge bg">Yes</span></td></tr>
+          <tr><td>Weld zone in slurry service</td><td><span class="badge bb">Weakest link — rapid wear</span></td><td><span class="badge bg">Wear-matched — consistent life</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn-box">
+      <strong>Verdict:</strong> Rework the joint using LH 108 electrodes. Verify preheat (100–150°C) and max interpass temperature (250°C) per SSAB Hardox welding guidelines before rework.
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="tab-panel" id="tab-notes">
+    <h2>Key Engineering Notes</h2>
+
+    <h3>A. Hardox / Wear-plate Service</h3>
+    <div class="note-box">Never use SS309 electrodes for welding Hardox sleeves in abrasive service. SS309 is a dissimilar-metal buffer electrode, not a wear-resistant consumable. The weld zone becomes the weakest point and wears faster than the surrounding Hardox. <strong>LH 108 or equivalent (Stoody 102, EFe-Cr4) must be used.</strong></div>
+
+    <h3>B. Dissimilar Metal Joints</h3>
+    <div class="note-box">When joining Carbon Steel to Stainless Steel, <strong>E309L is the standard buffer layer electrode.</strong> For critical or high-temperature service, ENiCrMo-3 (Inconel 625 filler) provides superior performance and avoids dilution-related cracking.</div>
+
+    <h3>C. Sensitization Risk</h3>
+    <div class="note-box">Always use <strong>low-carbon grades (316L, 308L, 309L)</strong> when welding stainless steels to avoid carbide precipitation and intergranular corrosion. Standard 316 or 308 should be avoided in welded assemblies unless post-weld solution annealing is performed.</div>
+
+    <h3>D. Preheat &amp; PWHT</h3>
+    <div class="note-box">WCB castings typically require preheat of <strong>100–150°C</strong> for thicknesses above 25 mm. Hard-facing overlays on Hardox require controlled interpass temperatures (max 250°C) to prevent cracking. Always follow SSAB guidelines for Hardox welding procedures.</div>
+
+    <h3>E. Code References</h3>
+    <div class="note-box">
+      <strong>AWS A5 Series</strong> — Welding Electrode Classifications &nbsp;|&nbsp;
+      <strong>ASME Section IX</strong> — Welding Qualifications &nbsp;|&nbsp;
+      <strong>ASTM A532</strong> — Abrasion Resistant Iron Castings &nbsp;|&nbsp;
+      <strong>NACE MR0175</strong> — Sour Service &nbsp;|&nbsp;
+      <strong>SSAB Hardox Welding Guidelines</strong>
+    </div>
+  </div>
+
+</div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "../login.html"; // Redirect if not logged in
+    }
+    });
+</script>
+<script>
+const mocData = [
+  ["Carbon Steel (A216 WCB)","A216 WCB, A105","Moderate","Poor","Low – Moderate","General service, non-corrosive"],
+  ["SS 304","A351 CF8","Good","Good (oxidizing)","Moderate","Food, pharma, mild chemicals"],
+  ["SS 316","A351 CF8M","Good","Excellent","Moderate","Marine, chloride environments"],
+  ["SS 316L","A351 CF3M","Good","Excellent","Moderate","Low carbon, weld sensitization control"],
+  ["SS 317L","A351 CG3M","Good","Excellent+","Moderate","High chloride / acid service"],
+  ["Duplex SS 2205","A890 Gr 4A","Very High","Excellent","High","Seawater, sour gas, high stress"],
+  ["Super Duplex 2507","A890 Gr 6A","Very High","Outstanding","Very High","Offshore, aggressive acids"],
+  ["Alloy 20","CN7M","Good","Outstanding (H2SO4)","High","Sulfuric acid service"],
+  ["Hastelloy C-276","CW2M","Good","Outstanding","Very High","Aggressive acids, solvents"],
+  ["Inconel 625","CW6MC","Good","Outstanding","Very High","High temp, seawater, fatigue"],
+  ["Monel 400","M35-1","Moderate","Outstanding (HF)","High","HF acid, marine, reducing acids"],
+  ["Titanium Gr 2","Custom","Moderate","Outstanding","High","Seawater, oxidizing acids"],
+  ["WCB + Hardox Sleeve","A216 WCB + Hardox","Outstanding","Poor (base)","Low – Moderate","Abrasive slurry, mining, bulk solids"],
+  ["High Chrome Iron","ASTM A532","Outstanding","Poor","Low","Abrasive service: slurries, minerals"],
+  ["Ni-Hard Iron","ASTM A532 CL II","Excellent","Poor","Low","Abrasive slurry, pump casings"],
+];
+const weldData = [
+  ["E6013","Carbon Steel","Moderate","Poor","Routine piping, structural, CS to CS joints"],
+  ["E7018 (LH)","Carbon Steel","Moderate","Poor","Pressure vessels, pipes, structural (low hydrogen)"],
+  ["E308L","SS 304/304L","Low","Good","SS 304 fabrication, food grade, mild corrosion"],
+  ["E309L","SS 309 / Dissimilar","Low","Good","Dissimilar joints (CS to SS), cladding buffer layer"],
+  ["E316L","SS 316/316L","Low","Excellent","Marine, chemical, chloride environments"],
+  ["E2209","Duplex SS 2205","Moderate","Excellent","High-stress corrosive service, sour gas"],
+  ["ENiCrMo-3 (625)","Inconel 625","Low – Moderate","Outstanding","Dissimilar metals, high temp, seawater"],
+  ["ENiCrMo-4 (C-276)","Hastelloy C-276","Low","Outstanding","Aggressive acids, overlay cladding"],
+  ["LH 108","Hard-facing / Wear","Outstanding","Poor","Abrasion overlay — Hardox, wear plates, chutes"],
+  ["Stoody 102","Hard-facing Carbide","Outstanding","Poor – Moderate","Severe abrasion: crusher, bucket lips, chutes"],
+  ["Stellite 6 (CoCr)","Cobalt-Chrome","Excellent","Excellent","High temp + abrasion + corrosion (valve trim)"],
+  ["Eutectic Eutroloy","NiCrBSi","Excellent","Good","Overlay on pumps, valve seats"],
+  ["E NiCu-7 (Monel)","Monel 400","Moderate","Outstanding (HF)","HF acid service, marine, reducing acids"],
+  ["ER Ti-2","Titanium Gr 2","Low","Outstanding","Seawater, oxidizing acids, titanium fabrication"],
+  ["AWS A5.13 EFe-Cr4","High Chrome Iron","Outstanding","Poor","Mining, mineral processing, abrasive slurry"],
+];
+const selData = [
+  ["Abrasive Slurry / Bulk Solids","WCB + Hardox, Hi-Chrome Iron, Ni-Hard","LH 108, Stoody 102, EFe-Cr4","Hard-facing electrode mandatory; SS electrodes unsuitable"],
+  ["Chloride / Marine","SS 316L, Super Duplex 2507, Inconel 625","E316L, E2209, ENiCrMo-3","Pitting resistance critical; avoid SS 304"],
+  ["Sulfuric Acid (H2SO4)","Alloy 20, Hastelloy C-276","ENiCrMo-4, ENiCrMo-3","Alloy 20 preferred for dilute H2SO4"],
+  ["HF Acid Service","Monel 400, Alloy 20","ENiCu-7, ENiCrMo-3","Monel 400 outstanding in HF; avoid SS"],
+  ["High Temperature","Inconel 625, SS 310, Hastelloy","ENiCrMo-3, E310","Creep & oxidation resistance critical"],
+  ["Sour Gas (H2S)","Duplex 2205, Super Duplex 2507","E2209, ENiCrMo-3","NACE MR0175 compliance required"],
+  ["General Corrosion","SS 316L, SS 317L","E316L, E317L","Low carbon grades to prevent sensitization"],
+  ["Dissimilar Metal Joint","CS to SS, CS to Alloy","E309L, ENiCrMo-3","309L as buffer layer; 625 for critical service"],
+  ["Abrasion + Corrosion","Stellite overlaid, Duplex + HC overlay","Stellite 6, Eutectic NiCrBSi","Two-layer overlay technique recommended"],
+];
+
+function b(v) {
+  if (!v) return '';
+  if (/Outstanding|Very High|Excellent/.test(v)) return `<span class="badge bg">${v}</span>`;
+  if (/Good|Moderate|High/.test(v))              return `<span class="badge bw">${v}</span>`;
+  if (/Poor|Low/.test(v))                        return `<span class="badge bb">${v}</span>`;
+  return v;
+}
+
+document.getElementById('moc-tbody').innerHTML = mocData.map(r =>
+  `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${b(r[2])}</td><td>${b(r[3])}</td><td>${b(r[4])}</td><td>${r[5]}</td></tr>`).join('');
+document.getElementById('weld-tbody').innerHTML = weldData.map(r =>
+  `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${b(r[2])}</td><td>${b(r[3])}</td><td>${r[4]}</td></tr>`).join('');
+document.getElementById('sel-tbody').innerHTML = selData.map(r =>
+  `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

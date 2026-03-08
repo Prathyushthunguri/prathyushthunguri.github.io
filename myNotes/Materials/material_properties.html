@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physical & Chemical Properties of Industrial Materials</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background-color: #f4f4f4; }
+
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 80px auto 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      transition: all 0.3s ease-in-out;
+    }
+    @media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+    @media (max-width: 1920px) { .main-container { max-width: 1800px; } }
+
+    .main-container h2 { color: #222; margin-bottom: 12px; }
+    .main-container h3 { margin-top: 24px; margin-bottom: 10px; color: #444; }
+    .main-container ul { padding-left: 30px; }
+    .main-container li { margin-bottom: 5px; }
+
+    .table-container-tab { max-width: 1800px; margin: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px; border-radius: 12px; margin-left: -10px;
+    }
+    thead { color: red; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; text-align: left; font-size: 12.5px; }
+    th { background-color: #f2f2f2; font-weight: bold; white-space: nowrap; }
+    tr:nth-child(even) { background-color: #fafafa; }
+    tr:hover td { background-color: #f0f4ff; }
+    td.label { font-weight: bold; color: #222; }
+    td.center { text-align: center; }
+    td.num { text-align: right; font-family: monospace; font-size: 12px; }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active { background: #ffffff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .note-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      padding: 10px 14px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+
+    /* Search */
+    .search-bar {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .search-bar input {
+      flex: 1; max-width: 340px; padding: 7px 11px;
+      border: 1px solid #ccc; border-radius: 4px;
+      font-size: 13px; font-family: 'Segoe UI', sans-serif;
+      outline: none;
+    }
+    .search-bar input:focus { border-color: #555; }
+    .search-bar label { font-size: 13px; color: #555; }
+
+    /* Group header rows */
+    tr.group-header td {
+      background-color: #e8e8e8 !important;
+      font-weight: bold; color: #111;
+      font-size: 12px; text-transform: uppercase; letter-spacing: .4px;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">Physical &amp; Chemical Properties of Industrial Materials</div>
+  <div class="navbar-right">
+    <button onclick="location.href='moc_welding.html'">MOC &amp; Welding</button>
+    <button onclick="location.href='moc_hardness_plating.html'">Hardness &amp; Plating</button>
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <h2>Physical &amp; Chemical Properties — Commonly Used Industrial Materials</h2>
+  <ul>
+    <li>Covers ferrous metals, stainless steels, nickel alloys, non-ferrous metals, polymers/plastics, elastomers and engineering ceramics</li>
+    <li>Physical properties: density, melting point, thermal conductivity, thermal expansion, specific heat, electrical resistivity, elastic modulus</li>
+    <li>Chemical properties: oxidation resistance, acid resistance, alkali resistance, chloride resistance, max service temperature</li>
+    <li>All values are typical/nominal — verify with material certifications and supplier datasheets for design use</li>
+  </ul>
+
+  <br>
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('physical',this)">Physical Properties</button>
+    <button onclick="showTab('chemical',this)">Chemical Resistance</button>
+    <button onclick="showTab('mech',this)">Mechanical Properties</button>
+    <button onclick="showTab('thermal',this)">Thermal Properties</button>
+    <button onclick="showTab('composition',this)">Composition &amp; Equivalents</button>
+    <button onclick="showTab('notes',this)">Material Notes</button>
+  </div>
+
+  <!-- ══ PHYSICAL PROPERTIES ══ -->
+  <div class="tab-panel active" id="tab-physical">
+    <h2>Physical Properties</h2>
+    <ul>
+      <li>Density, melting point / range, specific heat capacity, electrical resistivity and magnetic properties</li>
+    </ul>
+    <br>
+    <div class="search-bar">
+      <label>Search material:</label>
+      <input type="text" id="search-physical" oninput="filterTable('physical-tbody','search-physical')" placeholder="e.g. SS 316, carbon steel..." />
+    </div>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Density (g/cm³)</th>
+            <th>Melting Point / Range (°C)</th>
+            <th>Specific Heat Cp (J/kg·K)</th>
+            <th>Electrical Resistivity (µΩ·cm)</th>
+            <th>Magnetic</th>
+            <th>Crystal Structure</th>
+            <th>Poisson's Ratio</th>
+          </tr>
+        </thead>
+        <tbody id="physical-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ CHEMICAL RESISTANCE ══ -->
+  <div class="tab-panel" id="tab-chemical">
+    <h2>Chemical Resistance</h2>
+    <ul>
+      <li>Resistance ratings: E = Excellent &nbsp;|&nbsp; G = Good &nbsp;|&nbsp; M = Moderate &nbsp;|&nbsp; P = Poor &nbsp;|&nbsp; NR = Not Recommended</li>
+      <li>Ratings are for ambient temperature — high temperatures reduce resistance significantly</li>
+    </ul>
+    <br>
+    <div class="search-bar">
+      <label>Search material:</label>
+      <input type="text" id="search-chemical" oninput="filterTable('chemical-tbody','search-chemical')" placeholder="e.g. Hastelloy, PTFE..." />
+    </div>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Dilute H₂SO₄</th>
+            <th>Conc. H₂SO₄</th>
+            <th>Dilute HCl</th>
+            <th>HF Acid</th>
+            <th>HNO₃ (dilute)</th>
+            <th>NaOH (alkali)</th>
+            <th>Seawater / Chlorides</th>
+            <th>Oxidising Agents</th>
+            <th>Organic Solvents</th>
+            <th>Max Service Temp (°C)</th>
+          </tr>
+        </thead>
+        <tbody id="chemical-tbody"></tbody>
+      </table>
+    </div>
+    <div class="note-box">
+      E = Excellent (no significant attack) &nbsp;|&nbsp; G = Good (minor attack, acceptable for service) &nbsp;|&nbsp; M = Moderate (use with caution, monitor regularly) &nbsp;|&nbsp; P = Poor (significant attack) &nbsp;|&nbsp; NR = Not Recommended
+    </div>
+  </div>
+
+  <!-- ══ MECHANICAL PROPERTIES ══ -->
+  <div class="tab-panel" id="tab-mech">
+    <h2>Mechanical Properties</h2>
+    <ul>
+      <li>Tensile strength, yield strength, elongation, hardness and elastic (Young's) modulus</li>
+    </ul>
+    <br>
+    <div class="search-bar">
+      <label>Search material:</label>
+      <input type="text" id="search-mech" oninput="filterTable('mech-tbody','search-mech')" placeholder="e.g. Duplex, Inconel..." />
+    </div>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>UTS (MPa)</th>
+            <th>Yield Strength 0.2% (MPa)</th>
+            <th>Elongation (%)</th>
+            <th>Hardness (typical)</th>
+            <th>Elastic Modulus E (GPa)</th>
+            <th>Shear Modulus G (GPa)</th>
+            <th>Impact Toughness (Charpy J)</th>
+          </tr>
+        </thead>
+        <tbody id="mech-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ THERMAL PROPERTIES ══ -->
+  <div class="tab-panel" id="tab-thermal">
+    <h2>Thermal Properties</h2>
+    <ul>
+      <li>Thermal conductivity, coefficient of thermal expansion (CTE) and maximum continuous service temperature</li>
+    </ul>
+    <br>
+    <div class="search-bar">
+      <label>Search material:</label>
+      <input type="text" id="search-thermal" oninput="filterTable('thermal-tbody','search-thermal')" placeholder="e.g. titanium, PEEK..." />
+    </div>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Thermal Conductivity (W/m·K)</th>
+            <th>CTE (µm/m·°C) @ 20–100°C</th>
+            <th>Max Continuous Service Temp (°C)</th>
+            <th>Min Service Temp (°C)</th>
+            <th>Specific Heat Cp (J/kg·K)</th>
+            <th>Thermal Diffusivity (mm²/s)</th>
+          </tr>
+        </thead>
+        <tbody id="thermal-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ COMPOSITION & EQUIVALENTS ══ -->
+  <div class="tab-panel" id="tab-composition">
+    <h2>Chemical Composition &amp; Equivalent Casting / Wrought MOCs</h2>
+    <ul>
+      <li>Chemical composition ranges (wt%) for wrought / plate grades and their equivalent casting designations</li>
+      <li>Casting equivalents: ASTM A216/A351/A494 series — used in valves, pump casings, fittings and pressure castings</li>
+      <li>UNS = Unified Numbering System &nbsp;|&nbsp; — = not applicable or not the primary form factor for that material</li>
+    </ul>
+    <br>
+    <div class="search-bar">
+      <label>Search material:</label>
+      <input type="text" id="search-composition" oninput="filterTable('composition-tbody','search-composition')" placeholder="e.g. CF8, Hastelloy, 316..." />
+    </div>
+    <div class="table-container-tab">
+      <table>
+        <thead>
+          <tr>
+            <th>Wrought / Common Grade</th>
+            <th>UNS No.</th>
+            <th>C %</th>
+            <th>Cr %</th>
+            <th>Ni %</th>
+            <th>Mo %</th>
+            <th>Mn %</th>
+            <th>Si %</th>
+            <th>Other Key Elements</th>
+            <th>Equivalent Casting Grade (ASTM)</th>
+            <th>Casting UNS</th>
+            <th>Notes on Casting Equivalent</th>
+          </tr>
+        </thead>
+        <tbody id="composition-tbody"></tbody>
+      </table>
+    </div>
+    <div class="note-box"><strong>Casting vs Wrought:</strong> Casting grades generally have higher C, Si and Mn limits than wrought equivalents to ensure castability and fluidity. Mechanical properties are typically slightly lower. Always verify chemistry against the casting standard (ASTM A216, A351, A494, A890, IS 1030, IS 6911) rather than the wrought equivalent.</div>
+    <div class="note-box"><strong>L-grades (e.g. CF3, CF3M, IS 6911 02Cr grades):</strong> Low-carbon casting equivalents (C ≤ 0.03%) corresponding to 304L and 316L wrought grades. Preferred for welded castings to prevent sensitization.</div>
+    <div class="note-box"><strong>IS 216 vs IS 1030:</strong> IS 216 covers grey cast iron (flake graphite) in grades FG 150 to FG 400. IS 1030 covers carbon steel castings (Grades 1–4). IS 1865 covers spheroidal graphite (ductile) iron. IS 6911 covers stainless steel castings — directly equivalent to ASTM A351 CF grades. For Indian projects, IS 6911 castings are accepted in lieu of ASTM A351.</div>
+  </div>
+
+  <!-- ══ MATERIAL NOTES ══ -->
+  <div class="tab-panel" id="tab-notes">
+    <h2>Material Selection Notes &amp; Key Considerations</h2>
+
+    <h3>Ferrous Metals</h3>
+    <div class="note-box"><strong>Carbon Steel (A216 WCB / A105):</strong> Most widely used; good mechanical strength but poor corrosion resistance. Requires coating or lining for corrosive service. Weldable with E6013/E7018. Subject to general corrosion in water and acid. Max service temp approx 425°C (higher with alloy steel grades).</div>
+    <div class="note-box"><strong>Cast Iron (Grey / Ductile):</strong> Good compressive strength and damping; brittle in tension. Grey CI not suitable for shock loads. Ductile (SG) iron preferred for valves and pumps. Not weldable by conventional methods without preheat.</div>
+
+    <h3>Stainless Steels</h3>
+    <div class="note-box"><strong>SS 304 / 304L:</strong> General-purpose austenitic SS. Good corrosion resistance in mildly corrosive environments. Susceptible to chloride pitting and stress corrosion cracking (SCC). 304L preferred for welding (low carbon prevents sensitization).</div>
+    <div class="note-box"><strong>SS 316 / 316L:</strong> Addition of Mo (2–3%) significantly improves chloride and acid resistance over 304. Standard choice for marine, chemical and food service. 316L mandatory for welded assemblies. Max service temp 870°C (intermittent).</div>
+    <div class="note-box"><strong>SS 317L:</strong> Higher Mo (3–4%) than 316L. Better resistance to pitting in chloride environments and sulfuric/sulfurous acid service. Used where 316L marginally fails.</div>
+    <div class="note-box"><strong>Duplex 2205 / Super Duplex 2507:</strong> Two-phase (austenite + ferrite) microstructure. Approximately twice the yield strength of 316L. Excellent resistance to chloride SCC and pitting. 2507 for aggressive seawater and acid. Avoid temperatures above 280°C (sigma phase embrittlement).</div>
+
+    <h3>Nickel Alloys</h3>
+    <div class="note-box"><strong>Hastelloy C-276:</strong> Outstanding resistance to a wide range of aggressive chemicals including wet chlorine, HCl, H₂SO₄ and oxidising acids. Most versatile nickel alloy for chemical processing. Weld-without-PWHT capability is a key advantage.</div>
+    <div class="note-box"><strong>Inconel 625:</strong> Outstanding fatigue and creep resistance at high temperatures. Excellent resistance to seawater pitting and crevice corrosion. Used for bellows, flexible hoses and high-pressure vessels. Not suitable for strongly reducing acids.</div>
+    <div class="note-box"><strong>Alloy 20 (Carpenter 20):</strong> Specifically designed for sulfuric acid service. Contains Nb to prevent sensitization. Excellent resistance to dilute and intermediate concentrations of H₂SO₄. Also resists phosphoric acid and many organic acids.</div>
+    <div class="note-box"><strong>Monel 400:</strong> Outstanding resistance to HF acid and fluorine compounds. Also resistant to seawater, neutral salts and reducing acids. Should not be used in oxidising environments or in contact with mercuric salts.</div>
+
+    <h3>Non-Ferrous Metals</h3>
+    <div class="note-box"><strong>Titanium Gr 2:</strong> Outstanding corrosion resistance in oxidising acids (HNO₃, chromic acid), seawater and wet chlorine. Poor resistance to HF and reducing acids (HCl, H₂SO₄) unless inhibited. Excellent strength-to-weight ratio. Requires inert atmosphere welding.</div>
+    <div class="note-box"><strong>Copper / Copper Alloys:</strong> Excellent thermal and electrical conductivity. Good resistance to non-oxidising acids and seawater. Avoid ammonia (forms cuprammonium complexes), oxidising acids and nitric acid. Dezincification risk in brasses with &lt;65% Cu.</div>
+    <div class="note-box"><strong>Aluminium Alloys:</strong> Lightweight with good corrosion resistance via natural oxide film. Attacked by strong acids and alkalis. Not suitable for chloride service above 60°C. Excellent for cryogenic service (no ductile-brittle transition).</div>
+
+    <h3>Polymers &amp; Plastics</h3>
+    <div class="note-box"><strong>PTFE (Polytetrafluoroethylene):</strong> Outstanding chemical resistance — resists virtually all chemicals except molten alkali metals and fluorinating agents. Low coefficient of friction. Max service temp 260°C. Used as lining, gaskets, seats, seals and bellows.</div>
+    <div class="note-box"><strong>PVDF (Polyvinylidene Fluoride):</strong> Excellent chemical resistance to halogens, acids and oxidising agents. Better mechanical properties than PTFE at ambient temperatures. Max service temp 135°C. Used in pipes, valves and pump components for ultra-pure and chemical service.</div>
+    <div class="note-box"><strong>PP (Polypropylene):</strong> Good resistance to non-oxidising acids, alkalis and solvents at ambient temperature. Low cost and lightweight. Max service temp 100–110°C. Brittle below 0°C. Widely used for chemical tanks and piping in lower-temperature service.</div>
+    <div class="note-box"><strong>PEEK (Polyether Ether Ketone):</strong> High-performance engineering polymer. Excellent mechanical properties up to 250°C. Resists steam, hot water, most organic solvents and dilute acids. Used for pump bearings, valve seats and high-temperature seals.</div>
+
+    <h3>Elastomers</h3>
+    <div class="note-box"><strong>EPDM:</strong> Excellent resistance to steam, hot water, ozone, UV and polar solvents. Good resistance to alkalis and dilute acids. Poor resistance to petroleum oils and aromatic solvents. Preferred for food and water service (FDA compliant grades).</div>
+    <div class="note-box"><strong>Viton (FKM):</strong> Outstanding resistance to petroleum fluids, fuels, aromatic solvents, oils and many acids. Good high-temperature performance (200°C). Poor resistance to steam, hot water, esters and ketones.</div>
+    <div class="note-box"><strong>PTFE / Silicone:</strong> Silicone has very wide service temperature range (-60°C to +230°C) and is FDA compliant. PTFE as elastomer is chemically inert. Both used extensively in food and pharma sealing applications.</div>
+
+    <h3>Engineering Ceramics</h3>
+    <div class="note-box"><strong>Al₂O₃ (Alumina 92–99.5%):</strong> Excellent hardness (HV 1500–2000), wear and corrosion resistance. Used for seal faces, bearing surfaces, pump wear parts and linings. Brittle — low impact resistance. Max service temp 1600°C.</div>
+    <div class="note-box"><strong>SiC (Silicon Carbide):</strong> Extremely high hardness (~2500 HV) and excellent thermal conductivity. Outstanding wear and chemical resistance including strong acids and alkalis. Used for mechanical seal faces, nozzles and pump sleeves. Brittle.</div>
+    <div class="note-box"><strong>WC (Tungsten Carbide):</strong> Very high hardness (HV 1400–1800) combined with reasonable toughness (vs. ceramics). Used for HVOF spray coatings, nozzles, valve balls and hard-bearing surfaces. Attacked by strong oxidising acids at elevated temperatures.</div>
+  </div>
+
+</div><!-- end main-container -->
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "../login.html"; // Redirect if not logged in
+    }
+    });
+</script>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+// Physical Properties: [Material, Density, MeltingPt, Cp, Resistivity, Magnetic, Crystal, Poisson]
+const physicalData = [
+  // --- Ferrous Metals ---
+  ["GROUP", "Ferrous Metals"],
+  ["Carbon Steel (A216 WCB)","7.85","1425–1540","490","18","Yes (ferromagnetic)","BCC (ferrite)","0.29"],
+  ["Alloy Steel (WC6 / WC9)","7.80","1420–1530","480","20","Yes (ferromagnetic)","BCC","0.29"],
+  ["Grey Cast Iron","7.20","1150–1250","460","100","Yes (ferromagnetic)","—","0.26"],
+  ["Ductile (SG) Cast Iron","7.10","1140–1200","500","55","Yes (ferromagnetic)","—","0.27"],
+  ["Hardox 400 (Wear Steel)","7.85","1400–1480","490","16","Yes (ferromagnetic)","BCC","0.29"],
+  // --- IS 216 Grey CI ---
+  ["GROUP","IS 216 Grey Cast Iron (FG Grades)"],
+  ["IS 216 Gr FG 150","7.10","1150–1200","460","110","Yes (ferromagnetic)","—","0.26"],
+  ["IS 216 Gr FG 200","7.15","1150–1200","460","105","Yes (ferromagnetic)","—","0.26"],
+  ["IS 216 Gr FG 260","7.20","1150–1220","460","100","Yes (ferromagnetic)","—","0.26"],
+  ["IS 216 Gr FG 300","7.25","1150–1230","465","95","Yes (ferromagnetic)","—","0.26"],
+  ["IS 216 Gr FG 350","7.25","1150–1240","465","90","Yes (ferromagnetic)","—","0.26"],
+  ["IS 216 Gr FG 400","7.30","1150–1250","470","85","Yes (ferromagnetic)","—","0.26"],
+  // --- IS 1865 SG Iron ---
+  ["GROUP","IS 1865 Spheroidal Graphite (Ductile) Iron"],
+  ["IS 1865 Gr SG 370/17","7.10","1140–1200","510","55","Yes (ferromagnetic)","—","0.27"],
+  ["IS 1865 Gr SG 420/12","7.10","1140–1200","510","55","Yes (ferromagnetic)","—","0.27"],
+  ["IS 1865 Gr SG 500/7","7.10","1140–1200","500","55","Yes (ferromagnetic)","—","0.28"],
+  ["IS 1865 Gr SG 600/3","7.10","1140–1200","500","55","Yes (ferromagnetic)","—","0.28"],
+  ["IS 1865 Gr SG 700/2","7.10","1140–1200","490","55","Yes (ferromagnetic)","—","0.28"],
+  ["IS 1865 Gr SG 800/2","7.10","1140–1200","490","55","Yes (ferromagnetic)","—","0.28"],
+  // --- IS 1030 CS Castings ---
+  ["GROUP","IS 1030 Carbon Steel Castings"],
+  ["IS 1030 Gr 1 (230-450)","7.82","1430–1540","490","18","Yes (ferromagnetic)","BCC (ferrite)","0.29"],
+  ["IS 1030 Gr 2 (280-520)","7.83","1420–1530","490","18","Yes (ferromagnetic)","BCC (ferrite)","0.29"],
+  ["IS 1030 Gr 3 (340-570)","7.84","1415–1530","488","19","Yes (ferromagnetic)","BCC (ferrite)","0.29"],
+  ["IS 1030 Gr 4 (400-600)","7.85","1410–1520","488","20","Yes (ferromagnetic)","BCC (ferrite+pearlite)","0.29"],
+  // --- IS 2062 Structural Steel ---
+  ["GROUP","IS 2062 Structural / Plate Steel"],
+  ["IS 2062 Gr E250 (Fe 410)","7.85","1425–1540","490","18","Yes (ferromagnetic)","BCC","0.29"],
+  ["IS 2062 Gr E300 (Fe 440)","7.85","1420–1530","490","18","Yes (ferromagnetic)","BCC","0.29"],
+  ["IS 2062 Gr E350 (Fe 490)","7.85","1420–1530","490","18","Yes (ferromagnetic)","BCC","0.29"],
+  ["IS 2062 Gr E410 (Fe 540)","7.85","1415–1525","490","18","Yes (ferromagnetic)","BCC","0.29"],
+  // --- IS 6911 SS Castings ---
+  ["GROUP","IS 6911 Stainless Steel Castings"],
+  ["IS 6911 — 04Cr19Ni10 (CF8 equiv.)","7.93","1400–1450","500","72","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["IS 6911 — 02Cr19Ni10 (CF3 equiv.)","7.93","1400–1450","500","72","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["IS 6911 — 04Cr17Ni12Mo2 (CF8M equiv.)","7.98","1375–1400","500","74","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["IS 6911 — 02Cr17Ni12Mo2 (CF3M equiv.)","7.98","1375–1400","500","74","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["IS 6911 — 04Cr25Ni20 (CK20 equiv.)","7.90","1400–1455","500","78","No (non-magnetic*)","FCC (austenite)","0.29"],
+  // --- Austenitic SS ---
+  ["GROUP", "Austenitic Stainless Steels"],
+  ["SS 304 / 304L","7.93","1400–1450","500","72","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["SS 316 / 316L","7.98","1375–1400","500","74","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["SS 317L","7.98","1375–1400","500","74","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["SS 310 / 310S","7.90","1400–1455","500","78","No (non-magnetic*)","FCC (austenite)","0.29"],
+  ["SS 321","7.92","1400–1425","500","72","No (non-magnetic*)","FCC (austenite)","0.29"],
+  // --- Duplex SS ---
+  ["GROUP", "Duplex / Super Duplex Stainless Steels"],
+  ["Duplex SS 2205 (UNS S31803)","7.80","1350–1450","500","85","Weakly magnetic","Duplex (FCC+BCC)","0.30"],
+  ["Super Duplex 2507 (UNS S32750)","7.80","1350–1450","480","87","Weakly magnetic","Duplex (FCC+BCC)","0.30"],
+  ["Lean Duplex 2101","7.80","1380–1440","500","80","Weakly magnetic","Duplex (FCC+BCC)","0.30"],
+  // --- Nickel Alloys ---
+  ["GROUP", "Nickel Alloys"],
+  ["Hastelloy C-276 (UNS N10276)","8.89","1325–1370","427","130","No","FCC","0.32"],
+  ["Hastelloy C-22 (UNS N06022)","8.69","1357–1399","414","115","No","FCC","0.31"],
+  ["Inconel 625 (UNS N06625)","8.44","1290–1350","410","129","No","FCC","0.31"],
+  ["Inconel 718 (UNS N07718)","8.19","1260–1336","435","125","No","FCC","0.29"],
+  ["Alloy 20 (UNS N08020)","8.08","1355–1380","502","113","No","FCC","0.29"],
+  ["Monel 400 (UNS N04400)","8.80","1300–1350","427","54","Weakly magnetic","FCC","0.32"],
+  ["Incoloy 825 (UNS N08825)","8.14","1370–1400","440","113","No","FCC","0.29"],
+  // --- Non-Ferrous ---
+  ["GROUP", "Non-Ferrous Metals"],
+  ["Titanium Gr 2 (CP Ti)","4.51","1668","520","56","No","HCP (α-Ti)","0.37"],
+  ["Titanium Gr 5 (Ti-6Al-4V)","4.43","1604–1660","560","171","No","HCP+BCC","0.34"],
+  ["Copper (C11000)","8.94","1083","385","1.7","No","FCC","0.34"],
+  ["Bronze (Cu-Sn 90/10)","8.80","950–1050","380","12","No","FCC","0.34"],
+  ["Brass (Cu-Zn 70/30)","8.53","900–940","377","6.2","No","FCC","0.35"],
+  ["Aluminium 1100","2.71","643–657","900","2.9","No","FCC","0.33"],
+  ["Aluminium 6061-T6","2.70","582–652","896","3.7","No","FCC","0.33"],
+  ["Lead","11.34","327","128","21","No","FCC","0.44"],
+  ["Zinc (hot-dip galvanising)","7.13","419","388","5.9","No","HCP","0.25"],
+  // --- Polymers / Plastics ---
+  ["GROUP", "Polymers & Plastics"],
+  ["PTFE (Polytetrafluoroethylene)","2.20","327 (crystalline)","1050","10^23 (insulator)","No","Semi-crystalline","0.46"],
+  ["PVDF (Polyvinylidene Fluoride)","1.78","175","1300","10^14 (insulator)","No","Semi-crystalline","0.38"],
+  ["PP (Polypropylene)","0.90","160–170","1700","10^15 (insulator)","No","Semi-crystalline","0.40"],
+  ["HDPE (High Density Polyethylene)","0.95","130–135","2300","10^15 (insulator)","No","Semi-crystalline","0.45"],
+  ["PVC (Polyvinyl Chloride)","1.40","100–260 (decomposes)","1000","10^15 (insulator)","No","Amorphous","0.41"],
+  ["PEEK (Polyether Ether Ketone)","1.31","343","1100","10^15 (insulator)","No","Semi-crystalline","0.40"],
+  ["Nylon 66 (PA66)","1.14","255–265","1700","10^13 (insulator)","No","Semi-crystalline","0.41"],
+  ["CPVC (Chlorinated PVC)","1.55","90–120 (decomposes)","900","10^15 (insulator)","No","Amorphous","0.38"],
+  // --- Elastomers ---
+  ["GROUP", "Elastomers / Rubbers"],
+  ["EPDM Rubber","0.86–0.87","—","1700–2000","10^15 (insulator)","No","Amorphous","~0.50"],
+  ["Viton / FKM","1.80–1.90","—","1050","10^14 (insulator)","No","Amorphous","~0.50"],
+  ["Neoprene (CR)","1.23","—","1800","10^14 (insulator)","No","Amorphous","~0.50"],
+  ["Nitrile / NBR","0.98","—","1800","10^14 (insulator)","No","Amorphous","~0.50"],
+  ["Silicone (VMQ)","1.10–1.25","—","1460","10^15 (insulator)","No","Amorphous","~0.50"],
+  // --- Ceramics ---
+  ["GROUP", "Engineering Ceramics"],
+  ["Alumina Al₂O₃ (96%)","3.72","2050","880","10^14 (insulator)","No","Corundum (hexagonal)","0.22"],
+  ["Silicon Carbide (SiC)","3.21","2730 (decomposes)","750","100–1000 (semi)","No","Cubic / Hexagonal","0.19"],
+  ["Tungsten Carbide (WC-Co 6%)","14.95","~2870 (WC)","280","30–40","No","Hexagonal (WC)","0.22"],
+  ["Zirconia (ZrO₂ stabilised)","6.05","2715","460","10^8 (semi)","No","Cubic / Tetragonal","0.31"],
+  ["Silicon Nitride (Si₃N₄)","3.21","1900 (decomposes)","710","10^12 (insulator)","No","Hexagonal","0.27"],
+];
+
+// Chemical Resistance: [Material, dil.H2SO4, conc.H2SO4, dil.HCl, HF, HNO3, NaOH, Seawater/Cl-, Oxidising, Solvents, MaxTemp]
+const chemData = [
+  ["GROUP", "Ferrous Metals"],
+  ["Carbon Steel (A216 WCB)","P","M","P","P","P","G","P","P","G","425"],
+  ["Alloy Steel (WC6 / WC9)","P","M","P","P","P","G","P","P","G","600"],
+  ["Grey / Ductile Cast Iron","P","P","P","P","P","M","P","P","G","300"],
+  ["Hardox 400 (Wear Steel)","P","P","P","P","P","G","P","P","G","400"],
+  // IS 216 Grey CI
+  ["GROUP","IS 216 Grey Cast Iron (FG Grades)"],
+  ["IS 216 Gr FG 150","P","P","P","P","P","M","P","P","G","250"],
+  ["IS 216 Gr FG 200","P","P","P","P","P","M","P","P","G","250"],
+  ["IS 216 Gr FG 260","P","P","P","P","P","M","P","P","G","280"],
+  ["IS 216 Gr FG 300","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 216 Gr FG 350","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 216 Gr FG 400","P","P","P","P","P","M","P","P","G","300"],
+  // IS 1865 SG Iron
+  ["GROUP","IS 1865 Spheroidal Graphite (Ductile) Iron"],
+  ["IS 1865 Gr SG 370/17","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 1865 Gr SG 420/12","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 1865 Gr SG 500/7","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 1865 Gr SG 600/3","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 1865 Gr SG 700/2","P","P","P","P","P","M","P","P","G","300"],
+  ["IS 1865 Gr SG 800/2","P","P","P","P","P","M","P","P","G","300"],
+  // IS 1030 CS Castings
+  ["GROUP","IS 1030 Carbon Steel Castings"],
+  ["IS 1030 Gr 1 (230-450)","P","M","P","P","P","G","P","P","G","400"],
+  ["IS 1030 Gr 2 (280-520)","P","M","P","P","P","G","P","P","G","425"],
+  ["IS 1030 Gr 3 (340-570)","P","M","P","P","P","G","P","P","G","425"],
+  ["IS 1030 Gr 4 (400-600)","P","M","P","P","P","G","P","P","G","425"],
+  // IS 2062 Structural Steel
+  ["GROUP","IS 2062 Structural / Plate Steel"],
+  ["IS 2062 Gr E250 (Fe 410)","P","M","P","P","P","G","P","P","G","400"],
+  ["IS 2062 Gr E300 (Fe 440)","P","M","P","P","P","G","P","P","G","400"],
+  ["IS 2062 Gr E350 (Fe 490)","P","M","P","P","P","G","P","P","G","400"],
+  ["IS 2062 Gr E410 (Fe 540)","P","M","P","P","P","G","P","P","G","400"],
+  // IS 6911 SS Castings
+  ["GROUP","IS 6911 Stainless Steel Castings"],
+  ["IS 6911 — 04Cr19Ni10 (CF8 equiv.)","M","P","P","P","G","G","M (SCC risk)","G","G","870"],
+  ["IS 6911 — 02Cr19Ni10 (CF3 equiv.)","M","P","P","P","G","G","M (SCC risk)","G","G","870"],
+  ["IS 6911 — 04Cr17Ni12Mo2 (CF8M equiv.)","G","P","M","P","G","G","G","G","G","870"],
+  ["IS 6911 — 02Cr17Ni12Mo2 (CF3M equiv.)","G","P","M","P","G","G","G","G","G","870"],
+  ["IS 6911 — 04Cr25Ni20 (CK20 equiv.)","M","P","M","P","G","G","M","G","G","1100"],
+  ["GROUP", "Austenitic Stainless Steels"],
+  ["SS 304 / 304L","M","P","P","P","G","G","M (SCC risk)","G","G","870"],
+  ["SS 316 / 316L","G","P","M","P","G","G","G","G","G","870"],
+  ["SS 317L","G","M","G","P","G","G","G","G","G","870"],
+  ["SS 310 / 310S","M","P","M","P","G","G","M","G","G","1100"],
+  ["SS 321","M","P","P","P","G","G","M","G","G","870"],
+  ["GROUP", "Duplex / Super Duplex Stainless Steels"],
+  ["Duplex SS 2205","G","M","G","P","G","G","E","G","G","300"],
+  ["Super Duplex 2507","G","G","G","P","G","G","E","E","G","300"],
+  ["GROUP", "Nickel Alloys"],
+  ["Hastelloy C-276","E","E","E","G","E","E","E","E","G","1040"],
+  ["Hastelloy C-22","E","E","E","G","E","E","E","E","G","1040"],
+  ["Inconel 625","G","G","G","M","G","E","E","G","G","980"],
+  ["Inconel 718","G","M","M","P","G","E","G","G","G","700"],
+  ["Alloy 20 (CN7M)","E","G","G","M","G","E","G","G","G","540"],
+  ["Monel 400","G","M","G","E","P","G","G","P","G","480"],
+  ["Incoloy 825","E","G","G","M","G","E","E","G","G","540"],
+  ["GROUP", "Non-Ferrous Metals"],
+  ["Titanium Gr 2","M","P","P","NR","E","G","E","E","G","315"],
+  ["Titanium Gr 5 (Ti-6Al-4V)","M","P","P","NR","E","G","E","E","G","315"],
+  ["Copper (C11000)","G","P","G","G","P","M","G","P","G","200"],
+  ["Aluminium 6061","M","P","P","P","P","P","M","G","G","150"],
+  ["Lead","G","E","G","M","P","P","G","P","G","120"],
+  ["GROUP", "Polymers & Plastics"],
+  ["PTFE","E","E","E","E","E","E","E","E","E","260"],
+  ["PVDF","E","E","E","G","E","E","E","E","G","135"],
+  ["PP (Polypropylene)","G","M","G","G","M","E","G","G","M","100"],
+  ["HDPE","G","G","G","G","M","E","G","G","G","80"],
+  ["PVC (uPVC)","G","M","G","G","M","G","G","G","M","60"],
+  ["CPVC","E","G","E","G","G","G","E","G","G","95"],
+  ["PEEK","G","G","G","G","G","G","G","G","E","250"],
+  ["Nylon 66 (PA66)","M","P","P","P","M","M","M","M","M","120"],
+  ["GROUP", "Elastomers"],
+  ["EPDM Rubber","G","P","G","G","G","E","G","G","M","150"],
+  ["Viton / FKM","G","G","G","M","G","G","G","G","E","200"],
+  ["Neoprene (CR)","M","P","M","M","P","G","G","M","G","120"],
+  ["Nitrile / NBR","M","P","M","P","P","G","G","M","M","120"],
+  ["Silicone (VMQ)","M","P","M","P","M","G","G","G","G","230"],
+  ["GROUP", "Engineering Ceramics"],
+  ["Alumina Al₂O₃ (96%)","G","G","G","P","E","G","E","E","E","1600"],
+  ["Silicon Carbide (SiC)","E","E","E","G","E","E","E","E","E","1600"],
+  ["Tungsten Carbide (WC-Co)","G","M","G","G","M","G","G","G","E","500"],
+];
+
+// Mechanical: [Material, UTS, YS, Elong, Hardness, E-mod, G-mod, Impact]
+const mechData = [
+  ["GROUP","Ferrous Metals"],
+  ["Carbon Steel (A216 WCB)","485–655","250","22","≤197 HB","200","80","~27 J (Charpy)"],
+  ["Alloy Steel (WC6 / WC9)","485–620","275","22","≤207 HB","205","82","~27 J (Charpy)"],
+  ["Grey Cast Iron","170–310","—","0.6","180–220 HB","80–170","—","Very low"],
+  ["Ductile (SG) Iron Gr 65-45-12","450","310","12","143–187 HB","170","70","~7 J (Charpy)"],
+  ["Hardox 400","1250","1000","10","370–430 HB","210","81","~30 J @ -40°C"],
+  ["Hardox 500","1550","1250","8","470–530 HB","210","81","~15 J @ -40°C"],
+  // IS 216 Grey CI
+  ["GROUP","IS 216 Grey Cast Iron (FG Grades)"],
+  ["IS 216 Gr FG 150","150 min","—","—","160–180 HB","80–110","—","Very low (<1 J)"],
+  ["IS 216 Gr FG 200","200 min","—","—","170–210 HB","100–130","—","Very low (<1 J)"],
+  ["IS 216 Gr FG 260","260 min","—","—","180–220 HB","110–145","—","Very low (<1 J)"],
+  ["IS 216 Gr FG 300","300 min","—","—","190–235 HB","120–155","—","Very low (<1 J)"],
+  ["IS 216 Gr FG 350","350 min","—","—","207–255 HB","130–165","—","Very low (<1 J)"],
+  ["IS 216 Gr FG 400","400 min","—","—","220–280 HB","140–175","—","Very low (<1 J)"],
+  // IS 1865 SG Iron
+  ["GROUP","IS 1865 Spheroidal Graphite (Ductile) Iron"],
+  ["IS 1865 Gr SG 370/17","370","230","17","≤160 HB","165–175","65",">17 J (Charpy)"],
+  ["IS 1865 Gr SG 420/12","420","270","12","140–200 HB","165–175","65",">14 J (Charpy)"],
+  ["IS 1865 Gr SG 500/7","500","320","7","170–230 HB","168–178","66","~7 J (Charpy)"],
+  ["IS 1865 Gr SG 600/3","600","370","3","190–270 HB","168–178","66","~3 J (Charpy)"],
+  ["IS 1865 Gr SG 700/2","700","420","2","225–305 HB","170","67","~2 J (Charpy)"],
+  ["IS 1865 Gr SG 800/2","800","480","2","245–335 HB","170","67","~2 J (Charpy)"],
+  // IS 1030 CS Castings
+  ["GROUP","IS 1030 Carbon Steel Castings"],
+  ["IS 1030 Gr 1 (230-450)","450","230","22","≤180 HB","200","80","~27 J (Charpy)"],
+  ["IS 1030 Gr 2 (280-520)","520","280","20","≤197 HB","200","80","~27 J (Charpy)"],
+  ["IS 1030 Gr 3 (340-570)","570","340","18","≤207 HB","202","80","~27 J (Charpy)"],
+  ["IS 1030 Gr 4 (400-600)","600","400","15","≤217 HB","205","81","~20 J (Charpy)"],
+  // IS 2062 Structural Steel
+  ["GROUP","IS 2062 Structural / Plate Steel"],
+  ["IS 2062 Gr E250 (Fe 410)","410","250","23","≤180 HB","200","80","~27 J @ 0°C"],
+  ["IS 2062 Gr E300 (Fe 440)","440","300","22","≤187 HB","200","80","~27 J @ 0°C"],
+  ["IS 2062 Gr E350 (Fe 490)","490","350","22","≤207 HB","205","81","~27 J @ 0°C"],
+  ["IS 2062 Gr E410 (Fe 540)","540","410","20","≤217 HB","205","81","~27 J @ 0°C"],
+  // IS 6911 SS Castings
+  ["GROUP","IS 6911 Stainless Steel Castings"],
+  ["IS 6911 — 04Cr19Ni10 (CF8 equiv.)","485","205","35","≤201 HB","193","77","High (>100 J)"],
+  ["IS 6911 — 02Cr19Ni10 (CF3 equiv.)","485","205","35","≤201 HB","193","77","High (>100 J)"],
+  ["IS 6911 — 04Cr17Ni12Mo2 (CF8M equiv.)","485","205","35","≤217 HB","193","77","High (>100 J)"],
+  ["IS 6911 — 02Cr17Ni12Mo2 (CF3M equiv.)","485","205","35","≤217 HB","193","77","High (>100 J)"],
+  ["IS 6911 — 04Cr25Ni20 (CK20 equiv.)","450","195","30","≤217 HB","195","77","High (>100 J)"],
+  ["GROUP","Austenitic Stainless Steels"],
+  ["SS 304 / 304L","515–690","205–310","40–70","≤201 HB","193","77","High (>100 J)"],
+  ["SS 316 / 316L","515–690","205–310","40–70","≤217 HB","193","77","High (>100 J)"],
+  ["SS 317L","515–690","205","40","≤217 HB","193","77","High (>100 J)"],
+  ["SS 310 / 310S","520–760","205","40","≤217 HB","195","77","High (>100 J)"],
+  ["SS 321","515","205","40","≤217 HB","193","77","High (>100 J)"],
+  ["GROUP","Duplex / Super Duplex Stainless Steels"],
+  ["Duplex SS 2205","620–880","450","25","≤293 HB","200","77","60–80 J"],
+  ["Super Duplex 2507","795–1100","550","15","≤310 HB","200","77","40–60 J"],
+  ["GROUP","Nickel Alloys"],
+  ["Hastelloy C-276","790","355","40","≤241 HB","205","79","High (>100 J)"],
+  ["Hastelloy C-22","690","310","45","≤241 HB","205","80","High (>100 J)"],
+  ["Inconel 625","827–1035","414–517","30","≤241 HB","207","79","High (>100 J)"],
+  ["Inconel 718","1275","1034","12","36–44 HRC","200","77","~80 J"],
+  ["Alloy 20","550–690","240","30","≤217 HB","193","77","High (>100 J)"],
+  ["Monel 400","517–827","172–379","35–60","≤150–241 HB","180","66","High (>100 J)"],
+  ["Incoloy 825","590","240","30","≤217 HB","196","76","High (>100 J)"],
+  ["GROUP","Non-Ferrous Metals"],
+  ["Titanium Gr 2 (CP Ti)","345","275","20","≤130 HB","103","40","High (>100 J)"],
+  ["Titanium Gr 5 (Ti-6Al-4V)","950","880","14","30–36 HRC","114","44","~25 J"],
+  ["Copper (C11000 annealed)","220","70","45","40–65 HB","120","45","High"],
+  ["Aluminium 6061-T6","310","276","12","95–100 HB","69","26","~30 J"],
+  ["GROUP","Polymers & Plastics"],
+  ["PTFE","14–35","—","200–400","Shore D 55","0.4–0.8","—","Non-brittle"],
+  ["PVDF","35–55","—","20–300","Shore D 75","1.7–2.0","—","Non-brittle"],
+  ["PP (Polypropylene)","25–40","—","100–600","Shore D 70","1.3–1.8","—","Notch-sensitive"],
+  ["PEEK","100","91","30–50","Shore D 85","3.6","—","Good"],
+  ["GROUP","Engineering Ceramics"],
+  ["Alumina Al₂O₃ (96%)","—","—","0","1500–2000 HV","310–380","—","Brittle (KIC ~3–4 MPa√m)"],
+  ["Silicon Carbide (SiC)","—","—","0","2200–2500 HV","410–450","—","Brittle (KIC ~3–4 MPa√m)"],
+  ["Tungsten Carbide (WC-Co 6%)","—","—","0","1400–1800 HV","620","—","KIC ~10–15 MPa√m"],
+];
+
+// Thermal: [Material, k (W/mK), CTE (µm/m°C), MaxSvcTemp, MinSvcTemp, Cp, Diffusivity]
+const thermalData = [
+  ["GROUP","Ferrous Metals"],
+  ["Carbon Steel (A216 WCB)","50","12.0","425","-46","490","13.5"],
+  ["Alloy Steel (WC6 / WC9)","37","12.0","600","-46","480","10.0"],
+  ["Grey Cast Iron","50","10.5","300","-10","460","14.8"],
+  ["Ductile (SG) Iron","36","11.0","300","-20","500","10.2"],
+  ["Hardox 400","44","11.5","400","-40","490","12.3"],
+  // IS 216 Grey CI
+  ["GROUP","IS 216 Grey Cast Iron (FG Grades)"],
+  ["IS 216 Gr FG 150","48–52","10.0–11.0","250","-10","460","14.5"],
+  ["IS 216 Gr FG 200","48–52","10.0–11.0","260","-10","460","14.5"],
+  ["IS 216 Gr FG 260","45–50","10.5–11.5","280","-10","460","13.8"],
+  ["IS 216 Gr FG 300","44–48","10.5–11.5","300","-10","465","13.2"],
+  ["IS 216 Gr FG 350","42–46","10.5–12.0","300","-10","465","12.5"],
+  ["IS 216 Gr FG 400","40–45","10.5–12.0","300","-10","470","12.0"],
+  // IS 1865 SG Iron
+  ["GROUP","IS 1865 Spheroidal Graphite (Ductile) Iron"],
+  ["IS 1865 Gr SG 370/17","36","11.5","300","-20","510","10.1"],
+  ["IS 1865 Gr SG 420/12","36","11.5","300","-20","510","10.1"],
+  ["IS 1865 Gr SG 500/7","35","11.8","300","-20","500","9.9"],
+  ["IS 1865 Gr SG 600/3","33","12.0","300","-20","500","9.6"],
+  ["IS 1865 Gr SG 700/2","32","12.0","300","-20","490","9.3"],
+  ["IS 1865 Gr SG 800/2","30","12.0","300","-20","490","9.0"],
+  // IS 1030 CS Castings
+  ["GROUP","IS 1030 Carbon Steel Castings"],
+  ["IS 1030 Gr 1 (230-450)","50","12.0","400","-40","490","13.5"],
+  ["IS 1030 Gr 2 (280-520)","50","12.0","425","-40","490","13.5"],
+  ["IS 1030 Gr 3 (340-570)","49","12.0","425","-40","488","13.3"],
+  ["IS 1030 Gr 4 (400-600)","48","12.0","425","-30","488","13.0"],
+  // IS 2062 Structural Steel
+  ["GROUP","IS 2062 Structural / Plate Steel"],
+  ["IS 2062 Gr E250 (Fe 410)","50","12.0","400","-20","490","13.5"],
+  ["IS 2062 Gr E300 (Fe 440)","50","12.0","400","-20","490","13.5"],
+  ["IS 2062 Gr E350 (Fe 490)","49","12.0","400","-20","490","13.3"],
+  ["IS 2062 Gr E410 (Fe 540)","48","12.0","400","-20","490","13.0"],
+  // IS 6911 SS Castings
+  ["GROUP","IS 6911 Stainless Steel Castings"],
+  ["IS 6911 — 04Cr19Ni10 (CF8 equiv.)","16.2","17.2","870","-196","500","4.1"],
+  ["IS 6911 — 02Cr19Ni10 (CF3 equiv.)","16.2","17.2","870","-196","500","4.1"],
+  ["IS 6911 — 04Cr17Ni12Mo2 (CF8M equiv.)","16.3","15.9","870","-196","500","4.2"],
+  ["IS 6911 — 02Cr17Ni12Mo2 (CF3M equiv.)","16.3","15.9","870","-196","500","4.2"],
+  ["IS 6911 — 04Cr25Ni20 (CK20 equiv.)","14.2","14.4","1100","-196","500","3.6"],
+  ["GROUP","Austenitic Stainless Steels"],
+  ["SS 304 / 304L","16.2","17.2","870","-196","500","4.1"],
+  ["SS 316 / 316L","16.3","15.9","870","-196","500","4.2"],
+  ["SS 317L","14.5","16.0","870","-196","500","3.8"],
+  ["SS 310 / 310S","14.2","14.4","1100","-196","500","3.6"],
+  ["SS 321","16.0","17.0","870","-196","500","4.0"],
+  ["GROUP","Duplex / Super Duplex Stainless Steels"],
+  ["Duplex SS 2205","19.0","13.0","280","-50","500","5.2"],
+  ["Super Duplex 2507","17.0","13.0","280","-50","480","4.9"],
+  ["GROUP","Nickel Alloys"],
+  ["Hastelloy C-276","10.2","11.2","1040","-196","427","2.8"],
+  ["Hastelloy C-22","10.8","12.1","1040","-196","414","3.0"],
+  ["Inconel 625","9.8","12.8","980","-196","410","3.0"],
+  ["Inconel 718","11.4","13.0","700","-196","435","3.2"],
+  ["Alloy 20","11.5","14.8","540","-196","502","2.9"],
+  ["Monel 400","21.8","13.9","480","-196","427","5.5"],
+  ["Incoloy 825","11.1","14.0","540","-196","440","3.1"],
+  ["GROUP","Non-Ferrous Metals"],
+  ["Titanium Gr 2 (CP Ti)","21.9","8.6","315","-200","520","9.5"],
+  ["Titanium Gr 5 (Ti-6Al-4V)","6.7","8.6","315","-200","560","2.9"],
+  ["Copper (C11000)","388","17.0","200","-200","385","116"],
+  ["Bronze (Cu-Sn 90/10)","50","18.0","250","-150","380","17.0"],
+  ["Aluminium 6061-T6","167","23.6","150","-200","896","68.8"],
+  ["Lead","35","28.9","120","-50","128","23.6"],
+  ["GROUP","Polymers & Plastics"],
+  ["PTFE","0.25","120–135","260","-200","1050","0.11"],
+  ["PVDF","0.17","120–145","135","-40","1300","0.08"],
+  ["PP (Polypropylene)","0.22","90–100","100","-10","1700","0.09"],
+  ["HDPE","0.45","120–200","80","-50","2300","0.11"],
+  ["PVC (uPVC)","0.17","50–80","60","-15","1000","0.08"],
+  ["CPVC","0.14","60–70","95","-15","900","0.07"],
+  ["PEEK","0.25","47","250","-60","1100","0.13"],
+  ["Nylon 66 (PA66)","0.24","80","120","-40","1700","0.08"],
+  ["GROUP","Elastomers"],
+  ["EPDM Rubber","0.25","150–200","150","-50","2000","—"],
+  ["Viton / FKM","0.24","160","200","-20","1050","—"],
+  ["Neoprene (CR)","0.22","180","120","-40","1800","—"],
+  ["Nitrile / NBR","0.26","170","120","-40","1800","—"],
+  ["Silicone (VMQ)","0.28","200","230","-60","1460","—"],
+  ["GROUP","Engineering Ceramics"],
+  ["Alumina Al₂O₃ (96%)","30","8.1","1600","—","880","9.7"],
+  ["Silicon Carbide (SiC)","120","4.5","1600","—","750","55.0"],
+  ["Tungsten Carbide (WC-Co 6%)","110","5.0","500","—","280","26.0"],
+  ["Zirconia (ZrO₂ stab.)","2.9","10.5","1000","—","460","1.1"],
+];
+
+function ratingBadge(v) {
+  if (!v || v === '—') return v;
+  if (v === 'E') return '<span class="badge bg">E</span>';
+  if (v === 'G') return '<span class="badge bw">G</span>';
+  if (v === 'M') return '<span class="badge bn">M</span>';
+  if (v === 'P') return '<span class="badge bb">P</span>';
+  if (v === 'NR') return '<span class="badge bb">NR</span>';
+  return v;
+}
+
+function buildTable(data, tbodyId, cols, renderFn) {
+  const tbody = document.getElementById(tbodyId);
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row[0] === 'GROUP') {
+      tr.className = 'group-header';
+      const td = document.createElement('td');
+      td.colSpan = cols;
+      td.textContent = row[1];
+      tr.appendChild(td);
+    } else {
+      renderFn(row, tr);
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+// Physical
+buildTable(physicalData, 'physical-tbody', 8, (row, tr) => {
+  tr.innerHTML = `<td class="label">${row[0]}</td><td class="num">${row[1]}</td><td class="num">${row[2]}</td><td class="num">${row[3]}</td><td class="num">${row[4]}</td><td>${row[5]}</td><td>${row[6]}</td><td class="num">${row[7]}</td>`;
+});
+
+// Chemical
+buildTable(chemData, 'chemical-tbody', 11, (row, tr) => {
+  tr.innerHTML = `<td class="label">${row[0]}</td>${[row[1],row[2],row[3],row[4],row[5],row[6],row[7],row[8],row[9]].map(v => `<td class="center">${ratingBadge(v)}</td>`).join('')}<td class="num">${row[10]}</td>`;
+});
+
+// Mechanical
+buildTable(mechData, 'mech-tbody', 8, (row, tr) => {
+  tr.innerHTML = `<td class="label">${row[0]}</td><td class="num">${row[1]}</td><td class="num">${row[2]}</td><td class="num">${row[3]}</td><td>${row[4]}</td><td class="num">${row[5]}</td><td class="num">${row[6]}</td><td>${row[7]}</td>`;
+});
+
+// Thermal
+buildTable(thermalData, 'thermal-tbody', 7, (row, tr) => {
+  tr.innerHTML = `<td class="label">${row[0]}</td><td class="num">${row[1]}</td><td class="num">${row[2]}</td><td class="num">${row[3]}</td><td class="num">${row[4]}</td><td class="num">${row[5]}</td><td class="num">${row[6]}</td>`;
+});
+
+// Inline badge styles
+document.head.insertAdjacentHTML('beforeend', `<style>
+  .badge { display:inline-block; padding:1px 6px; border-radius:3px; font-size:11px; font-weight:bold; border:1px solid #ccc; }
+  .bg { background:#eaf4ea; color:#2d6a2d; border-color:#b0d4b0; }
+  .bw { background:#fefce8; color:#7a6000; border-color:#ddd09a; }
+  .bb { background:#fdecea; color:#9b2c2c; border-color:#f0b8b8; }
+  .bn { background:#f0f0f0; color:#444;    border-color:#ccc; }
+</style>`);
+
+// Composition & Equivalents:
+// [Wrought Grade, UNS, C%, Cr%, Ni%, Mo%, Mn%, Si%, Other, Casting Grade, Casting UNS, Notes]
+const compositionData = [
+  // ── Ferrous / Carbon Steels ──────────────────────────────────────────────────
+  ["GROUP","Carbon & Low Alloy Steels"],
+  ["Carbon Steel (A105 / A216 WCB)","—","≤0.30","—","—","—","≤0.90","≤0.35","P ≤0.04, S ≤0.045","A216 Gr WCB","J03002","Direct casting grade. WCB is the standard pressure casting equiv. of A105 forging."],
+  ["Carbon Steel (A216 WCC — higher strength)","—","≤0.25","—","—","—","≤1.20","≤0.60","P ≤0.04, S ≤0.045","A216 Gr WCC","J02503","Higher Mn for improved toughness vs WCB. Used for low-temp applications."],
+  ["Alloy Steel (A182 F11 / Cr-Mo)","—","0.05–0.15","1.00–1.50","—","0.44–0.65","0.30–0.60","0.50–1.00","—","A217 Gr WC6","J12072","1.25Cr–0.5Mo casting grade. High-temp service up to 540°C."],
+  ["Alloy Steel (A182 F22 / 2.25Cr-Mo)","—","0.05–0.15","2.00–2.50","—","0.90–1.10","0.30–0.60","≤0.50","—","A217 Gr WC9","J21890","2.25Cr–1Mo casting grade. High-temp / hydrogen service."],
+  ["Alloy Steel (A182 F91 / 9Cr-Mo)","K90901","0.08–0.12","8.00–9.50","≤0.40","0.85–1.05","0.30–0.60","≤0.50","V 0.18–0.25, Nb 0.06–0.10","A217 Gr C12A","J84090","Modified 9Cr-1Mo (Grade 91). Creep-resistant; power generation."],
+  ["Ductile (SG) Iron","—","3.0–4.0","—","—","—","0.10–0.80","1.0–2.8","Mg 0.03–0.06","ASTM A395 / A536","F32800","Nodular graphite; no direct wrought equivalent. Valve bodies, pump casings."],
+  ["Grey Cast Iron","—","3.0–3.5","—","—","—","0.5–1.0","1.0–3.0","—","ASTM A48 Class 30/40","F10004 / F10008","Flake graphite. Brittle; limited pressure service. Not weldable."],
+  ["Hardox 400 (wear plate)","—","≤0.32","≤1.4","≤1.0","≤0.6","≤1.6","≤0.7","B ≤0.005","No standard casting equiv.","—","Hardox is a quench & tempered wear plate. Hi-Chrome iron casting used instead for wear service."],
+
+  // ── IS 216 Cast Iron Grades ───────────────────────────────────────────────────
+  ["GROUP","IS 216 — Indian Standard Cast Iron Grades (Grey CI)"],
+  ["IS 216 Gr FG 150","—","3.0–3.7","—","—","—","0.5–0.9","1.0–2.8","P ≤0.15, S ≤0.12, Fe Balance","IS 216 Gr FG 150","—","Lowest strength grey CI grade. Flake graphite (Type A preferred). UTS min 150 N/mm². Suitable for non-pressure decorative, covers, housings."],
+  ["IS 216 Gr FG 200","—","3.0–3.5","—","—","—","0.5–0.9","1.0–2.5","P ≤0.15, S ≤0.12, Fe Balance","IS 216 Gr FG 200","—","UTS min 200 N/mm². General engineering: machine beds, frames, brackets. Equivalent to BS 1452 Gr 200 / DIN GG-20."],
+  ["IS 216 Gr FG 260","—","2.9–3.5","—","—","—","0.5–0.9","1.0–2.5","P ≤0.12, S ≤0.10, Fe Balance","IS 216 Gr FG 260","—","UTS min 260 N/mm². Good machinability + strength balance. Pump bodies, valve bodies, cylinder blocks. Equiv. BS 1452 Gr 260 / DIN GG-25."],
+  ["IS 216 Gr FG 300","—","2.8–3.4","0.2–0.5","0.2–0.5","—","0.6–0.9","1.0–2.2","P ≤0.10, S ≤0.10, small Cr+Mo additions permitted","IS 216 Gr FG 300","—","UTS min 300 N/mm². Higher strength grade; used for hydraulic cylinders, high-duty housings, gear boxes. Equiv. BS 1452 Gr 300 / DIN GG-30."],
+  ["IS 216 Gr FG 350","—","2.7–3.3","0.3–0.8","0.3–0.8","0.2–0.5","0.6–0.9","1.0–2.0","P ≤0.08, S ≤0.10, Cr 0.3–0.8, Mo 0.2–0.5","IS 216 Gr FG 350","—","UTS min 350 N/mm². Alloyed grade; good wear resistance. Brake drums, clutch plates, cylinder liners. Equiv. BS 1452 Gr 350 / DIN GG-35."],
+  ["IS 216 Gr FG 400","—","2.5–3.2","0.5–1.0","0.5–1.0","0.3–0.6","0.6–0.9","1.0–2.0","P ≤0.08, S ≤0.08, Cr 0.5–1.0, Mo 0.3–0.6, Ni 0.5–1.0","IS 216 Gr FG 400","—","UTS min 400 N/mm². Heavily alloyed; high hardness 200–260 HB. Wear-resistant components, rolls, liners. Equiv. BS 1452 Gr 400 / DIN GG-40."],
+
+  // ── IS 1865 Spheroidal Graphite (SG) Iron ─────────────────────────────────────
+  ["GROUP","IS 1865 — Indian Standard Spheroidal Graphite (Ductile) Iron Grades"],
+  ["IS 1865 Gr SG 370/17","—","3.4–3.8","—","—","—","≤0.30","1.8–2.8","Mg 0.03–0.06, P ≤0.08, S ≤0.02, Fe Balance","IS 1865 Gr SG 370/17","—","Ferritic SG iron. UTS 370 N/mm², 17% elongation. Excellent toughness/ductility. Equiv. ASTM A536 Gr 60-40-18, ISO 1083 Gr 350-22."],
+  ["IS 1865 Gr SG 420/12","—","3.4–3.8","—","—","—","≤0.40","1.8–2.8","Mg 0.03–0.06, P ≤0.08, S ≤0.02, Fe Balance","IS 1865 Gr SG 420/12","—","Ferritic-pearlitic SG iron. UTS 420 N/mm², 12% elongation. General engineering: valve bodies, pump casings. Equiv. ASTM A536 Gr 65-45-12, ISO 1083 Gr 400-15."],
+  ["IS 1865 Gr SG 500/7","—","3.3–3.7","—","—","—","0.30–0.65","1.8–2.8","Mg 0.03–0.06, P ≤0.08, S ≤0.02, Fe Balance","IS 1865 Gr SG 500/7","—","Pearlitic SG iron. UTS 500 N/mm², 7% elongation. Higher strength; crankshafts, gears, pressure housings. Equiv. ASTM A536 Gr 80-55-06, ISO 1083 Gr 500-7."],
+  ["IS 1865 Gr SG 600/3","—","3.3–3.7","—","—","—","0.50–0.80","1.8–2.8","Mg 0.03–0.06, P ≤0.08, S ≤0.02, Fe Balance","IS 1865 Gr SG 600/3","—","Pearlitic SG iron. UTS 600 N/mm², 3% elongation. High strength applications: hydraulic cylinders, high-pressure valves. Equiv. ASTM A536 Gr 100-70-03."],
+  ["IS 1865 Gr SG 700/2","—","3.2–3.6","—","—","—","0.60–0.90","1.8–2.8","Mg 0.03–0.06, P ≤0.08, S ≤0.02, small Mn-Mo additions","IS 1865 Gr SG 700/2","—","Pearlitic/martensitic SG iron. UTS 700 N/mm², 2% elongation. Wear + strength combination. Equiv. ASTM A536 Gr 120-90-02, ISO 1083 Gr 700-2."],
+  ["IS 1865 Gr SG 800/2","—","3.2–3.6","—","—","—","0.70–1.0","1.8–2.8","Mg 0.03–0.06, possible heat treatment (austempering), small alloy additions","IS 1865 Gr SG 800/2","—","Austempered Ductile Iron (ADI) or alloyed martensitic. Very high strength with reasonable toughness. Special applications. Equiv. ASTM A897 ADI Gr 2."],
+
+  // ── IS 2062 Carbon Steel (Structural / Plate) ──────────────────────────────────
+  ["GROUP","IS 2062 — Indian Standard Carbon & Micro-Alloy Steel (Structural / Plate / Pipe Fitting Casting Reference)"],
+  ["IS 2062 Gr E250 (Fe 410-W)","—","≤0.23","—","—","—","≤1.50","≤0.40","P ≤0.045, S ≤0.045, Cu ≤0.35","IS 2062 Gr E250","—","Standard structural carbon steel. Equivalent to ASTM A36. Used for flanges, structural supports, non-pressure castings when specified."],
+  ["IS 2062 Gr E300 (Fe 440)","—","≤0.20","—","—","—","≤1.30","≤0.40","P ≤0.040, S ≤0.040, Cu ≤0.35","IS 2062 Gr E300","—","Medium-strength structural. Equiv. to ASTM A572 Gr 42. Standard plate and structural sections."],
+  ["IS 2062 Gr E350 (Fe 490)","—","≤0.20","—","—","—","≤1.50","≤0.45","P ≤0.040, S ≤0.040, Nb/V micro-alloy","IS 2062 Gr E350","—","Micro-alloyed high-strength structural steel. Equiv. ASTM A572 Gr 50. Used for process plant structural and pressure part fabrications."],
+  ["IS 2062 Gr E410 (Fe 540)","—","≤0.20","—","—","—","≤1.60","≤0.45","P ≤0.035, S ≤0.035, Nb/V/Ti micro-alloy","IS 2062 Gr E410","—","High-strength structural. Equiv. ASTM A572 Gr 60. Used for high-duty structural and pressure vessel fabrications."],
+
+  // ── IS 210 / IS 1030 (Indian Carbon Steel Castings) ────────────────────────────
+  ["GROUP","IS 1030 — Indian Standard Carbon Steel Castings for General Engineering"],
+  ["IS 1030 Gr 1 (Grade 230-450)","—","≤0.25","—","—","—","≤1.20","≤0.60","P ≤0.05, S ≤0.05, Fe Balance","IS 1030 Gr 1","—","Indian equiv. of ASTM A216 WCA. Low-strength carbon steel casting. Non-pressure general service."],
+  ["IS 1030 Gr 2 (Grade 280-520)","—","≤0.30","—","—","—","≤1.20","≤0.60","P ≤0.05, S ≤0.05, Fe Balance","IS 1030 Gr 2","—","Indian equiv. of ASTM A216 WCB. General pressure service: valve bodies, pump casings, fittings. Most commonly specified Indian casting grade."],
+  ["IS 1030 Gr 3 (Grade 340-570)","—","≤0.35","—","—","—","≤1.20","≤0.60","P ≤0.05, S ≤0.05, Fe Balance","IS 1030 Gr 3","—","Higher strength CS casting. Indian equiv. of ASTM A216 WCC. High-strength pressure service."],
+  ["IS 1030 Gr 4 (Grade 400-600)","—","≤0.40","—","—","—","≤1.20","≤0.60","P ≤0.05, S ≤0.05, Fe Balance","IS 1030 Gr 4","—","Highest strength IS 1030 grade. Used for special high-strength casting applications where toughness requirements are not critical."],
+
+  // ── IS 6911 Stainless Steel Castings ────────────────────────────────────────────
+  ["GROUP","IS 6911 — Indian Standard Stainless Steel Castings"],
+  ["IS 6911 Gr 04Cr19Ni10 (CF8 equiv.)","—","≤0.08","18.0–20.0","8.0–11.0","—","≤2.0","≤1.5","—","IS 6911 Gr 04Cr19Ni10","—","Indian standard equiv. of ASTM A351 CF8 / SS 304. Most common IS SS casting grade."],
+  ["IS 6911 Gr 02Cr19Ni10 (CF3 equiv.)","—","≤0.030","18.0–20.0","8.0–11.0","—","≤2.0","≤1.5","—","IS 6911 Gr 02Cr19Ni10","—","Indian equiv. of CF3 (304L casting). Low carbon for welded assemblies."],
+  ["IS 6911 Gr 04Cr17Ni12Mo2 (CF8M equiv.)","—","≤0.08","16.0–18.5","10.0–14.0","2.0–3.0","≤2.0","≤1.5","—","IS 6911 Gr 04Cr17Ni12Mo2","—","Indian equiv. of ASTM A351 CF8M (SS 316 casting). Standard Mo-bearing corrosion-resistant casting."],
+  ["IS 6911 Gr 02Cr17Ni12Mo2 (CF3M equiv.)","—","≤0.030","16.0–18.5","10.0–14.0","2.0–3.0","≤2.0","≤1.5","—","IS 6911 Gr 02Cr17Ni12Mo2","—","Indian equiv. of CF3M (316L casting). Most commonly specified IS SS casting for corrosive service."],
+  ["IS 6911 Gr 04Cr25Ni20 (CK20 equiv.)","—","≤0.08","23.0–27.0","19.0–22.0","—","≤2.0","≤2.0","—","IS 6911 Gr 04Cr25Ni20","—","Indian equiv. of CK20 (SS 310 casting). High-temp oxidation service."],
+
+  // ── Austenitic Stainless Steels ──────────────────────────────────────────────
+  ["GROUP","Austenitic Stainless Steels"],
+  ["SS 304 (A240 / A276)","S30400","≤0.08","18.0–20.0","8.0–10.5","—","≤2.0","≤0.75","—","A351 Gr CF8","J92600","CF8 = standard casting equiv. C ≤ 0.08%. Used for valve bodies, pump casings."],
+  ["SS 304L (A240 / A276)","S30403","≤0.030","18.0–20.0","8.0–12.0","—","≤2.0","≤0.75","—","A351 Gr CF3","J92500","CF3 = low-carbon casting equiv. C ≤ 0.03%. Preferred for welded castings."],
+  ["SS 316 (A240 / A276)","S31600","≤0.08","16.0–18.0","10.0–14.0","2.0–3.0","≤2.0","≤0.75","—","A351 Gr CF8M","J92900","CF8M = standard casting equiv. with Mo. Standard corrosion-resistant valve grade."],
+  ["SS 316L (A240 / A276)","S31603","≤0.030","16.0–18.0","10.0–14.0","2.0–3.0","≤2.0","≤0.75","—","A351 Gr CF3M","J92800","CF3M = low-carbon Mo-bearing casting equiv. Most common corrosion-resistant casting grade."],
+  ["SS 317L (A240)","S31703","≤0.030","18.0–20.0","11.0–15.0","3.0–4.0","≤2.0","≤0.75","—","A351 Gr CG3M","J92999","CG3M = higher-Mo low-carbon casting. For aggressive chloride / acid service."],
+  ["SS 321 (A240)","S32100","≤0.08","17.0–19.0","9.0–12.0","—","≤2.0","≤0.75","Ti ≥ 5×C min","A351 Gr CF8C","J92710","CF8C = Nb-stabilised casting equiv. (Nb substituted for Ti in castings). High-temp service."],
+  ["SS 347 (A240)","S34700","≤0.08","17.0–19.0","9.0–13.0","—","≤2.0","≤0.75","Nb+Ta ≥ 10×C","A351 Gr CF8C","J92710","Same CF8C casting used for both 321 and 347 wrought equivalents."],
+  ["SS 310 / 310S (A240)","S31000 / S31008","≤0.25 / ≤0.08","24.0–26.0","19.0–22.0","—","≤2.0","≤1.5","—","A351 Gr CK20","J94202","CK20 = high Cr-Ni casting for high-temp oxidation resistance up to 1100°C."],
+  ["SS 309 (A240)","S30900","≤0.20","22.0–24.0","12.0–15.0","—","≤2.0","≤0.75","—","A351 Gr CH20","J93402","CH20 = 25Cr-12Ni casting equiv. High-temp + dissimilar metal service."],
+
+  // ── Duplex / Super Duplex SS ─────────────────────────────────────────────────
+  ["GROUP","Duplex & Super Duplex Stainless Steels"],
+  ["Duplex SS 2205 (A240 / A276)","S31803 / S32205","≤0.030","21.0–23.0","4.5–6.5","2.5–3.5","≤2.0","≤1.0","N 0.08–0.20","A890 Gr 4A / A995 Gr 4A","J92205","4A = standard duplex casting equiv. Also CD4MCu and CD3MN variants."],
+  ["Super Duplex 2507 (A240)","S32750","≤0.030","24.0–26.0","6.0–8.0","3.0–5.0","≤1.2","≤0.8","N 0.24–0.32, Cu ≤0.5","A890 Gr 6A","J93380","6A = super duplex casting. CD3MWCuN is alternative designation with W addition."],
+  ["Lean Duplex 2101 (A240)","S32101","≤0.040","21.0–22.0","1.35–1.70","0.1–0.8","4.0–6.0","≤1.0","N 0.20–0.25, Cu 0.1–0.8","A890 Gr 1C","—","Low-Ni duplex. Cost-effective alternative to 304/316 in mildly corrosive service."],
+  ["Duplex 2304 (A240)","S32304","≤0.030","21.5–24.5","3.0–5.5","0.05–0.60","≤2.5","≤1.0","N 0.05–0.20, Cu 0.05–0.60","A890 Gr 1B","J93370","Low-Mo duplex. Intermediate between 304 and 2205 for cost/performance."],
+
+  // ── Nickel Alloys ────────────────────────────────────────────────────────────
+  ["GROUP","Nickel Alloys"],
+  ["Hastelloy C-276 (B574)","N10276","≤0.010","14.5–16.5","Balance","15.0–17.0","≤1.0","≤0.08","W 3.0–4.5, Co ≤2.5, Fe 4.0–7.0","A494 Gr CW2M","N26455","CW2M = standard casting equiv. of C-276. High Mo+W for maximum corrosion resistance."],
+  ["Hastelloy C-22 (B574)","N06022","≤0.010","20.0–22.5","Balance","12.5–14.5","≤0.5","≤0.08","W 2.5–3.5, Co ≤2.5, Fe 2.0–6.0","A494 Gr CW6MC (approx)","—","No exact ASTM casting grade; CW6MC used as closest equiv. Specify UNS N06022 casting directly."],
+  ["Inconel 625 (B443 / B446)","N06625","≤0.10","20.0–23.0","≥58","8.0–10.0","≤0.5","≤0.5","Nb+Ta 3.15–4.15, Al ≤0.40, Ti ≤0.40","A494 Gr CW6MC","N26625","CW6MC = Nb-bearing Ni-Cr-Mo casting. Used for valve bodies in seawater and high-temp service."],
+  ["Inconel 718 (B637)","N07718","0.08 max","17.0–21.0","50.0–55.0","2.8–3.3","≤0.35","≤0.35","Nb 4.75–5.50, Al 0.2–0.8, Ti 0.65–1.15, Fe 17–21","No standard ASTM casting","—","718 is primarily a wrought/forged aerospace alloy. Investment casting used for complex parts."],
+  ["Alloy 20 / Carpenter 20 (B473)","N08020","≤0.07","19.0–21.0","32.0–38.0","2.0–3.0","≤2.0","≤1.0","Cu 3.0–4.0, Nb 8×C min, Fe Balance","A351 Gr CN7M","N08007","CN7M = Alloy 20 casting equiv. Standard choice for H2SO4 service castings (pumps, valves)."],
+  ["Monel 400 (B165 / B164)","N04400","≤0.30","—","63.0–70.0","—","≤2.0","≤0.5","Cu 28–34, Fe ≤2.5","A494 Gr M35-1","N24130","M35-1 = standard Monel casting. Used for HF acid service, seawater pumps and valves."],
+  ["Incoloy 825 (B424 / B425)","N08825","≤0.05","19.5–23.5","38.0–46.0","2.5–3.5","≤1.0","≤0.5","Cu 1.5–3.0, Ti 0.6–1.2, Al ≤0.2, Fe Balance","A494 (specify grade)","—","No dedicated ASTM casting; specify as Alloy 825 casting per UNS N08825. Used for sour service."],
+  ["Hastelloy B-3 (B333)","N10675","≤0.010","1.0–3.0","Balance","28.0–32.0","≤3.0","≤0.10","Fe ≤1.5, Co ≤3.0","A494 Gr N7M","N30007","N7M = high-Mo Ni casting for HCl, H3PO4 service. Excellent reducing acid resistance."],
+
+  // ── Non-Ferrous Metals ───────────────────────────────────────────────────────
+  ["GROUP","Non-Ferrous Metals"],
+  ["Titanium Gr 2 (CP Ti)","R50400","—","—","—","—","—","—","Ti ≥99.2%, Fe ≤0.30, O ≤0.25, N ≤0.03, C ≤0.08","ASTM B367 Gr C-2","—","Cast titanium (B367). Used for highly corrosive chemical service. Investment cast."],
+  ["Titanium Gr 5 (Ti-6Al-4V)","R56400","—","—","—","—","—","—","Ti bal, Al 5.5–6.75, V 3.5–4.5, Fe ≤0.40","ASTM B367 Gr C-5","—","Cast Ti-6Al-4V. High-strength titanium casting for aerospace and chemical."],
+  ["Copper (C11000 ETP)","C11000","—","—","—","—","—","—","Cu ≥99.90%, O 0.02–0.04%","ASTM B584 Alloy C83600 (LG bronze)","—","Pure Cu casting uncommon; leaded gunmetal (85Cu-5Sn-5Pb-5Zn) used for valves/fittings."],
+  ["Naval Brass (C46400)","C46400","—","—","—","—","—","—","Cu 59–62, Zn Balance, Sn 0.5–1.0","ASTM B584 C46400","—","Cast brass for marine valves and fittings. Dezincification-resistant."],
+  ["Gunmetal / LG2 (C83600)","C83600","—","—","—","—","—","—","Cu 84–86, Sn 4–6, Pb 4–6, Zn 4–6","ASTM B584 Gr C83600","—","Standard bronze casting for water/steam service valves and fittings. BS 1400 LG2."],
+  ["Aluminium Bronze (C95400)","C95400","—","—","—","—","≤3.5","—","Cu 83–86, Al 10–11.5, Fe 3–5, Ni ≤1","ASTM B148 Gr C95400","—","Aluminium bronze casting for seawater-resistant impellers, valves and marine hardware."],
+  ["Aluminium 6061-T6","A96061","—","—","—","—","—","0.40–0.80","Al bal, Mg 0.8–1.2, Si 0.40–0.80, Cu 0.15–0.40, Cr 0.04–0.35","A356 / A380 casting alloys","—","A356 (7Si-0.3Mg) common Al casting alloy. Good fluidity and pressure tightness."],
+
+  // ── High Alloy / Wear Cast Irons ─────────────────────────────────────────────
+  ["GROUP","High Alloy & Wear Cast Irons"],
+  ["High Chrome Iron (ASTM A532 Cl I Ty A)","—","2.0–3.3","23.0–28.0","—","—","≤2.0","≤1.5","—","ASTM A532 Cl I Ty A","F41000","25% Cr white iron. Excellent abrasion resistance. Pump casings, impellers, liners."],
+  ["High Chrome Iron (ASTM A532 Cl II Ty D)","—","2.0–3.3","14.0–18.0","—","2.0–3.0","≤2.0","≤1.5","—","ASTM A532 Cl II Ty D","F43000","15%Cr-3%Mo white iron. Better impact + abrasion balance vs Cl I."],
+  ["Ni-Hard 1 (ASTM A532 Cl I Ty A)","—","2.5–3.7","1.4–4.0","3.3–5.0","—","0.2–0.8","0.3–0.8","—","ASTM A532 Cl I Ty A (Ni-Hard 1)","F41000","Martensitic white iron with Ni+Cr. Good abrasion resistance for moderate impact."],
+  ["Ni-Hard 4 (ASTM A532 Cl I Ty D)","—","2.5–3.6","7.0–11.0","4.0–6.0","—","0.5–1.5","1.5–2.2","—","ASTM A532 Cl I Ty D (Ni-Hard 4)","F43001","Higher Cr Ni-hard. Better corrosion resistance than Ni-Hard 1. Slurry pump parts."],
+
+  // ── Polymers / Elastomers ────────────────────────────────────────────────────
+  ["GROUP","Polymers, Elastomers & Ceramics"],
+  ["PTFE","—","—","—","—","—","—","—","-(CF2-CF2)n- ; F content ~76 wt%","No casting equiv.","—","Thermoformed / moulded. Not metal — listed for completeness. ASTM D1457."],
+  ["PVDF","—","—","—","—","—","—","—","-(CH2-CF2)n- ; F content ~59 wt%","No casting equiv.","—","Injection / compression moulded. ASTM D3222."],
+  ["PEEK","—","—","—","—","—","—","—","Aromatic polyether ketone backbone; C, H, O only","No casting equiv.","—","Injection moulded or machined from stock. ASTM D6262."],
+  ["Alumina Al₂O₃ (96%)","—","—","—","—","—","—","—","Al₂O₃ 96%, SiO₂ ~2%, MgO ~1%","Slip cast / dry-pressed","—","Ceramic — no metal casting equiv. ASTM C773 / C1145."],
+  ["Silicon Carbide (SiC)","—","—","—","—","—","—","—","SiC ≥98%, Free Si ≤1%","Slip cast / reaction bonded","—","Ceramic — sintered or reaction-bonded. No metal equiv. ASTM C863."],
+  ["Tungsten Carbide (WC-Co 6%)","—","—","—","—","—","—","—","WC ~94%, Co ~6%","Powder metallurgy / HVOF spray","—","PM consolidated or thermal spray coating. No casting equiv. ISO 4499."],
+];
+
+// Composition tab
+buildTable(compositionData, 'composition-tbody', 12, (row, tr) => {
+  tr.innerHTML = `<td class="label">${row[0]}</td><td>${row[1]}</td><td class="num">${row[2]}</td><td class="num">${row[3]}</td><td class="num">${row[4]}</td><td class="num">${row[5]}</td><td class="num">${row[6]}</td><td class="num">${row[7]}</td><td style="font-size:11.5px">${row[8]}</td><td class="label" style="color:#555">${row[9]}</td><td style="font-size:11.5px">${row[10]}</td><td style="font-size:11.5px;color:#555">${row[11]}</td>`;
+});
+
+// Filter / search
+function filterTable(tbodyId, searchId) {
+  const q = document.getElementById(searchId).value.toLowerCase();
+  const rows = document.getElementById(tbodyId).querySelectorAll('tr');
+  rows.forEach(tr => {
+    if (tr.classList.contains('group-header')) { tr.style.display = q ? 'none' : ''; return; }
+    const text = tr.textContent.toLowerCase();
+    tr.style.display = text.includes(q) ? '' : 'none';
+  });
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

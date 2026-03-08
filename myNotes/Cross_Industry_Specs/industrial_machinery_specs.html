@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Industrial Machinery Technical Specifications — Cross-Industry</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background-color: #f4f4f4; }
+
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 80px auto 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      transition: all 0.3s ease-in-out;
+    }
+    @media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+    @media (max-width: 1920px) { .main-container { max-width: 1800px; } }
+
+    .main-container h2 { color: #222; margin-bottom: 12px; }
+    .main-container h3 { margin-top: 24px; margin-bottom: 10px; color: #444; }
+    .main-container ul { padding-left: 30px; }
+    .main-container li { margin-bottom: 5px; }
+
+    .table-container-tab { max-width: 1800px; margin: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px; border-radius: 12px; margin-left: -10px;
+    }
+    thead { color: red; }
+    th, td { border: 1px solid #ccc; padding: 5px; vertical-align: top; text-align: left; }
+    th { background-color: #f2f2f2; font-weight: bold; }
+    tr:nth-child(even) { background-color: #fafafa; }
+
+    /* Industry column header overrides — subtle, not colourful */
+    th.food   { background-color: #e8f0e8; color: #222; }
+    th.pharma { background-color: #e8ecf5; color: #222; }
+    th.chem   { background-color: #ede8f5; color: #222; }
+    th.paint  { background-color: #f5ece8; color: #222; }
+    th.min    { background-color: #ede8e8; color: #222; }
+
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active { background: #ffffff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .note-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      padding: 12px 16px; border-radius: 0 4px 4px 0;
+      margin: 10px 0; font-size: 13px; color: #333;
+    }
+
+    /* Summary cards using container_two style */
+    .container_two {
+      display: flex; justify-content: space-between; padding: 20px;
+      background-color: #ffffff; max-width: 1800px; margin: 20px auto;
+      border: 1px solid #ccc; border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1); gap: 20px;
+      flex-wrap: wrap;
+    }
+    .summary-card {
+      flex: 1; min-width: 200px; padding: 16px;
+      background-color: #fff; border: 1px solid #ddd;
+      border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .summary-card h3 { margin-top: 0; color: #222; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; }
+    .summary-card .row { margin-bottom: 8px; font-size: 13px; }
+    .summary-card .row .lbl { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: .3px; }
+    .summary-card .row .val { color: #333; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">Industrial Machinery — Cross-Industry Technical Specifications</div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <h2>Industrial Machinery Technical Specifications — Cross-Industry Comparison</h2>
+  <ul>
+    <li>Side-by-side comparison across Food &amp; Beverage, Pharmaceutical, Chemical, Paints &amp; Coatings and Minerals &amp; Mining</li>
+    <li>Covers MOC, surface finish, mechanical design, equipment types, instrumentation, compliance and maintenance</li>
+    <li>Each column represents one industry; each row is a technical specification parameter</li>
+  </ul>
+
+  <br>
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('moc',this)">A · MOC &amp; Surface Finish</button>
+    <button onclick="showTab('mech',this)">B · Mechanical Design</button>
+    <button onclick="showTab('equip',this)">C · Equipment Types</button>
+    <button onclick="showTab('instr',this)">D · Instrumentation</button>
+    <button onclick="showTab('comply',this)">E · Compliance</button>
+    <button onclick="showTab('maint',this)">F · Maintenance</button>
+    <button onclick="showTab('summary',this)">G · Summary</button>
+  </div>
+
+  <!-- A: MOC -->
+  <div class="tab-panel active" id="tab-moc">
+    <h2>A. Materials of Construction (MOC) &amp; Surface Finish</h2>
+    <ul><li>MOC selection driven by process fluid, regulatory requirements and operating environment</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-moc"></table></div>
+  </div>
+
+  <!-- B: MECHANICAL -->
+  <div class="tab-panel" id="tab-mech">
+    <h2>B. Mechanical Design &amp; Pressure / Temperature Specifications</h2>
+    <ul><li>Design codes and P/T envelopes vary significantly — Chemical plants operate the widest range; Pharma prioritises hygienic design over extreme ratings</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-mech"></table></div>
+  </div>
+
+  <!-- C: EQUIPMENT -->
+  <div class="tab-panel" id="tab-equip">
+    <h2>C. Process Equipment Types &amp; Selection</h2>
+    <ul><li>Equipment selection shaped by fluid characteristics, contamination risk, cleanability and severity of operating environment</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-equip"></table></div>
+  </div>
+
+  <!-- D: INSTRUMENTATION -->
+  <div class="tab-panel" id="tab-instr">
+    <h2>D. Instrumentation, Control &amp; Safety Systems</h2>
+    <ul><li>Instrumentation governed by fluid compatibility, regulatory requirements and measurement criticality</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-instr"></table></div>
+  </div>
+
+  <!-- E: COMPLIANCE -->
+  <div class="tab-panel" id="tab-comply">
+    <h2>E. Compliance, Standards &amp; Certifications</h2>
+    <ul><li>Pharma carries the most stringent compliance burden; Chemical plants focus on process safety; Minerals and Paints governed primarily by safety and environmental regulations</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-comply"></table></div>
+  </div>
+
+  <!-- F: MAINTENANCE -->
+  <div class="tab-panel" id="tab-maint">
+    <h2>F. Maintenance, Cleaning &amp; Utility Requirements</h2>
+    <ul><li>Pharma requires change-controlled validated maintenance; Food is designed for rapid CIP/SIP turnaround; Minerals requires frequent wear-part replacement</li></ul>
+    <br><div class="table-container-tab"><table id="tbl-maint"></table></div>
+  </div>
+
+  <!-- G: SUMMARY -->
+  <div class="tab-panel" id="tab-summary">
+    <h2>G. Key Differentiators — Industry Summary</h2>
+    <br>
+    <div class="container_two" id="summary-container"></div>
+  </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "../login.html"; // Redirect if not logged in
+    }
+    });
+</script>
+<script src="industrial_machinery_specs.js"></script>
+</body>
+</html>
