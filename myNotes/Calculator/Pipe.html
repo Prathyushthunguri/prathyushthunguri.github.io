@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Pipe Sizes – ASME B36.10M</title>
+        <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #e0e0e0;
+            display: flex; justify-content: center;
+            padding: 24px 12px; min-height: 100vh;
+            }
+            .card {
+            background: #fff; width: 100%; max-width: 960px;
+            border: 1px solid #aaa; box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+            display: flex; flex-direction: column;
+            margin-top: 50px;
+            }
+            .card-header {
+            background: #f2f2f2; border-bottom: 2px solid #bbb; padding: 10px 16px 8px;
+            }
+            .card-header h1 { font-size: 15px; font-weight: 700; color: #111; }
+            .card-header .pipe-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-top: 5px; }
+            .card-header .pipe-weight { font-size: 11px; color: #444; margin-top: 2px; line-height: 1.7; }
+
+            .body-row { display: flex; flex: 1; min-height: 0; }
+
+            .left-col {
+            width: 280px; flex-shrink: 0; border-right: 2px solid #bbb;
+            display: flex; flex-direction: column;
+            }
+            .info-title {
+            text-align: center; font-size: 12px; font-weight: 700; color: #333;
+            padding: 7px 6px; background: #f5f5f5; border-bottom: 1px solid #ddd;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            }
+            .sel-grid { display: grid; grid-template-columns: 1fr 1fr; }
+            .sel-grid .sh {
+            text-align: center; font-size: 11px; font-weight: 600; color: #555;
+            padding: 6px 4px; background: #eee; border-bottom: 1px solid #ccc;
+            }
+            .sel-grid .sh:first-child { border-right: 1px solid #ccc; }
+            .sel-grid .si { padding: 6px 6px; border-right: 1px solid #ddd; }
+            .sel-grid .si:last-child { border-right: none; }
+            select {
+            width: 100%; border: 1px solid #bbb; border-radius: 3px;
+            padding: 6px 22px 6px 6px; font-size: 12px; font-weight: 600; color: #111;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath fill='%23555' d='M4.5 5L0 0h9z'/%3E%3C/svg%3E") no-repeat right 7px center;
+            appearance: none; cursor: pointer;
+            }
+            select:focus { outline: 2px solid #3a80d2; }
+
+            .out-row {
+            display: grid; grid-template-columns: 1fr 52px 80px;
+            border-bottom: 1px solid #eee;
+            }
+            .out-row:last-child { border-bottom: none; }
+            .rl { padding: 6px 8px; color: #333; font-weight: 600; background: #f8f8f8; border-right: 1px solid #eee; font-size: 11.5px; }
+            .ru { padding: 6px 4px; color: #777; font-size: 10.5px; text-align: center; border-right: 1px solid #eee; background: #f3f3f3; }
+            .rv { padding: 6px 8px; font-weight: 700; color: #111; font-family: 'Courier New', monospace; font-size: 12px; }
+            .rv.dim { color: #999; font-weight: 400; font-family: inherit; }
+            .rv.na  { color: #c0392b; font-family: inherit; font-size: 10px; font-weight: 600; }
+
+            .right-col { flex: 1; display: flex; flex-direction: column; background: #fff; }
+            .drawing-wrap {
+            flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px;
+            }
+            #pipe-svg { width: 100%; max-width: 580px; display: block; }
+            .placeholder { text-align: center; color: #bbb; font-size: 13px; padding: 60px 20px; width: 100%; }
+            .std-label {
+            text-align: right; font-size: 10px; color: #999;
+            padding: 2px 12px 6px; font-style: italic; border-top: 1px solid #eee;
+            }
+            .card-footer {
+            background: #f0f0f0; border-top: 2px solid #bbb;
+            padding: 5px 14px; font-size: 10px; color: #777;
+            display: flex; justify-content: space-between;
+            }
+            @media (max-width: 640px) {
+            .body-row { flex-direction: column; }
+            .left-col { width: 100%; border-right: none; border-bottom: 2px solid #bbb; }
+            }
+        </style>
+        <link rel="stylesheet" href="../Notes-styles.css" />
+    </head>
+    <body>
+        <nav class="top-navbar">
+            <div class="navbar-left">Pipe Sizes</div>
+            <div class="navbar-right">
+                <button onclick='location.href = "../secret.html"'>Home</button>
+            </div>
+        </nav>
+        <div class="card">
+        <div class="card-header">
+            <h1>ASME B36.10M Pipe</h1>
+            <div class="pipe-title" id="hdr-title">— Select size and schedule —</div>
+            <div class="pipe-weight" id="hdr-weight"></div>
+        </div>
+
+        <div class="body-row">
+            <!-- LEFT -->
+            <div class="left-col">
+            <div class="info-title">Pipe Information</div>
+            <div class="sel-grid">
+                <div class="sh">NB (mm)</div>
+                <div class="sh">Schedule</div>
+            </div>
+            <div class="sel-grid">
+                <div class="si">
+                <select id="NB_mm" onchange="update()">
+                    <option value="">-- Size --</option>
+                    <option value="6">6 (1/8")</option>
+                    <option value="8">8 (1/4")</option>
+                    <option value="10">10 (3/8")</option>
+                    <option value="15">15 (1/2")</option>
+                    <option value="20">20 (3/4")</option>
+                    <option value="25">25 (1")</option>
+                    <option value="32">32 (1¼")</option>
+                    <option value="40">40 (1½")</option>
+                    <option value="50">50 (2")</option>
+                    <option value="65">65 (2½")</option>
+                    <option value="80">80 (3")</option>
+                    <option value="90">90 (3½")</option>
+                    <option value="100">100 (4")</option>
+                    <option value="125">125 (5")</option>
+                    <option value="150">150 (6")</option>
+                    <option value="200">200 (8")</option>
+                    <option value="250">250 (10")</option>
+                    <option value="300">300 (12")</option>
+                    <option value="350">350 (14")</option>
+                    <option value="400">400 (16")</option>
+                    <option value="450">450 (18")</option>
+                    <option value="500">500 (20")</option>
+                    <option value="550">550 (22")</option>
+                    <option value="600">600 (24")</option>
+                    <option value="650">650 (26")</option>
+                    <option value="700">700 (28")</option>
+                    <option value="750">750 (30")</option>
+                    <option value="800">800 (32")</option>
+                    <option value="850">850 (34")</option>
+                    <option value="900">900 (36")</option>
+                    <option value="950">950 (38")</option>
+                    <option value="1000">1000 (40")</option>
+                    <option value="1050">1050 (42")</option>
+                    <option value="1100">1100 (44")</option>
+                    <option value="1150">1150 (46")</option>
+                    <option value="1200">1200 (48")</option>
+                </select>
+                </div>
+                <div class="si">
+                <select id="Sch" onchange="update()">
+                    <option value="">-- Sch --</option>
+                    <option value="0">5</option>
+                    <option value="1">10</option>
+                    <option value="2">20</option>
+                    <option value="3">30</option>
+                    <option value="4">40</option>
+                    <option value="5">60</option>
+                    <option value="6">80</option>
+                    <option value="7">100</option>
+                    <option value="8">120</option>
+                    <option value="9">140</option>
+                    <option value="10">160</option>
+                    <option value="11">STD</option>
+                    <option value="12">XS</option>
+                    <option value="13">XXS</option>
+                </select>
+                </div>
+            </div>
+            <div id="output-rows">
+                <div class="out-row"><div class="rl">NB</div><div class="ru">inch</div><div class="rv dim" id="o-nb">—</div></div>
+                <div class="out-row"><div class="rl">OD</div><div class="ru">mm</div><div class="rv dim" id="o-od">—</div></div>
+                <div class="out-row"><div class="rl">Wall Thk (t)</div><div class="ru">mm</div><div class="rv dim" id="o-thk">—</div></div>
+                <div class="out-row"><div class="rl">ID</div><div class="ru">mm</div><div class="rv dim" id="o-id">—</div></div>
+                <div class="out-row"><div class="rl">Flow Area</div><div class="ru">cm²</div><div class="rv dim" id="o-area">—</div></div>
+                <div class="out-row"><div class="rl">Pipe Weight</div><div class="ru">kg/m</div><div class="rv dim" id="o-wt">—</div></div>
+                <div class="out-row"><div class="rl">Water Weight</div><div class="ru">kg/m</div><div class="rv dim" id="o-wtw">—</div></div>
+            </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="right-col">
+            <div class="drawing-wrap">
+                <div class="placeholder" id="placeholder">Select NB and Schedule<br>to view cross-section</div>
+                <svg id="pipe-svg" viewBox="0 0 500 380" style="display:none"></svg>
+            </div>
+            <div class="std-label" id="std-label" style="display:none">ASME B36.10M / B36.19M-2018</div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <span>ASME B36.10M — Carbon &amp; Alloy Steel Pipe</span>
+            <span id="footer-sch"></span>
+        </div>
+        </div>
+
+        <script>
+            const Data = {
+            "6":   { NBinch:"1/8",   OD:10.3,   Thk:[0,1.24,0,1.45,1.73,0,2.41,0,0,0,0,0,0,0] },
+            "8":   { NBinch:"1/4",   OD:13.7,   Thk:[0,1.65,0,1.85,2.24,0,3.02,0,0,0,0,0,0,0] },
+            "10":  { NBinch:"3/8",   OD:17.1,   Thk:[0,1.65,0,1.85,2.31,0,3.2,0,0,0,0,0,0,0] },
+            "15":  { NBinch:"1/2",   OD:21.3,   Thk:[1.65,2.11,0,2.41,2.77,0,3.73,0,0,0,4.78,2.77,3.73,7.47] },
+            "20":  { NBinch:"3/4",   OD:26.7,   Thk:[1.65,2.11,0,2.41,2.87,0,3.91,0,0,0,5.56,2.87,3.91,7.82] },
+            "25":  { NBinch:"1",     OD:33.4,   Thk:[1.65,2.77,0,2.9,3.38,0,4.55,0,0,0,6.35,3.38,4.55,9.09] },
+            "32":  { NBinch:"1 1/4", OD:42.2,   Thk:[1.65,2.77,0,2.97,3.56,0,4.85,0,0,0,6.35,3.56,4.85,9.7] },
+            "40":  { NBinch:"1 1/2", OD:48.3,   Thk:[1.65,2.77,0,3.18,3.68,0,5.08,0,0,0,7.14,3.68,5.08,10.15] },
+            "50":  { NBinch:"2",     OD:60.3,   Thk:[1.65,2.77,0,3.18,3.91,0,5.54,0,0,0,8.74,3.91,5.54,11.07] },
+            "65":  { NBinch:"2 1/2", OD:73,     Thk:[2.11,3.05,0,4.78,5.16,0,7.01,0,0,0,9.53,5.16,7.01,14.02] },
+            "80":  { NBinch:"3",     OD:88.9,   Thk:[2.11,3.05,0,4.78,5.49,0,7.62,0,0,0,11.13,5.49,7.62,15.24] },
+            "90":  { NBinch:"3 1/2", OD:101.6,  Thk:[2.11,3.05,0,4.78,5.74,0,8.08,0,0,0,0,5.74,8.08,0] },
+            "100": { NBinch:"4",     OD:114.3,  Thk:[2.11,3.05,0,4.78,6.02,0,8.56,0,0,0,13.49,6.02,8.56,17.12] },
+            "125": { NBinch:"5",     OD:141.3,  Thk:[2.77,3.4,0,0,6.55,0,9.53,0,0,0,15.88,6.55,9.53,19.05] },
+            "150": { NBinch:"6",     OD:168.3,  Thk:[2.77,3.4,0,0,7.11,0,10.97,0,0,0,18.26,7.11,10.97,21.95] },
+            "200": { NBinch:"8",     OD:219.1,  Thk:[2.77,3.76,6.35,7.04,8.18,10.31,12.7,15.09,18.26,20.62,23.01,8.18,12.7,22.23] },
+            "250": { NBinch:"10",    OD:273,    Thk:[3.4,4.19,6.35,7.8,9.27,12.7,15.09,18.26,21.44,25.4,28.58,9.27,12.7,25.4] },
+            "300": { NBinch:"12",    OD:323.8,  Thk:[3.96,4.57,6.35,8.38,10.31,14.27,17.48,21.44,25.4,28.58,33.32,9.53,12.7,25.4] },
+            "350": { NBinch:"14",    OD:355.6,  Thk:[3.96,6.35,7.92,9.53,11.13,15.09,19.05,23.83,27.79,31.75,35.71,9.53,12.7,0] },
+            "400": { NBinch:"16",    OD:406.4,  Thk:[4.19,6.35,7.92,9.53,12.7,16.66,21.44,26.19,30.96,36.53,40.49,9.53,12.7,0] },
+            "450": { NBinch:"18",    OD:457,    Thk:[4.19,6.35,7.92,11.13,14.27,19.05,23.83,29.36,34.93,39.67,45.24,9.53,12.7,0] },
+            "500": { NBinch:"20",    OD:508,    Thk:[4.78,6.35,9.53,12.7,15.09,20.62,26.19,32.54,38.1,44.45,50.01,9.53,12.7,0] },
+            "550": { NBinch:"22",    OD:559,    Thk:[4.78,6.35,9.53,12.7,0,22.23,28.58,34.93,41.28,47.63,53.98,9.53,12.7,0] },
+            "600": { NBinch:"24",    OD:610,    Thk:[5.54,6.35,9.53,14.27,17.48,24.61,30.96,38.89,46.02,52.37,59.54,9.53,12.7,0] },
+            "650": { NBinch:"26",    OD:660,    Thk:[0,7.92,12.7,15.88,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "700": { NBinch:"28",    OD:711,    Thk:[0,7.92,12.7,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "750": { NBinch:"30",    OD:762,    Thk:[6.35,7.92,12.7,15.88,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "800": { NBinch:"32",    OD:813,    Thk:[0,7.92,12.7,15.88,17.48,0,0,0,0,0,0,9.53,12.7,0] },
+            "850": { NBinch:"34",    OD:864,    Thk:[0,7.92,12.7,15.88,17.48,0,0,0,0,0,0,9.53,12.7,0] },
+            "900": { NBinch:"36",    OD:914,    Thk:[0,7.92,12.7,15.88,19.05,0,0,0,0,0,0,9.53,12.7,0] },
+            "950": { NBinch:"38",    OD:965,    Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "1000":{ NBinch:"40",    OD:1016,   Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "1050":{ NBinch:"42",    OD:1067,   Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "1100":{ NBinch:"44",    OD:1118,   Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "1150":{ NBinch:"46",    OD:1168,   Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] },
+            "1200":{ NBinch:"48",    OD:1219.2, Thk:[0,0,0,0,0,0,0,0,0,0,0,9.53,12.7,0] }
+            };
+            const schNames=['5','10','20','30','40','60','80','100','120','140','160','STD','XS','XXS'];
+
+            function setVal(id, val, cls='rv') {
+                const el = document.getElementById(id);
+                el.className = cls; el.textContent = val;
+            }
+
+            function update() {
+                const nbVal  = document.getElementById('NB_mm').value;
+                const schVal = document.getElementById('Sch').value;
+                if (!nbVal) { showPlaceholder(); return; }
+
+                const d       = Data[nbVal];
+                const hasSch  = schVal !== '';
+                const thk     = hasSch ? d.Thk[+schVal] : null;
+                const avail   = thk !== null && thk > 0;
+                const id      = avail ? +(d.OD - 2*thk).toFixed(2) : null;
+                const schName = hasSch ? schNames[+schVal] : '—';
+
+                document.getElementById('hdr-title').textContent =
+                    `${d.NBinch}" NPS${hasSch ? ' Sch-'+schName : ''} Pipe Information`;
+
+                const wtEl = document.getElementById('hdr-weight');
+                if (avail) {
+                    const aw = Math.PI/4*((d.OD/1000)**2-(id/1000)**2)*7850;
+                    const ww = Math.PI/4*(id/1000)**2*1000;
+                    wtEl.innerHTML = `Weight = ${aw.toFixed(2)} kg/m &nbsp;|&nbsp; Weight with water = ${(aw+ww).toFixed(2)} kg/m`;
+                } else { wtEl.innerHTML=''; }
+
+                document.getElementById('footer-sch').textContent = nbVal ? `NB ${nbVal} mm  Sch-${schName}` : '';
+
+                setVal('o-nb', d.NBinch+'"');
+                setVal('o-od', d.OD);
+
+                if (!hasSch) {
+                    setVal('o-thk','—','rv dim');
+                    ['o-id','o-area','o-wt','o-wtw'].forEach(i=>setVal(i,'—','rv dim'));
+                } else if (!avail) {
+                    setVal('o-thk','N/A','rv na');
+                    ['o-id','o-area','o-wt','o-wtw'].forEach(i=>setVal(i,'—','rv dim'));
+                } else {
+                    setVal('o-thk', thk);
+                    setVal('o-id',  id);
+                    setVal('o-area',(Math.PI/4*(id/10)**2).toFixed(2));
+                    const aw=Math.PI/4*((d.OD/1000)**2-(id/1000)**2)*7850;
+                    const ww=Math.PI/4*(id/1000)**2*1000;
+                    setVal('o-wt',  aw.toFixed(2));
+                    setVal('o-wtw', ww.toFixed(2));
+                }
+
+                drawPipe(d.OD, thk, id, avail, hasSch, d.NBinch, schName);
+            }
+
+            function showPlaceholder() {
+            document.getElementById('placeholder').style.display='block';
+            document.getElementById('pipe-svg').style.display='none';
+            document.getElementById('std-label').style.display='none';
+            document.getElementById('hdr-title').textContent='— Select size and schedule —';
+            document.getElementById('hdr-weight').innerHTML='';
+            document.getElementById('footer-sch').textContent='';
+            ['o-nb','o-od','o-thk','o-id','o-area','o-wt','o-wtw'].forEach(i=>setVal(i,'—','rv dim'));
+            }
+
+            /* ══════════════════════════════════════════════════════
+            DRAWING — ViewBox 500 × 380
+            Pipe centre: cx=240, cy=195
+
+            Dimension layout matching reference image exactly:
+            ┌─────────────────────────────────────────────────┐
+            │         ←——————— OD ———————→  (above pipe)     │
+            │    t↗   ╔══════════════╗                        │
+            │   ──────╫──────────────╫──── horizontal CL ───  │
+            │         ╚══════════════╝                        │
+            │         ←———— ID ————→  (below pipe)            │
+            └─────────────────────────────────────────────────┘
+
+            OD dim line: horizontal, sits ABOVE pipe, arrows span
+                            from left outer edge to right outer edge.
+                            Extension lines drop from dim line DOWN
+                            to touch the horizontal CL (cy) on each side.
+
+            ID dim line: horizontal, sits BELOW pipe, same style.
+                            Extension lines rise from dim line UP
+                            to touch horizontal CL on each side.
+
+            Wall thk:   diagonal double-arrow + leader, top-left.
+
+            Hatch:      left half of wall only.
+            ══════════════════════════════════════════════════════ */
+            function drawPipe(OD, thk, id, avail, hasSch, nbInch, schName) {
+            document.getElementById('placeholder').style.display='none';
+            document.getElementById('std-label').style.display='block';
+            const svg = document.getElementById('pipe-svg');
+            svg.style.display='block';
+
+            const W=500, H=380;
+            const cx=240, cy=190;   // pipe centre
+            const maxR=118;
+            const scale = maxR/(OD/2);
+            const Ro = (OD/2)*scale;
+            const Ri = (avail&&thk) ? ((OD/2-thk)*scale) : null;
+
+            // Hatch
+            const wallPx = Ri ? (Ro-Ri) : Ro*0.15;
+            const hs = Math.max(3, Math.min(9, wallPx/2.8));
+            let hatch='';
+            const B=Ro+4;
+            for(let d2=-B*3; d2<B*3; d2+=hs)
+                hatch+=`<line x1="${d2}" y1="${-B}" x2="${d2+B*2}" y2="${B}" stroke="#444" stroke-width="0.6"/>`;
+
+            let s=`
+            <defs>
+                <clipPath id="wallclip">
+                <path fill-rule="evenodd" d="
+                    M ${cx} ${cy-Ro} A ${Ro} ${Ro} 0 1 1 ${cx-0.01} ${cy-Ro} Z
+                    ${Ri ? `M ${cx} ${cy-Ri} A ${Ri} ${Ri} 0 1 0 ${cx-0.01} ${cy-Ri} Z` : ''}
+                "/>
+                </clipPath>
+                <clipPath id="lefthalf">
+                <rect x="0" y="0" width="${cx}" height="${H}"/>
+                </clipPath>
+            </defs>
+            <rect width="${W}" height="${H}" fill="#fff"/>
+            <g clip-path="url(#wallclip)">
+                <g clip-path="url(#lefthalf)" transform="translate(${cx},${cy})">${hatch}</g>
+            </g>
+            <circle cx="${cx}" cy="${cy}" r="${Ro}" fill="none" stroke="#111" stroke-width="1.6"/>
+            `;
+
+            if (Ri&&Ri>2) {
+                s+=`<circle cx="${cx}" cy="${cy}" r="${Ri}" fill="#fff" stroke="#111" stroke-width="1.6"/>`;
+            } else if (hasSch&&!avail) {
+                s+=`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-family="Arial"
+                    font-size="13" fill="#c0392b" font-weight="bold">N/A for this schedule</text>`;
+            }
+
+            /* ── Crosshairs ── */
+            // Horizontal CL — extends past both sides
+            s+=`<line x1="${cx-Ro-22}" y1="${cy}" x2="${cx+Ro+22}" y2="${cy}"
+                        stroke="#999" stroke-width="0.85" stroke-dasharray="12 4 2 4"/>`;
+            // Vertical CL
+            s+=`<line x1="${cx}" y1="${cy-Ro-22}" x2="${cx}" y2="${cy+Ro+22}"
+                        stroke="#999" stroke-width="0.85" stroke-dasharray="12 4 2 4"/>`;
+
+            /* ════════════════════════════════════════════════
+                OD DIMENSION
+                - Horizontal dim line ABOVE the pipe
+                - Left arrow at (cx-Ro, odY), right arrow at (cx+Ro, odY)
+                - Extension lines go from CY (horizontal CL) UP to the dim line
+                on the left and right sides (outside the circle)
+                - Label above the dim line, centred
+            ════════════════════════════════════════════════ */
+            const odY = cy - Ro - 30;  // dim line y, above pipe
+
+            // Left extension: from CL (cy) up to dim line, at x = cx-Ro
+            s+=`<line x1="${cx-Ro}" y1="${cy}" x2="${cx-Ro}" y2="${odY-4}"
+                        stroke="#555" stroke-width="0.75"/>`;
+            // Right extension: from CL (cy) up to dim line, at x = cx+Ro
+            s+=`<line x1="${cx+Ro}" y1="${cy}" x2="${cx+Ro}" y2="${odY-4}"
+                        stroke="#555" stroke-width="0.75"/>`;
+
+            // Dim line with inward arrows (pointing toward centre, touching circle edges)
+            s+=`<line x1="${cx-Ro}" y1="${odY}" x2="${cx+Ro}" y2="${odY}"
+                        stroke="#111" stroke-width="1.1"/>`;
+            s+=arrowL(cx-Ro, odY);  // left arrow points left (outward from centre)
+            s+=arrowR(cx+Ro, odY);  // right arrow points right (outward from centre)
+
+            // Label above dim line
+            s+=`<text x="${cx}" y="${odY-7}" text-anchor="middle"
+                    font-family="Arial" font-size="13" font-weight="bold" fill="#111">${OD} mm</text>`;
+
+            if (Ri&&Ri>3) {
+                /* ════════════════════════════════════════════════
+                ID DIMENSION
+                - Horizontal dim line BELOW the pipe
+                - Extension lines go from CY (horizontal CL) DOWN to dim line
+                    at left and right inner edges
+                - Label below the dim line, centred
+                ════════════════════════════════════════════════ */
+                const idY = cy + Ro + 30;  // dim line y, below pipe
+
+                // Left extension: from CL (cy) down to dim line, at x = cx-Ri
+                s+=`<line x1="${cx-Ri}" y1="${cy}" x2="${cx-Ri}" y2="${idY+4}"
+                        stroke="#555" stroke-width="0.75"/>`;
+                // Right extension: from CL (cy) down to dim line, at x = cx+Ri
+                s+=`<line x1="${cx+Ri}" y1="${cy}" x2="${cx+Ri}" y2="${idY+4}"
+                        stroke="#555" stroke-width="0.75"/>`;
+
+                // Dim line with outward arrows
+                s+=`<line x1="${cx-Ri}" y1="${idY}" x2="${cx+Ri}" y2="${idY}"
+                        stroke="#111" stroke-width="1.1"/>`;
+                s+=arrowL(cx-Ri, idY);
+                s+=arrowR(cx+Ri, idY);
+
+                // Label below dim line
+                s+=`<text x="${cx}" y="${idY+18}" text-anchor="middle"
+                    font-family="Arial" font-size="13" font-weight="bold" fill="#111">${id} mm</text>`;
+
+                /* ════════════════════════════════════════════════
+                WALL THICKNESS — diagonal double-arrow
+                Arrow runs from OUTER surface to INNER surface at 135°
+                Leader from midpoint → shoulder → label top-left
+                ════════════════════════════════════════════════ */
+                const ang = 135*Math.PI/180;
+                const outerX = cx + Ro*Math.cos(ang);
+                const outerY = cy + Ro*Math.sin(ang);
+                const innerX = cx + Ri*Math.cos(ang);
+                const innerY = cy + Ri*Math.sin(ang);
+                const midX   = (outerX+innerX)/2;
+                const midY   = (outerY+innerY)/2;
+                const dx=Math.cos(ang), dy=Math.sin(ang);
+
+                // Label anchor
+                const lblX = outerX - 60;
+                const lblY = outerY - 16;
+
+                s+=`
+                <!-- Wall thickness arrow (outer to inner) -->
+                <line x1="${outerX}" y1="${outerY}" x2="${innerX}" y2="${innerY}"
+                    stroke="#111" stroke-width="1.1"/>
+                ${arrowAlong(outerX,outerY, dx, dy)}
+                ${arrowAlong(innerX,innerY,-dx,-dy)}
+                <!-- Leader: midpoint → shoulder -->
+                <line x1="${midX}" y1="${midY}" x2="${lblX+50}" y2="${lblY}"
+                    stroke="#111" stroke-width="0.9"/>
+                <!-- Shoulder -->
+                <line x1="${lblX}" y1="${lblY}" x2="${lblX+50}" y2="${lblY}"
+                    stroke="#111" stroke-width="0.9"/>
+                <!-- Label -->
+                <text x="${lblX-3}" y="${lblY-5}" font-family="Arial" font-size="13"
+                    font-weight="bold" fill="#111" text-anchor="end">t = ${thk} mm</text>
+                `;
+            }
+
+            // Watermark
+            s+=`<text x="${W-6}" y="${H-5}" font-family="Arial" font-size="9" fill="#bbb"
+                    text-anchor="end">NB ${nbInch}"  Sch-${schName}</text>`;
+
+            svg.innerHTML=s;
+            }
+
+            /* ── Arrow helpers ── */
+            const AH=7, AW=3.5;
+            function arrowL(x,y){ return `<polygon points="${x},${y} ${x+AH},${y-AW} ${x+AH},${y+AW}" fill="#111"/>`; }
+            function arrowR(x,y){ return `<polygon points="${x},${y} ${x-AH},${y-AW} ${x-AH},${y+AW}" fill="#111"/>`; }
+            function arrowAlong(tx,ty,dx,dy){
+                const bx=tx+dx*AH, by=ty+dy*AH;
+                const px=-dy*AW,   py=dx*AW;
+                return `<polygon points="${tx},${ty} ${bx+px},${by+py} ${bx-px},${by-py}" fill="#111"/>`;
+            }
+        </script>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+            import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+            const firebaseConfig = {
+            apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+            authDomain: "personal-workspace-d39d0.firebaseapp.com",
+            projectId: "personal-workspace-d39d0",
+            appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "../login.html"; // Redirect if not logged in
+            }
+            });
+        </script>
+    </body>
+</html>
