@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASTM D2000 Rubber Configurator</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141716;
+    --surface2: #1c1f1d;
+    --border: #2a2e2b;
+    --accent: #00e676;
+    --accent2: #69f0ae;
+    --accent-dim: rgba(0,230,118,0.12);
+    --text: #e8ede9;
+    --text-muted: #7a8a7c;
+    --text-dim: #4a5a4c;
+    --warn: #ffb300;
+    --error: #ff5252;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+  /* Header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+  .header-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .header-title {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-family: var(--mono);
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    background: var(--surface);
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field-group {
+    margin-bottom: 24px;
+  }
+
+  .field-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .field-label span {
+    color: var(--accent);
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .select-wrapper {
+    position: relative;
+  }
+  .select-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    pointer-events: none;
+    font-size: 12px;
+  }
+
+  /* Checkbox group */
+  .checkbox-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .checkbox-item:hover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .checkbox-item.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .checkbox-item input { display: none; }
+  .cb-dot {
+    width: 10px; height: 10px;
+    border: 1px solid var(--text-dim);
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .checkbox-item.active .cb-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .cb-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .checkbox-item.active .cb-label {
+    color: var(--accent2);
+  }
+
+  /* Range inputs */
+  .range-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .range-input-wrap { position: relative; }
+  .range-unit {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  input[type="number"] { padding-right: 36px; }
+
+  /* Btn */
+  .btn-configure {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
+    margin-top: 8px;
+  }
+  .btn-configure:hover { opacity: 0.85; }
+
+  .btn-reset {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    margin-top: 8px;
+  }
+  .btn-reset:hover { border-color: var(--text-muted); color: var(--text); }
+
+  /* Main panel */
+  .main {
+    padding: 24px 32px;
+    overflow-y: auto;
+  }
+
+  /* Callout box */
+  .designation-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .designation-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .designation-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .designation-value.empty {
+    color: var(--text-dim);
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  /* Result cards */
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .result-card.highlight {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .rc-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .rc-value {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .rc-value.green { color: var(--accent); }
+  .rc-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Table */
+  .table-section {
+    margin-bottom: 24px;
+  }
+  .table-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  th {
+    text-align: left;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  td.accent { color: var(--accent); font-weight: 600; }
+  td.warn { color: var(--warn); }
+  td.muted { color: var(--text-muted); }
+
+  /* Suffix badge */
+  .suffix-badge {
+    display: inline-block;
+    background: var(--accent-dim);
+    border: 1px solid rgba(0,230,118,0.3);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    margin: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Polymer match */
+  .polymer-match {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .polymer-name {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent2);
+    margin-bottom: 4px;
+  }
+  .polymer-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--surface2);
+    border-left: 2px solid var(--accent);
+  }
+
+  /* Status indicator */
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .status-dot.ok { background: var(--accent); }
+  .status-dot.warn { background: var(--warn); }
+  .status-dot.err { background: var(--error); }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 12px;
+    color: var(--text-dim);
+  }
+  .empty-state-icon {
+    font-size: 48px;
+    opacity: 0.3;
+  }
+  .empty-state-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Divider */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* Suffix multi-select */
+  .suffix-scroll {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+  }
+  .suffix-scroll::-webkit-scrollbar { width: 4px; }
+  .suffix-scroll::-webkit-scrollbar-track { background: var(--surface2); }
+  .suffix-scroll::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .suffix-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.1s;
+    user-select: none;
+  }
+  .suffix-item:last-child { border-bottom: none; }
+  .suffix-item:hover { background: var(--surface2); }
+  .suffix-item.active { background: var(--accent-dim); }
+  .suffix-item input { display: none; }
+  .suffix-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 28px;
+    font-weight: 600;
+  }
+  .suffix-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .suffix-item.active .suffix-desc { color: var(--text); }
+
+  .no-result {
+    padding: 40px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">Physical &amp; Chemical Properties of Industrial Materials</div>
+  <div class="navbar-right">
+    <button onclick="configure()">▶ Generate Designation</button>
+    <button onclick="resetAll()">↺ Reset All</button>
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+</nav>
+<div class="header">
+  <div class="header-badge">ASTM</div>
+  <div class="header-title">D2000 / SAE J200 Rubber Configurator</div>
+  <div class="header-sub">Standard Classification System · 2001 Edition</div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="section-label">Material Inputs</div>
+
+    <!-- Grade -->
+    <div class="field-group">
+      <div class="field-label"><span>01</span> Grade Number</div>
+      <div class="select-wrapper">
+        <select id="grade">
+          <option value="">— Select Type —</option>
+          <option value="1">1 — Basic requirements only</option>
+          <option value="2">2 — Additional suffix requirements</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Type -->
+    <div class="field-group">
+      <div class="field-label"><span>02</span> Type — Heat Resistance</div>
+      <div class="select-wrapper">
+        <select id="type">
+          <option value="">— Select Type —</option>
+          <option value="A">A — 70°C</option>
+          <option value="B">B — 100°C</option>
+          <option value="C">C — 125°C</option>
+          <option value="D">D — 150°C</option>
+          <option value="E">E — 175°C</option>
+          <option value="F">F — 200°C</option>
+          <option value="G">G — 225°C</option>
+          <option value="H">H — 250°C</option>
+          <option value="J">J — 275°C</option>
+          <option value="K">K — 300°C</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Class -->
+    <div class="field-group">
+      <div class="field-label"><span>03</span> Class — Oil Resistance (Volume Swell)</div>
+      <div class="select-wrapper">
+        <select id="class">
+          <option value="">— Select Class —</option>
+          <option value="A">A — No requirement</option>
+          <option value="B">B — 140% max</option>
+          <option value="C">C — 120% max</option>
+          <option value="D">D — 100% max</option>
+          <option value="E">E — 80% max</option>
+          <option value="F">F — 60% max</option>
+          <option value="G">G — 40% max</option>
+          <option value="H">H — 30% max</option>
+          <option value="J">J — 20% max</option>
+          <option value="K">K — 10% max</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Hardness -->
+    <div class="field-group">
+      <div class="field-label"><span>04</span> Durometer Hardness (Shore A) — <span style="color:var(--text-muted)">first digit of 3-digit code</span></div>
+      <div class="select-wrapper">
+        <select id="hardness">
+          <option value="">— Select —</option>
+          <option value="2">20 → code digit: 2</option>
+          <option value="3">30 → code digit: 3</option>
+          <option value="4">40 → code digit: 4</option>
+          <option value="5">50 → code digit: 5</option>
+          <option value="6">60 → code digit: 6</option>
+          <option value="7">70 → code digit: 7</option>
+          <option value="8">80 → code digit: 8</option>
+          <option value="9">90 → code digit: 9</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-top:5px;">e.g. 70 Shore A → digit "7" · ±5 pts tolerance</div>
+    </div>
+
+    <!-- Tensile -->
+    <div class="field-group">
+      <div class="field-label"><span>05</span> Min Tensile Strength (MPa)</div>
+      <div class="select-wrapper">
+        <select id="tensile">
+          <option value="">— Select —</option>
+          <option value="3">3 MPa</option>
+          <option value="5">5 MPa</option>
+          <option value="6">6 MPa</option>
+          <option value="7">7 MPa</option>
+          <option value="8">8 MPa</option>
+          <option value="9">9 MPa</option>
+          <option value="10">10 MPa</option>
+          <option value="12">12 MPa</option>
+          <option value="14">14 MPa</option>
+          <option value="16">16 MPa</option>
+          <option value="17">17 MPa</option>
+          <option value="21">21 MPa</option>
+          <option value="24">24 MPa</option>
+          <option value="28">28 MPa</option>
+        </select>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="section-label">Suffix Requirements</div>
+
+    <!-- Suffix letters -->
+    <div class="field-group">
+      <div class="field-label"><span>06</span> Select Suffix Requirements Needed</div>
+      <div class="suffix-scroll" id="suffix-container">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <hr class="divider">
+    <div class="section-label">Application Context</div>
+
+    <!-- Oil contact -->
+    <div class="field-group">
+      <div class="field-label"><span>07</span> Oil / Fluid Exposure</div>
+      <div class="checkbox-group" id="fluid-group">
+        <div class="checkbox-item" data-value="oil1" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">IRM 902 (Oil No.1)</span>
+        </div>
+        <div class="checkbox-item" data-value="oil3" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">IRM 903 (Oil No.3)</span>
+        </div>
+        <div class="checkbox-item" data-value="fuelA" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Ref. Fuel A</span>
+        </div>
+        <div class="checkbox-item" data-value="fuelB" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Ref. Fuel B</span>
+        </div>
+        <div class="checkbox-item" data-value="fuelC" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Ref. Fuel C</span>
+        </div>
+        <div class="checkbox-item" data-value="fuelD" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Ref. Fuel D</span>
+        </div>
+        <div class="checkbox-item" data-value="water" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Distilled Water</span>
+        </div>
+        <div class="checkbox-item" data-value="glycol" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Water/Glycol</span>
+        </div>
+      </div>
+      <!-- Fluid reference info box -->
+      <div style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);padding:10px 12px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Fluid Reference Guide (D471)</div>
+        <table style="width:100%;font-family:var(--mono);font-size:10px;border-collapse:collapse;">
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">IRM 902</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">Replaces ASTM Oil No.2. Light petroleum oil. Low swell test fluid. Used for EO suffix (mild oil exposure).</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">IRM 903</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">Replaces ASTM Oil No.3. Severe petroleum oil. High aniline point. Primary class-rating oil. Used for EO suffix (harsh oil exposure).</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Fuel A</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">100% isooctane. Represents low-aromatic gasoline. Mild swelling agent. EF suffix test fluid.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Fuel B</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">70% isooctane + 30% toluene. Simulates regular unleaded gasoline. Moderate aromatic content. EF suffix.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Fuel C</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">50% isooctane + 50% toluene. Severe aromatic fuel blend. Simulates high-aromatic/premium fuels. EF suffix.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Fuel D</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">100% toluene. Extreme aromatic solvent. Most aggressive fuel test fluid. EF suffix — special cases.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Water</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">Distilled water immersion, 70h @ 100°C. EA suffix. Checks hydrolytic stability.</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;color:var(--accent2);font-weight:600;white-space:nowrap;">Water/Glycol</td>
+            <td style="padding:4px 6px;color:var(--text-muted);">50/50 vol% distilled water + ethylene glycol. Simulates coolant/antifreeze. EA suffix.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Low temp -->
+    <div class="field-group">
+      <div class="field-label"><span>08</span> Low-Temperature Requirement</div>
+      <div class="select-wrapper">
+        <select id="lowtemp">
+          <option value="">None</option>
+          <option value="-10">−10°C</option>
+          <option value="-18">−18°C</option>
+          <option value="-25">−25°C</option>
+          <option value="-35">−35°C</option>
+          <option value="-40">−40°C</option>
+          <option value="-50">−50°C</option>
+          <option value="-55">−55°C</option>
+          <option value="-65">−65°C</option>
+          <option value="-75">−75°C</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ozone -->
+    <div class="field-group">
+      <div class="field-label"><span>09</span> Environmental Exposure</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item" data-value="ozone" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Ozone</span>
+        </div>
+        <div class="checkbox-item" data-value="outdoor" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Outdoor</span>
+        </div>
+        <div class="checkbox-item" data-value="flame" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Flame</span>
+        </div>
+        <div class="checkbox-item" data-value="stain" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">No Staining</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mechanical -->
+    <div class="field-group">
+      <div class="field-label"><span>10</span> Mechanical Requirements</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item" data-value="tear" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Tear Resist.</span>
+        </div>
+        <div class="checkbox-item" data-value="flex" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Flex Resist.</span>
+        </div>
+        <div class="checkbox-item" data-value="abrasion" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Abrasion</span>
+        </div>
+        <div class="checkbox-item" data-value="adhesion" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Adhesion</span>
+        </div>
+        <div class="checkbox-item" data-value="compression" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Comp. Set</span>
+        </div>
+        <div class="checkbox-item" data-value="resilience" onclick="toggleCb(this)">
+          <div class="cb-dot"></div><span class="cb-label">Resilience</span>
+        </div>
+      </div>
+    </div>
+
+    
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main" id="main-panel">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-state-icon">⬡</div>
+      <div class="empty-state-text">Select inputs and click Generate</div>
+      <div style="font-size:11px; color: var(--text-dim); font-family: var(--mono);">ASTM D2000 / SAE J200 Line Call-Out Builder</div>
+    </div>
+    <div id="result-panel" style="display:none;"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────
+const TYPES = {
+  A: { temp: 70,  label: '70°C' },
+  B: { temp: 100, label: '100°C' },
+  C: { temp: 125, label: '125°C' },
+  D: { temp: 150, label: '150°C' },
+  E: { temp: 175, label: '175°C' },
+  F: { temp: 200, label: '200°C' },
+  G: { temp: 225, label: '225°C' },
+  H: { temp: 250, label: '250°C' },
+  J: { temp: 275, label: '275°C' },
+  K: { temp: 300, label: '300°C' },
+};
+const CLASSES = {
+  A: { swell: 'No requirement', label: 'No oil swell requirement' },
+  B: { swell: '140%', label: '140% max volume swell' },
+  C: { swell: '120%', label: '120% max volume swell' },
+  D: { swell: '100%', label: '100% max volume swell' },
+  E: { swell: '80%',  label: '80% max volume swell' },
+  F: { swell: '60%',  label: '60% max volume swell' },
+  G: { swell: '40%',  label: '40% max volume swell' },
+  H: { swell: '30%',  label: '30% max volume swell' },
+  J: { swell: '20%',  label: '20% max volume swell' },
+  K: { swell: '10%',  label: '10% max volume swell' },
+};
+
+const POLYMERS = {
+  AA: 'Natural rubber, reclaimed rubber, SBR, butyl, EP polybutadiene, polyisoprene',
+  AK: 'Polysulfides',
+  BA: 'Ethylene propylene (EPDM), high-temperature SBR and butyl compounds',
+  BC: 'Chloroprene polymers (Neoprene)',
+  BE: 'Chloroprene polymers (Neoprene)',
+  BF: 'NBR polymers (Nitrile)',
+  BG: 'NBR polymers, Urethanes',
+  BK: 'NBR (Nitrile)',
+  CA: 'Ethylene propylene (EPDM)',
+  CE: 'Chlorosulfonated polyethylene (Hypalon)',
+  CH: 'NBR polymers, Epichlorohydrin polymers',
+  DA: 'Ethylene propylene polymers (EPDM)',
+  DE: 'CM, CSM (Chlorinated/Chlorosulfonated polyethylene)',
+  DF: 'Polyacrylic (butyl-acrylate type)',
+  DH: 'Polyacrylic polymers, HNBR',
+  EE: 'AEM (Ethylene acrylic)',
+  EH: 'ACM (Polyacrylate)',
+  EK: 'FZ (Fluorosilicone)',
+  FC: 'Silicones (high strength)',
+  FE: 'Silicones',
+  FK: 'Fluorinated silicones',
+  GE: 'Silicones',
+  HK: 'Fluorinated elastomers (Viton, Fluorel, etc.)',
+  KK: 'Perfluoroelastomers',
+};
+
+const SUFFIX_DEFS = [
+  { code: 'A', desc: 'Heat Resistance (post-aging tensile/elongation/hardness)' },
+  { code: 'B', desc: 'Compression Set' },
+  { code: 'C', desc: 'Ozone or Weather Resistance' },
+  { code: 'D', desc: 'Compression-Deflection Resistance' },
+  { code: 'EA', desc: 'Fluid Resistance — Aqueous (water/glycol)' },
+  { code: 'EF', desc: 'Fluid Resistance — Fuels (Reference Fuels A–D)' },
+  { code: 'EO', desc: 'Fluid Resistance — Oils & Lubricants (IRM 902/903)' },
+  { code: 'F',  desc: 'Low-Temperature Resistance' },
+  { code: 'G',  desc: 'Tear Resistance' },
+  { code: 'H',  desc: 'Flex Resistance' },
+  { code: 'J',  desc: 'Abrasion Resistance' },
+  { code: 'K',  desc: 'Adhesion to Rigid Substrates' },
+  { code: 'M',  desc: 'Flammability Resistance' },
+  { code: 'N',  desc: 'Impact Resistance' },
+  { code: 'P',  desc: 'Staining Resistance' },
+  { code: 'R',  desc: 'Resilience' },
+  { code: 'Z',  desc: 'Special Requirement (specify in detail)' },
+];
+
+// Basic requirement data by material designation
+const BASIC_REQS = {
+  AA: { compSet: '50% max, 22h @ 70°C', oilImmersion: 'No requirement', heatAgedStd: 'D573, 70h @ 70°C' },
+  AK: { compSet: '50% max, 22h @ 70°C', oilImmersion: '+10% max vol, 70h @ 70°C', heatAgedStd: 'D573, 70h @ 70°C' },
+  BA: { compSet: '50% max, 22h @ 70°C', oilImmersion: 'No requirement', heatAgedStd: 'D573, 70h @ 100°C' },
+  BC: { compSet: '80% max, 22h @ 100°C', oilImmersion: '+120% max vol, 70h @ 100°C', heatAgedStd: 'D573, 70h @ 100°C' },
+  BE: { compSet: '40–50% max, 22h @ 100°C', oilImmersion: '+80% max vol, 70h @ 100°C', heatAgedStd: 'D573, 70h @ 100°C' },
+  BF: { compSet: '50% max, 22h @ 100°C', oilImmersion: '+60% max vol, 70h @ 100°C', heatAgedStd: 'D573, 70h @ 100°C' },
+  BG: { compSet: '50% max, 22h @ 100°C', oilImmersion: '+40% max vol, 70h @ 100°C', heatAgedStd: 'D573, 70h @ 100°C' },
+  BK: { compSet: '50% max, 22h @ 100°C', oilImmersion: '+10% max vol, 70h @ 100°C', heatAgedStd: 'D573, 70h @ 100°C' },
+  CA: { compSet: '60% max, 22h @ 100°C', oilImmersion: 'No requirement', heatAgedStd: 'D573, 70h @ 125°C' },
+  CE: { compSet: '80% max, 22h @ 70°C', oilImmersion: '+80% max vol, 70h @ 125°C', heatAgedStd: 'D573, 70h @ 125°C' },
+  CH: { compSet: '50% max, 22h @ 100°C', oilImmersion: '+30% max vol, 70h @ 125°C', heatAgedStd: 'D865, 70h @ 125°C' },
+  DA: { compSet: '50% max, 22h @ 150°C (plied)', oilImmersion: 'No requirement', heatAgedStd: 'D573, 70h @ 150°C' },
+  DE: { compSet: '+80% max, 22h @ 125°C', oilImmersion: '+80% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 150°C' },
+  DF: { compSet: '80% max, 22h @ 150°C', oilImmersion: '+60% max vol, 70h @ 150°C', heatAgedStd: 'D865, 70h @ 150°C' },
+  DH: { compSet: '40–75% max, 22h @ 150°C', oilImmersion: '+30% max vol, 70h @ 150°C', heatAgedStd: 'D865, 70h @ 150°C' },
+  EE: { compSet: '75% max, 22h @ 150°C', oilImmersion: '+80% max vol, 70h @ 150°C', heatAgedStd: 'D865, 70h @ 175°C' },
+  EH: { compSet: '75% max, 22h @ 150°C', oilImmersion: '±30% vol, 70h @ 150°C', heatAgedStd: 'D865, 70h @ 175°C' },
+  EK: { compSet: '60% max, 22h @ 150°C', oilImmersion: '±10% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 150°C' },
+  FC: { compSet: '60–80% max, 22h @ 175°C (plied)', oilImmersion: '+120% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 200°C' },
+  FE: { compSet: '60–80% max, 22h @ 175°C', oilImmersion: '+80% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 200°C' },
+  FK: { compSet: '50% max, 22h @ 175°C (plied)', oilImmersion: '+10% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 200°C' },
+  GE: { compSet: '50–70% max, 22h @ 175°C (plied)', oilImmersion: '+80% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 225°C' },
+  HK: { compSet: '35% max, 22h @ 175°C (plied)', oilImmersion: '+10% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 250°C' },
+  KK: { compSet: '25% max, 22h @ 200°C (plied)', oilImmersion: '+10% max vol, 70h @ 150°C', heatAgedStd: 'D573, 70h @ 300°C' },
+};
+
+// Known valid material designations
+const VALID_DESIGNATIONS = Object.keys(POLYMERS);
+
+// ── Init suffix list ─────────────────────────────────────────────────
+function initSuffixList() {
+  const container = document.getElementById('suffix-container');
+  container.innerHTML = SUFFIX_DEFS.map(s => `
+    <div class="suffix-item" id="sx-${s.code.replace('/','')}" onclick="toggleSuffix(this, '${s.code}')">
+      <span class="suffix-code">${s.code}</span>
+      <span class="suffix-desc">${s.desc}</span>
+    </div>
+  `).join('');
+}
+
+function toggleSuffix(el, code) {
+  el.classList.toggle('active');
+}
+
+function getActiveSuffixes() {
+  return [...document.querySelectorAll('.suffix-item.active')]
+    .map(el => el.querySelector('.suffix-code').textContent.trim());
+}
+
+// ── Toggle checkbox ───────────────────────────────────────────────────
+function toggleCb(el) {
+  el.classList.toggle('active');
+}
+
+function getChecked(groupSelector) {
+  return [...document.querySelectorAll(groupSelector + ' .checkbox-item.active')]
+    .map(el => el.dataset.value);
+}
+
+// ── Build suffix notation ─────────────────────────────────────────────
+function buildSuffixNotation(suffixes, typeCode, fluids, lowTemp, env, mech) {
+  const typeTemp = TYPES[typeCode]?.temp || 100;
+  const parts = [];
+
+  // Map suffix codes to notation
+  suffixes.forEach(s => {
+    if (s === 'A') {
+      // Heat resistance suffix
+      const tempNum = getSuffixTempNum(typeTemp, false);
+      parts.push(`A1${tempNum}`);
+    } else if (s === 'B') {
+      const tempNum = getSuffixTempNum(Math.min(typeTemp, 100), false);
+      parts.push(`B1${tempNum}`);
+    } else if (s === 'C') {
+      parts.push('C12');
+    } else if (s === 'D') {
+      parts.push('D11');
+    } else if (s === 'EA') {
+      parts.push('EA14');
+    } else if (s === 'EF') {
+      if (fluids.includes('fuelC')) parts.push('EF31');
+      else if (fluids.includes('fuelB')) parts.push('EF21');
+      else parts.push('EF11');
+    } else if (s === 'EO') {
+      const oilTemp = getSuffixTempNum(Math.min(typeTemp, 150), false);
+      if (fluids.includes('oil3')) parts.push(`EO3${oilTemp}`);
+      else parts.push(`EO1${oilTemp}`);
+    } else if (s === 'F') {
+      if (lowTemp) {
+        const ltNum = getLowTempNum(lowTemp);
+        parts.push(`F1${ltNum}`);
+      } else {
+        parts.push('F17');
+      }
+    } else if (s === 'G') {
+      parts.push('G21');
+    } else if (s === 'H') {
+      parts.push('H11');
+    } else if (s === 'J') {
+      parts.push('J11');
+    } else if (s === 'K') {
+      parts.push('K11');
+    } else if (s === 'M') {
+      parts.push('M (method TBD)');
+    } else if (s === 'N') {
+      parts.push('N (method TBD)');
+    } else if (s === 'P') {
+      parts.push('P2');
+    } else if (s === 'R') {
+      parts.push('R11');
+    } else if (s === 'Z') {
+      parts.push('Z (specify)');
+    }
+  });
+
+  // Auto-add based on checkboxes
+  if (mech.includes('compression') && !suffixes.includes('B')) {
+    const tempNum = getSuffixTempNum(Math.min(typeTemp, 100), false);
+    parts.push(`B1${tempNum}`);
+  }
+  if ((env.includes('ozone') || env.includes('outdoor')) && !suffixes.includes('C')) {
+    parts.push('C12');
+  }
+  if (lowTemp && !suffixes.includes('F')) {
+    const ltNum = getLowTempNum(lowTemp);
+    parts.push(`F1${ltNum}`);
+  }
+  if ((fluids.includes('oil1') || fluids.includes('oil3')) && !suffixes.includes('EO')) {
+    const oilTemp = getSuffixTempNum(Math.min(typeTemp, 150), false);
+    if (fluids.includes('oil3')) parts.push(`EO3${oilTemp}`);
+    else parts.push(`EO1${oilTemp}`);
+  }
+  if ((fluids.includes('fuelA') || fluids.includes('fuelB') || fluids.includes('fuelC')) && !suffixes.includes('EF')) {
+    if (fluids.includes('fuelC')) parts.push('EF31');
+    else if (fluids.includes('fuelB')) parts.push('EF21');
+    else parts.push('EF11');
+  }
+  if (fluids.includes('water') && !suffixes.includes('EA')) {
+    parts.push('EA14');
+  }
+  if (mech.includes('tear') && !suffixes.includes('G')) parts.push('G21');
+  if (mech.includes('adhesion') && !suffixes.includes('K')) parts.push('K11');
+  if (mech.includes('resilience') && !suffixes.includes('R')) parts.push('R11');
+  if (env.includes('stain') && !suffixes.includes('P')) parts.push('P2');
+
+  // Deduplicate
+  return [...new Set(parts)];
+}
+
+function getSuffixTempNum(temp, isLow) {
+  const map = { 275:11, 250:10, 225:9, 200:8, 175:7, 150:6, 125:5, 100:4, 70:3, 38:2, 23:1 };
+  return map[temp] || 4;
+}
+
+function getLowTempNum(temp) {
+  const map = { '-10':3, '-18':4, '-25':5, '-35':6, '-40':7, '-50':8, '-55':9, '-65':10, '-75':11 };
+  return map[temp] || 7;
+}
+
+// ── Validate designation ──────────────────────────────────────────────
+function validateDesignation(typeCode, classCode) {
+  const des = typeCode + classCode;
+  return VALID_DESIGNATIONS.includes(des);
+}
+
+// ── Configure ─────────────────────────────────────────────────────────
+function configure() {
+  const grade    = document.getElementById('grade').value;
+  const typeCode = document.getElementById('type').value;
+  const classCode= document.getElementById('class').value;
+  const hardness = document.getElementById('hardness').value;
+  const tensile  = document.getElementById('tensile').value;
+  const lowTemp  = document.getElementById('lowtemp').value;
+
+  const fluids = getChecked('#fluid-group');
+  const env    = [...document.querySelectorAll('.checkbox-item.active')]
+    .map(el => el.dataset.value)
+    .filter(v => ['ozone','outdoor','flame','stain'].includes(v));
+  const mech   = [...document.querySelectorAll('.checkbox-item.active')]
+    .map(el => el.dataset.value)
+    .filter(v => ['tear','flex','abrasion','adhesion','compression','resilience'].includes(v));
+
+  const activeSuffixes = getActiveSuffixes();
+
+  if (!typeCode || !classCode) {
+    alert('Please select both Type and Class.');
+    return;
+  }
+  if (!hardness || !tensile) {
+    alert('Please select Hardness and Tensile Strength.');
+    return;
+  }
+
+  const matDes = typeCode + classCode;
+  const valid  = validateDesignation(typeCode, classCode);
+  const typeInfo  = TYPES[typeCode];
+  const classInfo = CLASSES[classCode];
+
+  // Build suffix parts
+  const suffixParts = buildSuffixNotation(activeSuffixes, typeCode, fluids, lowTemp, env, mech);
+  const suffixStr = suffixParts.join(' ');
+
+  // Build the full designation
+  // hardness is already the single digit (e.g. "7" for 70 Shore A)
+  const tensileCode = parseInt(tensile).toString().padStart(2, '0');
+  const designation = `M${grade}${matDes}${hardness}${tensileCode}${suffixParts.length ? ' ' + suffixStr : ''}`;
+
+  const polymerText = valid ? (POLYMERS[matDes] || 'Consult supplier') : 'No standard material matches this combination';
+  const basicReq = BASIC_REQS[matDes] || {};
+
+  // Warnings
+  const warnings = [];
+  if (!valid) warnings.push('This type/class combination is not listed in Table 6 — verify with supplier');
+  if (parseInt(grade) > 1 && activeSuffixes.length === 0 && fluids.length === 0 && env.length === 0 && mech.length === 0) {
+    warnings.push('Grade > 1 selected but no suffix requirements specified');
+  }
+  if (classCode !== 'A' && fluids.length === 0) {
+    warnings.push('Oil-resistant class selected but no fluid exposure specified — consider adding EO suffix');
+  }
+  if (['F','G','H','J','K'].includes(typeCode) && !['FC','FE','FK','GE','HK','KK'].includes(matDes)) {
+    if (!valid) warnings.push('High-temperature type requires specific class combinations');
+  }
+
+  // Tensile psi
+  const psiMap = {3:435,5:725,6:870,7:1015,8:1160,9:1305,10:1450,12:1740,14:2031,16:2320,17:2466,21:3046,24:3481,28:4061};
+  const psi = psiMap[parseInt(tensile)] || '—';
+
+  // Render
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('result-panel').style.display = 'block';
+
+  document.getElementById('result-panel').innerHTML = `
+
+    <!-- DESIGNATION BOX -->
+    <div class="designation-box">
+      <div>
+        <div class="designation-label">ASTM D2000 Line Call-Out</div>
+        <div class="designation-value">${designation.split(' ')[0]}</div>
+        ${suffixParts.length ? `<div style="font-family:var(--mono);font-size:12px;color:var(--accent2);margin-top:6px;">+ ${suffixStr}</div>` : ''}
+      </div>
+      <div style="margin-left:auto;text-align:right;">
+        <div class="designation-label">Document Reference</div>
+        <div style="font-family:var(--mono);font-size:13px;color:var(--text-muted);margin-top:4px;">ASTM D 2000 – 01</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-top:2px;">SAE J200 | SI Units</div>
+      </div>
+    </div>
+
+    ${warnings.length ? `
+    <div style="background:rgba(255,179,0,0.08);border:1px solid rgba(255,179,0,0.3);padding:12px 16px;margin-bottom:16px;">
+      ${warnings.map(w=>`<div style="font-size:11px;color:var(--warn);font-family:var(--mono);margin-bottom:4px;">⚠ ${w}</div>`).join('')}
+    </div>` : ''}
+
+    <!-- POLYMER MATCH -->
+    <div class="polymer-match">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">
+        ${valid ? '✓ Material Designation: ' + matDes : '✗ Designation: ' + matDes}
+      </div>
+      <div class="polymer-name">${valid ? polymerText : 'Non-standard combination'}</div>
+      <div class="polymer-note">
+        <strong style="color:var(--accent2);">Note:</strong> Table X1.1 lists typical polymers for guidance only.
+        Other polymers meeting the same performance requirements may be used per ASTM D1418.
+      </div>
+    </div>
+
+    <!-- RESULT CARDS -->
+    <div class="results-grid">
+      <div class="result-card highlight">
+        <div class="rc-title">Heat Resistance (Type ${typeCode})</div>
+        <div class="rc-value green">${typeInfo.label}</div>
+        <div class="rc-sub">Heat aging test per ${basicReq.heatAgedStd || 'D573, 70h @ ' + typeInfo.temp + '°C'}</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-title">Oil Resistance (Class ${classCode})</div>
+        <div class="rc-value">${classInfo.swell}</div>
+        <div class="rc-sub">${classInfo.label}</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-title">Durometer Hardness (Shore A)</div>
+        <div class="rc-value">${hardness}0 ± 5 points</div>
+        <div class="rc-sub">Code digit: ${hardness} — Test Method D2240, Type A</div>
+      </div>
+      <div class="result-card">
+        <div class="rc-title">Min Tensile Strength</div>
+        <div class="rc-value">${tensile} MPa</div>
+        <div class="rc-sub">${psi} psi — Test Method D412, Die C</div>
+      </div>
+    </div>
+
+    <!-- BASIC REQUIREMENTS TABLE -->
+    <div class="table-section">
+      <div class="table-title">Basic Requirements — ${matDes} Material (Table 6)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Requirement</th>
+            <th>Test Method</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tensile Strength</td>
+            <td class="accent">${tensile} MPa (${psi} psi) min</td>
+            <td class="muted">D412, Die C</td>
+          </tr>
+          <tr>
+            <td>Elongation at Break</td>
+            <td>Per Table 6 for hardness ${hardness} / tensile ${tensile} MPa</td>
+            <td class="muted">D412, Die C</td>
+          </tr>
+          <tr>
+            <td>Hardness Change (heat aged)</td>
+            <td>±15 points max</td>
+            <td class="muted">${basicReq.heatAgedStd || 'D573'}</td>
+          </tr>
+          <tr>
+            <td>Tensile Strength Change (heat aged)</td>
+            <td>±30% max</td>
+            <td class="muted">${basicReq.heatAgedStd || 'D573'}</td>
+          </tr>
+          <tr>
+            <td>Elongation Change (heat aged)</td>
+            <td>−50% max</td>
+            <td class="muted">${basicReq.heatAgedStd || 'D573'}</td>
+          </tr>
+          <tr>
+            <td>Oil Immersion Volume Swell</td>
+            <td class="${classCode==='A'?'muted':'accent'}">${basicReq.oilImmersion || classInfo.label}</td>
+            <td class="muted">D471, IRM 903 Oil, 70h</td>
+          </tr>
+          <tr>
+            <td>Compression Set</td>
+            <td>${basicReq.compSet || '50% max'}</td>
+            <td class="muted">D395, Method B, Solid</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SUFFIX TABLE -->
+    ${suffixParts.length ? `
+    <div class="table-section">
+      <div class="table-title">Suffix Requirements Specified</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Suffix Code</th>
+            <th>Description</th>
+            <th>Test Method Reference</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${suffixParts.map(s => {
+            const code = s.replace(/[0-9\-]/g,'').replace('EO','EO').replace('EF','EF').replace('EA','EA');
+            const def = SUFFIX_DEFS.find(d => s.startsWith(d.code)) || {};
+            const methodMap = {
+              'A':'D573 or D865 (70h or 168h)',
+              'B':'D395, Method B',
+              'C':'D1171 (ozone/weather)',
+              'D':'D575',
+              'EA':'D471 (distilled water/glycol)',
+              'EF':'D471 (Reference Fuels A–D)',
+              'EO':'D471 (IRM 902 / IRM 903)',
+              'F':'D2137 Method A or D1329',
+              'G':'D624, Die B or C',
+              'H':'D430',
+              'J':'(specify)',
+              'K':'D429, Method A or B',
+              'M':'(specify)',
+              'N':'(specify)',
+              'P':'D925, Method B',
+              'R':'D945',
+              'Z':'(specify)',
+            };
+            const matchKey = Object.keys(methodMap).find(k => s.startsWith(k)) || '';
+            return `<tr>
+              <td class="accent">${s}</td>
+              <td>${def.desc || '—'}</td>
+              <td class="muted">${methodMap[matchKey] || '—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <!-- COMPARABLE MATERIALS -->
+    <div class="table-section">
+      <div class="table-title">Related Standard Designations (same type/class family)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Designation</th>
+            <th>Typical Polymer</th>
+            <th>Key Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${getRelatedMaterials(typeCode, classCode, matDes).map(r => `
+            <tr>
+              <td class="accent">${r.des}</td>
+              <td>${r.polymer}</td>
+              <td class="muted">${r.note}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NOTES -->
+    <div style="background:var(--surface);border:1px solid var(--border);padding:16px 20px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Important Notes</div>
+      <div style="font-size:12px;color:var(--text-muted);line-height:1.8;">
+        • Basic requirements (Table 6) are <strong style="color:var(--text);">always in effect</strong> unless explicitly superseded by suffix requirements in the line call-out.<br>
+        • ASTM Oil No. 2 and No. 3 are no longer commercially available; replaced by <strong style="color:var(--text);">IRM 902</strong> and <strong style="color:var(--text);">IRM 903</strong> oils per Practice D5964.<br>
+        • Test values in Table 6 are based on <strong style="color:var(--text);">standard lab specimens</strong>. Parts cut from finished products may deviate by ±10% on tensile/elongation (D3183).<br>
+        • Grade 1 = basic requirements only. Grade 2+ = suffix requirements apply per Table 6.
+      </div>
+    </div>
+  `;
+}
+
+function getRelatedMaterials(typeCode, classCode, currentDes) {
+  const related = [];
+  // Same type, adjacent classes
+  const allClasses = 'ABCDEFGHJK'.split('');
+  const ci = allClasses.indexOf(classCode);
+  allClasses.forEach(c => {
+    if (c === classCode) return;
+    const des = typeCode + c;
+    if (POLYMERS[des] && related.length < 4) {
+      const diff = ci < allClasses.indexOf(c) ? 'Better oil resistance' : 'Less oil resistance required';
+      related.push({ des, polymer: POLYMERS[des].split(',')[0], note: diff });
+    }
+  });
+  // Same class, adjacent types
+  const allTypes = 'ABCDEFGHJK'.split('');
+  const ti = allTypes.indexOf(typeCode);
+  allTypes.forEach(t => {
+    if (t === typeCode) return;
+    const des = t + classCode;
+    if (POLYMERS[des] && related.length < 6) {
+      const diff = ti < allTypes.indexOf(t) ? 'Higher temp. resistance' : 'Lower temp. class';
+      related.push({ des, polymer: POLYMERS[des].split(',')[0], note: diff });
+    }
+  });
+  return related.slice(0, 5);
+}
+
+function resetAll() {
+  document.getElementById('grade').value = '2';
+  document.getElementById('type').value = 'B';
+  document.getElementById('class').value = 'A';
+  document.getElementById('hardness').value = '7';
+  document.getElementById('tensile').value = '14';
+  document.getElementById('lowtemp').value = '';
+  document.querySelectorAll('.checkbox-item.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.suffix-item.active').forEach(el => el.classList.remove('active'));
+  document.getElementById('empty-state').style.display = 'flex';
+  document.getElementById('result-panel').style.display = 'none';
+}
+
+// Init
+initSuffixList();
+</script>
+</body>
+</html>

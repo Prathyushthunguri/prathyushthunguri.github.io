@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hardness Converter</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#e0e0e0;display:flex;justify-content:center;padding:24px 12px;min-height:100vh;}
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+    .card{background:#fff;width:100%;max-width:860px;border:1px solid #aaa;box-shadow:0 3px 12px rgba(0,0,0,0.18);display:flex;flex-direction:column;}
+
+    .card-header{background:#f2f2f2;border-bottom:2px solid #bbb;padding:12px 18px 10px;}
+    .card-header h1{font-size:16px;font-weight:700;color:#111;}
+    .card-header p{font-size:11px;color:#555;margin-top:3px;}
+
+    .body{padding:20px 18px;display:flex;flex-direction:column;gap:18px;}
+
+    /* Input section */
+    .input-section{background:#f8f8f8;border:1px solid #ddd;border-radius:6px;padding:16px;}
+    .input-section h3{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+    .input-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+    .input-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px;}
+    .input-group label{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.5px;}
+    .input-group select, .input-group input{
+      border:1px solid #bbb;border-radius:3px;padding:8px 10px;
+      font-size:13px;font-weight:600;color:#111;background:#fff;outline:none;
+    }
+    .input-group select{
+      background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath fill='%23555' d='M4.5 5L0 0h9z'/%3E%3C/svg%3E") no-repeat right 8px center;
+      appearance:none;padding-right:26px;cursor:pointer;
+    }
+    .input-group input:focus, .input-group select:focus{border-color:#3a80d2;}
+    .clear-btn{
+      background:#888;color:#fff;border:none;border-radius:4px;
+      padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;
+      align-self:flex-end;
+    }
+    .clear-btn:hover{background:#666;}
+
+    /* Results */
+    .results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;}
+    .result-card{
+      border:1px solid #ddd;border-radius:6px;padding:14px 14px 12px;
+      background:#fff;position:relative;overflow:hidden;
+      transition:box-shadow .15s;
+    }
+    .result-card.active{border-color:#2c5f8a;box-shadow:0 0 0 2px rgba(44,95,138,.15);}
+    .result-card.source{border-color:#e07b00;background:#fffbf5;}
+    .result-card .scale-name{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
+    .result-card .scale-full{font-size:10px;color:#888;margin-bottom:8px;}
+    .result-card .val{font-size:26px;font-weight:700;color:#111;font-family:'Courier New',monospace;line-height:1;}
+    .result-card .val.na{font-size:13px;color:#bbb;font-family:inherit;font-weight:400;margin-top:6px;}
+    .result-card .range-bar{height:5px;background:#eee;border-radius:3px;margin-top:10px;overflow:hidden;}
+    .result-card .range-fill{height:100%;background:#2c5f8a;border-radius:3px;transition:width .4s;}
+    .result-card.source .range-fill{background:#e07b00;}
+    .result-card .range-label{font-size:9.5px;color:#aaa;margin-top:3px;}
+
+    /* Comparison bar */
+    .compare-section{background:#f8f8f8;border:1px solid #ddd;border-radius:6px;padding:14px 16px;}
+    .compare-section h3{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+    .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .bar-label{width:52px;font-size:11px;font-weight:700;color:#444;text-align:right;flex-shrink:0;}
+    .bar-track{flex:1;height:18px;background:#eee;border-radius:3px;overflow:hidden;position:relative;}
+    .bar-fill{height:100%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;transition:width .5s;}
+    .bar-fill span{font-size:10px;color:#fff;font-weight:700;white-space:nowrap;}
+    .bar-unit{width:55px;font-size:10px;color:#888;flex-shrink:0;}
+
+    /* Material examples */
+    .examples-section{background:#f8f8f8;border:1px solid #ddd;border-radius:6px;padding:14px 16px;}
+    .examples-section h3{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+    .examples-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+    .examples-table th{padding:5px 8px;text-align:left;background:#eee;border-bottom:1px solid #ccc;font-size:10.5px;color:#444;font-weight:700;}
+    .examples-table td{padding:5px 8px;border-bottom:1px solid #f0f0f0;color:#333;}
+    .examples-table tr:last-child td{border-bottom:none;}
+    .examples-table tr.highlight{background:#fffbf5;}
+    .examples-table tr.highlight td{font-weight:600;}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
+    .card-footer{background:#f0f0f0;border-top:2px solid #bbb;padding:5px 14px;font-size:10px;color:#777;display:flex;justify-content:space-between;}
+    .note{font-size:10px;color:#888;font-style:italic;margin-top:4px;}
+  </style>
+</head>
+<body>
+  <nav class="top-navbar">
+  <div class="navbar-left">Physical &amp; Chemical Properties of Industrial Materials</div>
+  <div class="navbar-right">
+    <button onclick="location.href='material_properties.html'">Properties</button>
+    <button onclick="location.href='moc_welding.html'">MOC &amp; Welding</button>
+    <button onclick="location.href='moc_hardness_plating.html'">Hardness &amp; Plating</button>
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+  </nav>
+<div class="card">
+  <div class="card-header">
+    <h1>Hardness Conversion Tool</h1>
+    <p>Convert between Rockwell (HRC / HRB), Vickers (HV), Brinell (HB), Knoop (HK), Shore (HS) and Mohs scales</p>
+  </div>
+
+  <div class="body">
+    <!-- Input -->
+    <div class="input-section">
+      <h3>Input</h3>
+      <div class="input-row">
+        <div class="input-group" style="max-width:160px">
+          <label>Scale</label>
+          <select id="fromScale" onchange="onScaleChange()">
+            <option value="HRC">HRC — Rockwell C</option>
+            <option value="HRB">HRB — Rockwell B</option>
+            <option value="HV">HV — Vickers</option>
+            <option value="HB">HB — Brinell</option>
+            <option value="HK">HK — Knoop</option>
+            <option value="HS">HS — Shore</option>
+            <option value="Mohs">Mohs Scale</option>
+          </select>
+        </div>
+        <div class="input-group" style="max-width:140px">
+          <label>Value</label>
+          <input type="number" id="inputVal" placeholder="e.g. 60" min="0" step="0.1" oninput="autoConvert()" onchange="autoConvert()"/>
+        </div>
+        <button class="clear-btn" onclick="clearAll()">Clear</button>
+      </div>
+      <div class="note" id="range-note">HRC range: 20 – 68</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-grid" id="results-grid">
+      <div class="result-card" id="rc-HRC">
+        <div class="scale-name">HRC</div>
+        <div class="scale-full">Rockwell C</div>
+        <div class="val na" id="v-HRC">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HRC" style="width:0%"></div></div>
+        <div class="range-label">Range: 20 – 68</div>
+      </div>
+      <div class="result-card" id="rc-HRB">
+        <div class="scale-name">HRB</div>
+        <div class="scale-full">Rockwell B</div>
+        <div class="val na" id="v-HRB">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HRB" style="width:0%"></div></div>
+        <div class="range-label">Range: 60 – 100</div>
+      </div>
+      <div class="result-card" id="rc-HV">
+        <div class="scale-name">HV</div>
+        <div class="scale-full">Vickers</div>
+        <div class="val na" id="v-HV">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HV" style="width:0%"></div></div>
+        <div class="range-label">Range: 100 – 900</div>
+      </div>
+      <div class="result-card" id="rc-HB">
+        <div class="scale-name">HB</div>
+        <div class="scale-full">Brinell</div>
+        <div class="val na" id="v-HB">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HB" style="width:0%"></div></div>
+        <div class="range-label">Range: 100 – 650</div>
+      </div>
+      <div class="result-card" id="rc-HK">
+        <div class="scale-name">HK</div>
+        <div class="scale-full">Knoop</div>
+        <div class="val na" id="v-HK">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HK" style="width:0%"></div></div>
+        <div class="range-label">Range: 100 – 1000</div>
+      </div>
+      <div class="result-card" id="rc-HS">
+        <div class="scale-name">HS</div>
+        <div class="scale-full">Shore</div>
+        <div class="val na" id="v-HS">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-HS" style="width:0%"></div></div>
+        <div class="range-label">Range: 30 – 100</div>
+      </div>
+      <div class="result-card" id="rc-Mohs">
+        <div class="scale-name">Mohs</div>
+        <div class="scale-full">Mohs Scale</div>
+        <div class="val na" id="v-Mohs">—</div>
+        <div class="range-bar"><div class="range-fill" id="b-Mohs" style="width:0%"></div></div>
+        <div class="range-label">Range: 1 – 10</div>
+      </div>
+    </div>
+
+    <!-- Visual bar comparison -->
+    <div class="compare-section" id="compare-section" style="display:none">
+      <h3>Visual Comparison</h3>
+      <div class="bar-row">
+        <div class="bar-label">HRC</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HRC" style="width:0%;background:#2c5f8a"><span id="bs-HRC"></span></div></div>
+        <div class="bar-unit">/ 68</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">HRB</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HRB" style="width:0%;background:#3a7abf"><span id="bs-HRB"></span></div></div>
+        <div class="bar-unit">/ 100</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">HV</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HV" style="width:0%;background:#2e8b57"><span id="bs-HV"></span></div></div>
+        <div class="bar-unit">/ 900</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">HB</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HB" style="width:0%;background:#6b8e23"><span id="bs-HB"></span></div></div>
+        <div class="bar-unit">/ 650</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">HK</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HK" style="width:0%;background:#8b6914"><span id="bs-HK"></span></div></div>
+        <div class="bar-unit">/ 1000</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">HS</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-HS" style="width:0%;background:#8b3a3a"><span id="bs-HS"></span></div></div>
+        <div class="bar-unit">/ 100</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Mohs</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-Mohs" style="width:0%;background:#5a3a8b"><span id="bs-Mohs"></span></div></div>
+        <div class="bar-unit">/ 10</div>
+      </div>
+    </div>
+
+    <!-- Material reference table -->
+    <div class="examples-section">
+      <h3>Material Hardness Reference</h3>
+      <table class="examples-table">
+        <thead>
+          <tr><th>Material / Condition</th><th>HRC</th><th>HV</th><th>HB</th><th>Mohs</th><th>Typical Use</th></tr>
+        </thead>
+        <tbody id="ref-table">
+          <tr><td><span class="dot" style="background:#c0c0c0"></span>Aluminium alloy</td><td>—</td><td>60–100</td><td>50–100</td><td>2–3</td><td>Structural, aerospace</td></tr>
+          <tr><td><span class="dot" style="background:#cd7f32"></span>Copper / Brass</td><td>—</td><td>60–200</td><td>60–180</td><td>2.5–3</td><td>Piping, fittings</td></tr>
+          <tr><td><span class="dot" style="background:#888"></span>Mild steel (A36)</td><td>—</td><td>120–160</td><td>120–160</td><td>4</td><td>Structural</td></tr>
+          <tr><td><span class="dot" style="background:#aaa"></span>SS 304 (annealed)</td><td>—</td><td>160–200</td><td>150–190</td><td>5–6</td><td>General piping</td></tr>
+          <tr><td><span class="dot" style="background:#888"></span>SS 316L</td><td>—</td><td>170–210</td><td>160–200</td><td>5–6</td><td>Corrosive service</td></tr>
+          <tr><td><span class="dot" style="background:#666"></span>Carbon steel (norm.)</td><td>10–25</td><td>200–280</td><td>190–270</td><td>5–6</td><td>Pressure vessels</td></tr>
+          <tr><td><span class="dot" style="background:#555"></span>Alloy steel (Q&T)</td><td>28–40</td><td>280–390</td><td>270–370</td><td>6</td><td>High-pressure fittings</td></tr>
+          <tr><td><span class="dot" style="background:#444"></span>Tool steel (D2)</td><td>55–62</td><td>600–750</td><td>550–650</td><td>7–8</td><td>Dies, cutting tools</td></tr>
+          <tr><td><span class="dot" style="background:#333"></span>HSS (M2)</td><td>62–65</td><td>750–850</td><td>—</td><td>7–8</td><td>Drill bits, cutting</td></tr>
+          <tr><td><span class="dot" style="background:#111"></span>Tungsten carbide</td><td>70–75*</td><td>1500–2000</td><td>—</td><td>9</td><td>Wear parts, inserts</td></tr>
+          <tr><td><span class="dot" style="background:#66ccff"></span>Diamond</td><td>—</td><td>~10000</td><td>—</td><td>10</td><td>Hardest known mineral</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="margin-top:6px">* Extrapolated — HRC scale does not apply above 68. Conversions are approximate per ASTM E140.</div>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <span>Hardness Conversion — per ASTM E140 / ISO 18265</span>
+    <span id="result-summary"></span>
+  </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "../login.html"; // Redirect if not logged in
+    }
+    });
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   CONVERSION TABLE — keyed by HV (Vickers) as master scale
+   Source: ASTM E140 Table 1 (steel)
+   Each entry: [HV, HRC, HRB, HB, HK, HS]
+══════════════════════════════════════════════════════════ */
+const TABLE = [
+  // HV,   HRC,   HRB,   HB,   HK,   HS
+  [940,  68.0,  null,  null, 920,  97],
+  [900,  67.0,  null,  null, 895,  95],
+  [865,  66.0,  null,  null, 870,  93],
+  [832,  65.0,  null,  null, 846,  91],
+  [800,  64.0,  null,  null, 822,  89],
+  [772,  63.0,  null,  null, 799,  87],
+  [746,  62.0,  null,  null, 776,  85],
+  [720,  61.0,  null,  null, 754,  83],
+  [697,  60.0,  null,  null, 732,  81],
+  [674,  59.0,  null,  null, 710,  79],
+  [653,  58.0,  null,  null, 690,  77],
+  [633,  57.0,  null,  null, 670,  75],
+  [613,  56.0,  null,  null, 650,  73],
+  [595,  55.0,  null,  null, 630,  72],
+  [577,  54.0,  null,  null, 612,  70],
+  [560,  53.0,  null,  null, 594,  68],
+  [544,  52.0,  null,  null, 576,  67],
+  [528,  51.0,  null,  null, 558,  65],
+  [513,  50.0,  null,  null, 542,  64],
+  [498,  49.0,  null,  null, 526,  62],
+  [484,  48.0,  null,  null, 510,  60],
+  [471,  47.0,  null,  null, 495,  59],
+  [458,  46.0,  null,  null, 480,  57],
+  [446,  45.0,  null,  null, 466,  56],
+  [434,  44.0,  null,  null, 452,  54],
+  [423,  43.0,  null,  null, 438,  53],
+  [412,  42.0,  null,  null, 426,  52],
+  [402,  41.0,  null,  null, 414,  50],
+  [392,  40.0,  null,  390, 402,  49],
+  [382,  39.0,  null,  381, 391,  48],
+  [372,  38.0,  null,  371, 380,  47],
+  [363,  37.0,  null,  362, 370,  46],
+  [354,  36.0,  null,  353, 360,  44],
+  [345,  35.0,  null,  344, 351,  43],
+  [336,  34.0,  null,  336, 342,  42],
+  [327,  33.0,  null,  327, 334,  41],
+  [318,  32.0,  null,  318, 326,  40],
+  [310,  31.0,  null,  310, 318,  39],
+  [302,  30.0,  null,  302, 311,  38],
+  [294,  29.0,  null,  294, 304,  37],
+  [286,  28.0,  null,  286, 297,  36],
+  [279,  27.0,  null,  279, 290,  35],
+  [272,  26.0,  null,  272, 284,  34],
+  [266,  25.0,  null,  266, 278,  33],
+  [260,  24.0,  null,  260, 272,  33],
+  [254,  23.0,  null,  254, 266,  32],
+  [248,  22.0,  null,  248, 261,  31],
+  [243,  21.0,  null,  243, 256,  30],
+  [238,  20.0,  null,  238, 251,  30],
+  [230,  null,  100,   230, 243,  29],
+  [222,  null,   99,   222, 235,  28],
+  [213,  null,   98,   213, 225,  27],
+  [204,  null,   97,   204, 215,  26],
+  [196,  null,   96,   196, 206,  25],
+  [188,  null,   95,   188, 197,  24],
+  [180,  null,   94,   180, 188,  23],
+  [173,  null,   93,   173, 180,  22],
+  [166,  null,   92,   166, 173,  22],
+  [160,  null,   91,   160, 166,  21],
+  [154,  null,   90,   154, 159,  20],
+  [148,  null,   89,   148, 153,  null],
+  [143,  null,   88,   143, 147,  null],
+  [138,  null,   87,   138, 142,  null],
+  [133,  null,   86,   133, 137,  null],
+  [128,  null,   85,   128, 132,  null],
+  [124,  null,   84,   124, 127,  null],
+  [120,  null,   83,   120, 122,  null],
+  [116,  null,   82,   116, 118,  null],
+  [112,  null,   81,   112, 115,  null],
+  [109,  null,   80,   109, 111,  null],
+  [106,  null,   79,   106, 108,  null],
+  [103,  null,   78,   103, 105,  null],
+  [100,  null,   77,   100, 102,  null],
+];
+
+// Column indices in TABLE
+const IDX={HV:0,HRC:1,HRB:2,HB:3,HK:4,HS:5};
+const RANGES={HRC:[20,68],HRB:[60,100],HV:[100,940],HB:[100,650],HK:[100,1000],HS:[20,97],Mohs:[1,10]};
+const NOTES={
+  HRC:'HRC range: 20 – 68 (steels, hard materials)',
+  HRB:'HRB range: 60 – 100 (softer steels, aluminium)',
+  HV:'HV range: 100 – 940+ (universal scale)',
+  HB:'HB range: 100 – 650 (castings, non-heat-treated steels)',
+  HK:'HK range: 100 – 1000 (thin sections, coatings)',
+  HS:'Shore range: 20 – 97 (scleroscope)',
+  Mohs:'Mohs range: 1 (talc) – 10 (diamond) — qualitative mineral scale'
+};
+
+/* Mohs ↔ HV approximate mapping (non-linear) */
+const MOHS_TABLE=[
+  {mohs:1,  hv:2},
+  {mohs:2,  hv:36},
+  {mohs:3,  hv:109},
+  {mohs:4,  hv:190},
+  {mohs:5,  hv:536},
+  {mohs:6,  hv:800},
+  {mohs:7,  hv:1000},
+  {mohs:8,  hv:1500},
+  {mohs:9,  hv:2000},
+  {mohs:10, hv:10000},
+];
+
+function mohsToHV(m){
+  for(let i=0;i<MOHS_TABLE.length-1;i++){
+    const a=MOHS_TABLE[i],b=MOHS_TABLE[i+1];
+    if(m>=a.mohs&&m<=b.mohs){
+      const t=(m-a.mohs)/(b.mohs-a.mohs);
+      return a.hv+(b.hv-a.hv)*t;
+    }
+  }
+  return null;
+}
+function hvToMohs(hv){
+  for(let i=0;i<MOHS_TABLE.length-1;i++){
+    const a=MOHS_TABLE[i],b=MOHS_TABLE[i+1];
+    if(hv>=a.hv&&hv<=b.hv){
+      const t=(hv-a.hv)/(b.hv-a.hv);
+      return +(a.mohs+(b.mohs-a.mohs)*t).toFixed(1);
+    }
+  }
+  if(hv<MOHS_TABLE[0].hv) return 1;
+  return 10;
+}
+
+/* Linear interpolation in table for a given scale */
+function interpFromHV(hvVal, col){
+  // Find two surrounding rows
+  for(let i=0;i<TABLE.length-1;i++){
+    const r0=TABLE[i], r1=TABLE[i+1];
+    if(hvVal<=r0[0]&&hvVal>=r1[0]){
+      const t=(hvVal-r0[0])/(r1[0]-r0[0]);
+      const v0=r0[col], v1=r1[col];
+      if(v0===null||v1===null) return null;
+      return v0+(v1-v0)*t;
+    }
+  }
+  return null;
+}
+
+function scaleToHV(scale, val){
+  if(scale==='HV') return val;
+  if(scale==='Mohs') return mohsToHV(val);
+  const col=IDX[scale];
+  // Find rows bracketing val
+  for(let i=0;i<TABLE.length-1;i++){
+    const r0=TABLE[i],r1=TABLE[i+1];
+    const v0=r0[col],v1=r1[col];
+    if(v0===null||v1===null) continue;
+    const lo=Math.min(v0,v1), hi=Math.max(v0,v1);
+    if(val>=lo&&val<=hi){
+      const t=(val-v0)/(v1-v0);
+      return r0[0]+(r1[0]-r0[0])*t;
+    }
+  }
+  return null;
+}
+
+function onScaleChange(){
+  const sc=document.getElementById('fromScale').value;
+  document.getElementById('range-note').textContent=NOTES[sc]||'';
+  document.getElementById('inputVal').placeholder=
+    sc==='HRC'?'e.g. 60':sc==='HV'?'e.g. 400':sc==='HB'?'e.g. 300':
+    sc==='HRB'?'e.g. 90':sc==='HK'?'e.g. 400':sc==='HS'?'e.g. 60':
+    sc==='Mohs'?'1–10':'value';
+  autoConvert();
+}
+
+function clearAll(){
+  document.getElementById('inputVal').value='';
+  ['HRC','HRB','HV','HB','HK','HS','Mohs'].forEach(sc=>{
+    document.getElementById('v-'+sc).textContent='—';
+    document.getElementById('v-'+sc).className='val na';
+    document.getElementById('b-'+sc).style.width='0%';
+    document.getElementById('rc-'+sc).className='result-card';
+    if(document.getElementById('bar-'+sc)){
+      document.getElementById('bar-'+sc).style.width='0%';
+      document.getElementById('bs-'+sc).textContent='';
+    }
+  });
+  document.getElementById('compare-section').style.display='none';
+  document.getElementById('result-summary').textContent='';
+}
+
+let _debounce=null;
+function autoConvert(){
+  clearTimeout(_debounce);
+  const raw=parseFloat(document.getElementById('inputVal').value);
+  if(isNaN(raw)||document.getElementById('inputVal').value===''){clearAll();return;}
+  _debounce=setTimeout(()=>convert(),120);
+}
+
+function convert(){
+  const scale=document.getElementById('fromScale').value;
+  const raw=parseFloat(document.getElementById('inputVal').value);
+  if(isNaN(raw)||raw==='') return;
+
+  // Convert input to HV first
+  const hv=scaleToHV(scale,raw);
+
+  const results={};
+  results[scale]=raw;
+
+  if(hv===null){ return; }
+
+  // Get all scales from HV
+  results['HV']=Math.round(hv);
+  results['HRC']=interpFromHV(hv,IDX.HRC);
+  results['HRB']=interpFromHV(hv,IDX.HRB);
+  results['HB'] =interpFromHV(hv,IDX.HB);
+  results['HK'] =interpFromHV(hv,IDX.HK);
+  results['HS'] =interpFromHV(hv,IDX.HS);
+  results['Mohs']=hvToMohs(hv);
+
+  // Round
+  ['HRC','HRB','HB','HK','HS'].forEach(s=>{
+    if(results[s]!==null&&results[s]!==undefined) results[s]=+results[s].toFixed(1);
+  });
+
+  // Update cards
+  ['HRC','HRB','HV','HB','HK','HS','Mohs'].forEach(sc=>{
+    const card=document.getElementById('rc-'+sc);
+    const el=document.getElementById('v-'+sc);
+    const bar=document.getElementById('b-'+sc);
+    const v=results[sc];
+    const isSrc=sc===scale;
+    card.className='result-card'+(isSrc?' source':v!==null?' active':'');
+
+    if(v===null||v===undefined){
+      el.textContent='N/A';
+      el.className='val na';
+      bar.style.width='0%';
+    } else {
+      el.textContent=sc==='Mohs'?v.toFixed(1):v;
+      el.className='val';
+      const [lo,hi]=RANGES[sc];
+      const pct=Math.min(100,Math.max(0,(v-lo)/(hi-lo)*100));
+      bar.style.width=pct+'%';
+    }
+
+    // Bar chart
+    const bigBar=document.getElementById('bar-'+sc);
+    const bigLbl=document.getElementById('bs-'+sc);
+    if(bigBar&&bigLbl){
+      if(v===null||v===undefined){bigBar.style.width='0%';bigLbl.textContent='';}
+      else{
+        const [lo,hi]=RANGES[sc];
+        const pct=Math.min(100,Math.max(2,(v-lo)/(hi-lo)*100));
+        bigBar.style.width=pct+'%';
+        bigLbl.textContent=sc==='Mohs'?v.toFixed(1):v;
+      }
+    }
+  });
+
+  document.getElementById('compare-section').style.display='block';
+  document.getElementById('result-summary').textContent=
+    `${scale} ${raw} → HV ${results['HV']||'—'} | HRC ${results['HRC']??'—'} | HB ${results['HB']??'—'} | Mohs ${results['Mohs']||'—'}`;
+
+  // Highlight closest material row
+  highlightMaterial(hv);
+}
+
+function highlightMaterial(hv){
+  const rows=document.querySelectorAll('#ref-table tr');
+  rows.forEach(r=>r.classList.remove('highlight'));
+  // rough check: find matching HV range from table text
+  // (simple visual feedback only)
+}
+
+onScaleChange();
+</script>
+</body>
+</html>
