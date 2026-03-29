@@ -254,6 +254,7 @@
     <button class="primary" onclick="navGenerate()">▶ Generate Designation</button>
     <button onclick="navMoc()">⇄ MOC Equivalent</button>
     <button onclick="resetAll()">↺ Reset</button>
+    <button onclick='location.href = "../secret.html"'>Home</button>
   </div>
 </nav>
 
@@ -284,8 +285,9 @@
         <div class="field-group">
           <div class="field-label">01 · Grade Number</div>
           <select id="grade">
+            <option value="">— Select Grade —</option>
             <option value="1">1 — Basic requirements only</option>
-            <option value="2" selected>2 — Suffix requirements apply</option>
+            <option value="2">2 — Suffix requirements apply</option>
             <option value="3">3</option><option value="4">4</option>
             <option value="5">5</option><option value="6">6</option>
             <option value="7">7</option><option value="8">8</option>
@@ -297,7 +299,7 @@
           <select id="type">
             <option value="">— Select Type —</option>
             <option value="A">A — 70°C</option>
-            <option value="B" selected>B — 100°C</option>
+            <option value="B">B — 100°C</option>
             <option value="C">C — 125°C</option>
             <option value="D">D — 150°C</option>
             <option value="E">E — 175°C</option>
@@ -313,7 +315,7 @@
           <div class="field-label">03 · Class — Oil Resistance (Max Vol. Swell in IRM 903)</div>
           <select id="class">
             <option value="">— Select Class —</option>
-            <option value="A" selected>A — No requirement</option>
+            <option value="A">A — No requirement</option>
             <option value="B">B — 140% max</option>
             <option value="C">C — 120% max</option>
             <option value="D">D — 100% max</option>
@@ -335,7 +337,7 @@
             <option value="4">40 Shore A → digit: 4</option>
             <option value="5">50 Shore A → digit: 5</option>
             <option value="6">60 Shore A → digit: 6</option>
-            <option value="7" selected>70 Shore A → digit: 7</option>
+            <option value="7">70 Shore A → digit: 7</option>
             <option value="8">80 Shore A → digit: 8</option>
             <option value="9">90 Shore A → digit: 9</option>
           </select>
@@ -354,7 +356,7 @@
             <option value="9">9 MPa (1305 psi) → 09</option>
             <option value="10">10 MPa (1450 psi) → 10</option>
             <option value="12">12 MPa (1740 psi) → 12</option>
-            <option value="14" selected>14 MPa (2031 psi) → 14</option>
+            <option value="14">14 MPa (2031 psi) → 14</option>
             <option value="16">16 MPa (2320 psi) → 16</option>
             <option value="17">17 MPa (2466 psi) → 17</option>
             <option value="21">21 MPa (3046 psi) → 21</option>
@@ -433,11 +435,6 @@
             <div class="checkbox-item" data-value="resilience" onclick="toggleCb(this)"><div class="cb-dot"></div><span class="cb-label">Resilience</span></div>
           </div>
         </div>
-
-        <div class="btn-row">
-          <button class="btn-generate" onclick="configure()">▶ Generate Designation</button>
-          <button class="btn-reset" onclick="resetAll()">↺</button>
-        </div>
       </div><!-- /sidebar -->
 
       <div>
@@ -460,7 +457,7 @@
         <div class="section-label">Step 1 · Enter Your Code</div>
         <div class="field-group">
           <div class="field-label">Existing ASTM D2000 Designation</div>
-          <input type="text" class="moc-input" id="moc-input" placeholder="M2BA714" maxlength="30" oninput="parseMocInput()" />
+          <input type="text" class="moc-input" id="moc-input" placeholder="" maxlength="30" oninput="parseMocInput()" />
           <div class="field-hint">Enter base code, e.g. M2BA714 or 2BF614</div>
         </div>
         <div id="parsed-display" style="display:none;">
