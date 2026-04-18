@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Valves — Engineering Reference</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0ee; color: #333; font-size: 14px; line-height: 1.6; }
+
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer;
+      font-size: 14px; border-radius: 4px; transition: background 0.2s;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    .main-container {
+      max-width: 1800px; margin: 80px auto 40px auto;
+      padding: 20px; background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 12px;
+    }
+    @media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 14px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active {
+      background: #ffffff; color: #222; font-weight: bold;
+      border-bottom: 2px solid #fff; margin-bottom: -2px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    h2 { color: #222; margin-bottom: 14px; font-size: 18px; }
+    h3 { margin-top: 20px; margin-bottom: 8px; color: #444; font-size: 15px; }
+    p { margin-bottom: 8px; color: #444; }
+    ul { padding-left: 22px; margin-bottom: 6px; }
+    li { margin-bottom: 4px; font-size: 13.5px; }
+    strong { color: #222; }
+
+    table {
+      width: 100%; border-collapse: collapse; background: #fff;
+      box-shadow: 0 0 6px rgba(0,0,0,0.08); margin-bottom: 20px;
+      border-radius: 8px; overflow: hidden; font-size: 13px;
+    }
+    th {
+      background-color: #f2f2f2; color: #222; font-weight: bold;
+      padding: 8px 12px; text-align: left; border: 1px solid #ccc; font-size: 12px;
+    }
+    td { border: 1px solid #ccc; padding: 8px 12px; vertical-align: top; }
+    tr:nth-child(even) td { background-color: #fafafa; }
+    tr:hover td { background-color: #f5f5f5; }
+
+    .valve-prop-table td:first-child {
+      width: 140px; font-weight: 600; color: #444;
+      background-color: #f9f9f9; white-space: nowrap;
+    }
+
+    .note-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #333;
+      border-radius: 0 4px 4px 0;
+    }
+    .warn-box {
+      background: #fff8f2; border-left: 4px solid #b85c00;
+      padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #333;
+      border-radius: 0 4px 4px 0;
+    }
+    .warn-box strong { color: #b85c00; }
+
+    @media print { .top-navbar { display: none; } .main-container { margin-top: 0; box-shadow: none; } }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">Valves — Engineering Reference</div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <div class="tab-bar">
+    <button onclick="showTab('selection',this)" class="active">Selection Guide</button>
+    <button onclick="showTab('gate',this)">Gate</button>
+    <button onclick="showTab('globe',this)">Globe</button>
+    <button onclick="showTab('ball',this)">Ball</button>
+    <button onclick="showTab('check',this)">Check</button>
+    <button onclick="showTab('butterfly',this)">Butterfly</button>
+    <button onclick="showTab('plug',this)">Plug</button>
+    <button onclick="showTab('diaphragm',this)">Diaphragm</button>
+    <button onclick="showTab('needle',this)">Needle</button>
+    <button onclick="showTab('relief',this)">Pressure Relief</button>
+    <button onclick="showTab('control',this)">Control</button>
+    <button onclick="showTab('solenoid',this)">Solenoid</button>
+    <button onclick="showTab('pinch',this)">Pinch</button>
+  </div>
+
+  <!-- ══ SELECTION GUIDE ══ -->
+  <div class="tab-panel active" id="tab-selection">
+    <h2>Key Considerations for Valve Selection</h2>
+    <table>
+      <thead><tr><th>S.No</th><th>Property</th><th>Selection Guidance</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Fluid Type</td><td>Corrosive fluids require materials like stainless steel or PTFE (e.g., diaphragm, plug valves). Slurries favour pinch or diaphragm valves.</td></tr>
+        <tr><td>2</td><td>Pressure and Temperature</td><td>High-pressure systems need robust valves like gate or trunnion ball valves; high temperatures limit diaphragm and pinch valves.</td></tr>
+        <tr><td>3</td><td>Flow Requirements</td><td>Full flow (ball, gate) vs. precise throttling (globe, needle).</td></tr>
+        <tr><td>4</td><td>Actuation</td><td>Manual, pneumatic, electric, or hydraulic, with control valves often requiring automation.</td></tr>
+        <tr><td>5</td><td>Size and Space</td><td>Butterfly valves are ideal for large pipelines; needle and solenoid valves suit compact systems.</td></tr>
+        <tr><td>6</td><td>Maintenance</td><td>Diaphragm and pinch valves are low-maintenance; lubricated plug valves require regular upkeep.</td></tr>
+        <tr><td>7</td><td>Cost</td><td>Butterfly and pinch valves are cost-effective for large sizes; control valves are expensive due to automation.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Standards &amp; Specifications</h2>
+    <table>
+      <thead><tr><th>Standard</th><th>Scope</th></tr></thead>
+      <tbody>
+        <tr><td>API 6D</td><td>Pipeline valves (gate, ball).</td></tr>
+        <tr><td>ASME B16.34</td><td>Pressure/temperature ratings for valves.</td></tr>
+        <tr><td>ANSI/ASME B16.10</td><td>Face-to-face dimensions; diaphragm valves often follow MSS SP-88.</td></tr>
+        <tr><td>FDA 177:2600</td><td>Hygienic valves in food and pharmaceutical industries.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ GATE ══ -->
+  <div class="tab-panel" id="tab-gate">
+    <h2>Gate Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Designed for on/off control, providing straight-line flow with minimal pressure drop when fully open. Not suitable for throttling due to potential damage to the gate and seat.</td></tr>
+        <tr><td>Design</td><td>Features a gate (wedge or parallel) that moves perpendicular to the flow path, actuated by a threaded stem connected to a handwheel or actuator.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Rising Stem:</strong> Stem moves visibly up/down, indicating valve position.</li><li><strong>Non-Rising Stem:</strong> Stem remains stationary, ideal for compact spaces.</li><li><strong>Wedge Gate:</strong> Common for tight sealing in liquid systems.</li><li><strong>Parallel Slide Gate:</strong> Used in high-pressure steam or gas systems.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Isolation in oil and gas pipelines, water treatment, and power plants.</li><li>Refineries for crude oil and product isolation.</li><li>Mining and wastewater treatment for water and inert substances.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Minimal pressure drop when fully open.</li><li>Reliable shutoff for high-pressure and high-temperature systems.</li><li>Simple to operate.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Slow operation (multi-turn).</li><li>Prone to erosion if used for throttling.</li><li>Susceptible to sediment buildup, affecting sealing.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Carbon steel, stainless steel, or ductile iron, with graphite gaskets for high-temperature applications.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ GLOBE ══ -->
+  <div class="tab-panel" id="tab-globe">
+    <h2>Globe Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Excel in throttling and flow regulation, as well as on/off control, due to their linear motion design.</td></tr>
+        <tr><td>Design</td><td>Features a spherical body with a movable disc (plug) that seats against a stationary ring, creating an S-shaped flow path. Stem movement is linear, often manually operated or actuator-driven.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Tee Pattern (Z-body):</strong> Standard for throttling, with higher pressure drop.</li><li><strong>Angle Pattern:</strong> 90° flow redirection, used in piping elbows.</li><li><strong>Y-Pattern:</strong> Reduces pressure drop for high-flow applications.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Flow regulation in refineries (mixing and separation processes).</li><li>Steam systems, chemical plants, and HVAC for precise control.</li><li>Breweries for regulating liquid and gas flow.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Precise flow control.</li><li>Good shutoff capability.</li><li>Shorter stroke than gate valves for faster operation.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Higher pressure drop due to flow path.</li><li>Not ideal for slurries or viscous fluids.</li><li>Limited to moderate pressures (up to 300 PSI in some cases).</li></ul></td></tr>
+        <tr><td>Materials</td><td>Stainless steel, cast iron, or brass, with seats often made of PTFE or metal for sealing.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ BALL ══ -->
+  <div class="tab-panel" id="tab-ball">
+    <h2>Ball Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Provide quick on/off control with a 90° turn, offering excellent sealing for high-pressure applications.</td></tr>
+        <tr><td>Design</td><td>Features a spherical ball with a bore that rotates to align with or block the flow. Available with manual, pneumatic, or electric actuation.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Full Port:</strong> Bore matches pipe diameter, minimising pressure drop.</li><li><strong>Reduced Port:</strong> Smaller bore, cost-effective but with some restriction.</li><li><strong>Floating Ball:</strong> Relies on fluid pressure for sealing.</li><li><strong>Trunnion-Mounted:</strong> Fixed ball for high-pressure systems.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Petrochemical and natural gas distribution.</li><li>Pharmaceutical and food processing for hygienic shutoff.</li><li>HVAC and compressed air systems.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Low friction loss and quick operation.</li><li>Excellent sealing with low torque.</li><li>Durable for high-pressure applications.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Not suitable for throttling (seat wear).</li><li>Fluid trapping in ball cavity when closed.</li><li>Higher cost for large sizes.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Stainless steel, nickel-plated brass, or UPVC, with PTFE seats.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ CHECK ══ -->
+  <div class="tab-panel" id="tab-check">
+    <h2>Check Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Allow unidirectional flow and prevent backflow, protecting equipment from reverse flow damage. Also called non-return valves.</td></tr>
+        <tr><td>Design</td><td>Operates automatically using the fluid's pressure.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Swing Check:</strong> Hinged disc swings to allow flow and closes to prevent backflow.</li><li><strong>Lift Check:</strong> Disc lifts off the seat, used in high-pressure systems.</li><li><strong>Ball Check:</strong> Ball moves to allow/block flow, ideal for wastewater.</li><li><strong>Piston Check:</strong> Piston-style disc for precise operation.</li><li><strong>Stop Check:</strong> Combines check and manual shutoff functions.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Pump and compressor discharge lines in oil and gas.</li><li>Water treatment, mining, and sewerage systems.</li><li>Breweries to prevent backflow in contaminated lines.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Automatic operation without external control.</li><li>Prevents equipment damage from backflow.</li><li>Low maintenance.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Potential for water hammer in high-pressure systems.</li><li>Limited to unidirectional flow.</li><li>Not suitable for pulsating flows.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Cast iron, stainless steel, or ductile iron with stainless steel internals.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ BUTTERFLY ══ -->
+  <div class="tab-panel" id="tab-butterfly">
+    <h2>Butterfly Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Used for on/off and throttling, known for compact design and low cost.</td></tr>
+        <tr><td>Design</td><td>Features a rotating disc mounted on a rod, turning 90° to control flow. Actuated manually, pneumatically, or electrically.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Concentric:</strong> Disc centred, for low-pressure applications.</li><li><strong>Double/Triple Offset (Eccentric):</strong> Reduces wear and improves sealing for high-pressure systems.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Large-diameter pipelines in water treatment and mining.</li><li>HVAC systems and brewery equipment for air and water flow.</li><li>Refineries for fluid isolation and regulation.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Lightweight and compact.</li><li>Low pressure drop compared to globe valves.</li><li>Cost-effective for large sizes.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Disc remains in the flow path, causing some pressure drop.</li><li>Limited throttling precision.</li><li>Sealing may degrade in high-pressure systems.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Ductile iron, stainless steel, or UPVC, with elastomeric seats (EPDM, Nitrile).</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ PLUG ══ -->
+  <div class="tab-panel" id="tab-plug">
+    <h2>Plug Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Provide on/off and limited throttling control with quarter-turn operation, similar to ball valves.</td></tr>
+        <tr><td>Design</td><td>Features a cylindrical or tapered plug with a bore that rotates to control flow. Compact and robust.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Lubricated Plug:</strong> Uses lubricant to reduce friction and enhance sealing.</li><li><strong>Non-Lubricated Plug:</strong> Employs a sleeve (e.g., PTFE) for sealing, reducing maintenance.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Crude oil distillation and product separation in refineries.</li><li>Chemical processing and slurry systems.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Quick operation and tight shutoff.</li><li>Suitable for corrosive and abrasive fluids.</li><li>Simple design with minimal parts.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Lubricated types require regular maintenance.</li><li>Higher operating torque than ball valves.</li><li>Limited throttling capability.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Cast iron, stainless steel, or PTFE-lined for corrosive fluids.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ DIAPHRAGM ══ -->
+  <div class="tab-panel" id="tab-diaphragm">
+    <h2>Diaphragm Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Ideal for on/off and throttling in systems handling corrosive, abrasive, or hygienic fluids.</td></tr>
+        <tr><td>Design</td><td>Uses a flexible diaphragm that presses against a weir or seat to control flow. Actuated manually, pneumatically, or hydraulically.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Weir Type:</strong> Common for throttling, with a raised weir for sealing.</li><li><strong>Straight-Through Type:</strong> Full bore for slurries, requiring more diaphragm stretch.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Pharmaceutical, food, and beverage industries for hygienic processes.</li><li>Wastewater treatment and slurry handling in mining.</li><li>Corrosive chemical systems.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Leak-proof seals and tight shutoff.</li><li>Isolates valve components from fluid, preventing contamination.</li><li>Easy to clean and maintain.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Limited to moderate temperatures (−62°F to 450°F) and pressures (300 PSI).</li><li>Diaphragm wear requires regular replacement.</li><li>Higher pressure drop than gate or ball valves.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Body of cast iron or stainless steel; diaphragm of rubber, PTFE, or elastomers compliant with FDA standards.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ NEEDLE ══ -->
+  <div class="tab-panel" id="tab-needle">
+    <h2>Needle Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Provide precise flow control in low-flow, high-pressure systems, ideal for fine adjustments.</td></tr>
+        <tr><td>Design</td><td>Features a slender, tapered needle that fits into a small orifice, controlled by a finely threaded stem. Linear motion with manual operation.</td></tr>
+        <tr><td>Types</td><td>No distinct sub-types; variants differ primarily in body orientation (straight, angle, multi-turn).</td></tr>
+        <tr><td>Applications</td><td><ul><li>Laboratory equipment, pressure gauges, and flow metering.</li><li>Petrochemical and biofuel industries for calibration.</li><li>Hydraulic and fuel systems.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Exceptional precision in flow regulation.</li><li>Reliable shutoff with minimal force.</li><li>Suitable for high-pressure applications.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>High pressure drop due to small orifice.</li><li>Not suitable for high-flow or viscous fluids.</li><li>Position not visually verifiable.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Stainless steel or brass for corrosion resistance.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ PRESSURE RELIEF ══ -->
+  <div class="tab-panel" id="tab-relief">
+    <h2>Pressure Relief / Safety Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Protect systems by releasing excess pressure to prevent equipment damage or catastrophic failure.</td></tr>
+        <tr><td>Design</td><td>Automatically opens at a preset pressure and closes when pressure normalises.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Spring-Loaded:</strong> Spring holds the valve closed until pressure exceeds the set point.</li><li><strong>Pilot-Operated:</strong> Uses system pressure to assist operation, ideal for high-pressure systems.</li><li><strong>Thermal Relief:</strong> Protects against pressure buildup from thermal expansion.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Boilers, pressure vessels, and pipelines in oil and gas.</li><li>Chemical plants and refineries for safety.</li><li>Power generation facilities.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Automatic protection against overpressure.</li><li>High reliability and safety.</li><li>Prevents costly equipment damage.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Limited to pressure relief, not flow control.</li><li>Requires regular testing to ensure functionality.</li><li>Potential leakage if not properly seated.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Stainless steel, carbon steel, or bronze, with resilient seats for sealing.</td></tr>
+      </tbody>
+    </table>
+    <div class="warn-box"><strong>Note:</strong> Pressure relief valves are safety-critical devices and must be sized, tested, and certified per applicable codes (e.g., ASME Section VIII, API 520/521).</div>
+  </div>
+
+  <!-- ══ CONTROL ══ -->
+  <div class="tab-panel" id="tab-control">
+    <h2>Control Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Regulate flow, pressure, temperature, or liquid level in automated systems, often integrated with actuators.</td></tr>
+        <tr><td>Design</td><td>Combines valve types (globe, butterfly, etc.) with actuators (pneumatic, electric, or hydraulic) for precise control. Equipped with positioners and sensors for automation.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Linear Motion:</strong> Globe or diaphragm for fine throttling.</li><li><strong>Rotary Motion:</strong> Ball or butterfly for quick operation.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Process control in oil and gas, chemicals, and power plants.</li><li>Water and wastewater treatment for flow regulation.</li><li>Automated brewery systems.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Precise control of process parameters.</li><li>Seamless integration with automation systems.</li><li>Versatile for various applications.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>High cost due to complexity.</li><li>Requires calibration and maintenance.</li><li>Sensitive to fluid contaminants.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Stainless steel, cast iron, or alloy-based materials.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ SOLENOID ══ -->
+  <div class="tab-panel" id="tab-solenoid">
+    <h2>Solenoid Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Provide precise on/off control in automated systems using electromagnetic actuation.</td></tr>
+        <tr><td>Design</td><td>Uses a solenoid to move a plunger or diaphragm, opening/closing the valve. Compact with electrical control.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Direct-Acting:</strong> Solenoid directly controls the valve.</li><li><strong>Pilot-Operated:</strong> Uses system pressure for operation, suitable for larger systems.</li><li><strong>Two-Way / Three-Way / Four-Way:</strong> Based on port configuration.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Automation, irrigation, and refrigeration systems.</li><li>Medical devices and hospital bed air bladders.</li><li>Breweries for gas and liquid control.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Fast and precise operation.</li><li>Ideal for remote and automated control.</li><li>Compact and lightweight.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Limited to small sizes and low-pressure systems.</li><li>Requires electrical power.</li><li>Susceptible to contamination.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Brass, stainless steel, or plastic, with elastomeric seals.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ PINCH ══ -->
+  <div class="tab-panel" id="tab-pinch">
+    <h2>Pinch Valve</h2>
+    <table class="valve-prop-table">
+      <tbody>
+        <tr><td>Function</td><td>Control flow by pinching a flexible tube, ideal for slurries and abrasive fluids.</td></tr>
+        <tr><td>Design</td><td>Features a flexible sleeve pinched by air pressure or mechanical actuation. Acts as a built-in actuator, reducing the need for external mechanisms.</td></tr>
+        <tr><td>Types</td><td><ul><li><strong>Air-Operated:</strong> Uses pneumatic pressure to pinch the sleeve.</li><li><strong>Mechanical:</strong> Uses a handwheel or actuator.</li></ul></td></tr>
+        <tr><td>Applications</td><td><ul><li>Mining and mineral processing for slurry transport.</li><li>Wastewater treatment and food processing.</li><li>Pharmaceutical industry for bulk material handling.</li></ul></td></tr>
+        <tr><td>Advantages</td><td><ul><li>Handles abrasive and corrosive fluids effectively.</li><li>No contact between mechanism and fluid, reducing contamination.</li><li>Cost-effective and low maintenance.</li></ul></td></tr>
+        <tr><td>Disadvantages</td><td><ul><li>Limited to low-pressure applications.</li><li>Sleeve wear requires periodic replacement.</li><li>Not suitable for high-temperature fluids.</li></ul></td></tr>
+        <tr><td>Materials</td><td>Aluminium or stainless steel body; rubber or elastomer sleeve.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- end main-container -->
+
+<script>
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+    authDomain: "personal-workspace-d39d0.firebaseapp.com",
+    projectId: "personal-workspace-d39d0",
+    appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, (user) => {
+    if (!user) window.location.href = "../login.html";
+  });
+</script>
+</body>
+</html>
