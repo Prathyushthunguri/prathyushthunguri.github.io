@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RAL – Rotary Valve Reference</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; }
+
+  .top-navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #222;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  z-index: 1000;
+}
+
+.navbar-left {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.navbar-right button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.navbar-right button:hover {
+  background-color: #666;
+}
+
+    /* ── TOP NAV ── */
+    header {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .logo { font-size: 20px; font-weight: bold; color: #fff; }
+
+    /* ── LAYOUT ── */
+    .wrapper {
+      max-width: 1800px;
+      margin: 80px auto 40px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 12px;
+    }
+    @media (max-width: 768px) { .wrapper { margin: 100px 10px 20px 10px; padding: 15px; } }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar a {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+      text-decoration: none;
+    }
+    .tab-bar a:hover { background: #dddddd; }
+    .tab-bar a.active { background: #ffffff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+    /* ── SECTION PANELS ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CARDS ── */
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .card h2 {
+      font-size: 16px; font-weight: 700; color: #222;
+      margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 2px solid #eee;
+    }
+    .card h3 { font-size: 13px; color: #444; margin: 14px 0 8px; font-weight: 600; }
+
+    ul { padding-left: 24px; }
+    li { margin-bottom: 6px; font-size: 13.5px; line-height: 1.6; }
+    li > ul { margin-top: 6px; }
+    li > ul li { color: #555; font-size: 13px; }
+    strong { color: #222; }
+
+    /* ── FUNC GRID ── */
+    .func-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px; margin-top: 10px;
+    }
+    .func-item {
+      background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;
+      padding: 12px 16px; font-size: 13px; color: #333;
+    }
+    .func-item .num {
+      font-size: 22px; font-weight: 700; color: #444;
+      display: block; margin-bottom: 4px;
+    }
+
+    /* ── NOTE / WARNING BOXES ── */
+    .warning-block {
+      background: #fff8f2; border-left: 4px solid #b85c00;
+      border-radius: 0 4px 4px 0; padding: 12px 16px;
+      margin: 8px 0; font-size: 13px; color: #333;
+    }
+    .warning-block strong { color: #b85c00; }
+    .note-block {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      border-radius: 0 4px 4px 0; padding: 12px 16px;
+      margin: 8px 0; font-size: 13px; color: #333;
+    }
+    .success-block {
+      background: #eaf4ea; border-left: 4px solid #2d6a2d;
+      border-radius: 0 4px 4px 0; padding: 12px 16px;
+      margin: 8px 0; font-size: 13px; color: #333;
+    }
+
+    /* ── DATA TABLES ── */
+    .data-table {
+      width: 100%; border-collapse: collapse; margin-top: 10px;
+      font-size: 13px; box-shadow: 0 0 6px rgba(0,0,0,0.08);
+      border-radius: 8px; overflow: hidden;
+    }
+    .data-table th {
+      background-color: #f2f2f2; color: #222; font-weight: bold;
+      padding: 8px 12px; text-align: left; border: 1px solid #ccc; font-size: 12px;
+    }
+    .data-table td { padding: 8px 12px; border: 1px solid #ccc; vertical-align: top; }
+    .data-table tr:nth-child(even) td { background-color: #fafafa; }
+
+    /* ── TWO-COL LAYOUT ── */
+    .two-col {
+      display: flex; justify-content: space-between; gap: 16px; margin-top: 10px;
+    }
+    .two-col > div { flex: 1; padding: 14px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; }
+    @media (max-width: 700px) { .two-col { flex-direction: column; } }
+
+    /* ── CALC SECTION ── */
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 700px) { .calc-grid { grid-template-columns: 1fr; } }
+
+    .calc-card {
+      background: #fff; border: 1px solid #ddd; border-radius: 10px;
+      padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .calc-card h2 { font-size: 14px; color: #222; font-weight: 700; margin-bottom: 6px; }
+    .formula {
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 6px;
+      padding: 8px 14px; font-size: 13px; color: #444;
+      margin-bottom: 16px; font-style: italic;
+    }
+    .calc-row {
+      display: grid; grid-template-columns: 1fr 80px 1fr;
+      gap: 6px; align-items: center; margin-bottom: 8px;
+    }
+    .calc-label { font-size: 12px; color: #666; }
+    .calc-unit { font-size: 11px; color: #999; text-align: center; }
+    .calc-input {
+      background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px;
+      padding: 6px 8px; color: #333; font-size: 13px;
+      font-family: inherit; width: 100%; outline: none; transition: border-color 0.2s;
+    }
+    .calc-input:focus { border-color: #888; }
+    .calc-input[readonly] { background: #eef2e8; color: #2d6a2d; border-color: #c5dac5; }
+    .divider-label {
+      grid-column: 1 / -1; font-size: 11px; color: #b85c00;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin: 8px 0 4px; border-top: 1px dashed #ccc; padding-top: 8px;
+    }
+
+    /* ── SEAL GRID ── */
+    .seal-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px; margin-top: 10px;
+    }
+    .seal-card {
+      background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; padding: 14px;
+    }
+    .seal-card h4 {
+      color: #222;
+      font-size: 13px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .seal-card ul { padding-left: 16px; }
+    .seal-card li { font-size: 12.5px; color: #555; margin-bottom: 4px; }
+
+    /* ── TWO-COL ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── SCROLL ── */
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+        <div class="navbar-left">Rotary Valve</div>
+        <div class="navbar-right">   
+        <button onclick='location.href = "../secret.html"'>Home</button>
+        </div>
+    </nav>
+
+<div class="wrapper">
+
+  <h2 style="color:#222;margin-bottom:8px;">Rotary Valve — Engineering Reference</h2>
+  <ul style="margin-bottom:16px;">
+    <li>Practical guide to selection, design, operation and maintenance of rotary valves</li>
+    <li>Based on SHAPA Technical Paper 13 — Ian Blackmore (Rota Val Ltd) &amp; Prof. Mike Bradley (Wolfson Centre)</li>
+    <!-- <li><a href="https://www.shapa.co.uk/technical-downloads/Updated%20Papers%20May%202015/rotary_valves.pdf" style="color:#0066cc;">SHAPA Technical Paper 13 PDF ↗</a></li> -->
+  </ul>
+
+  <div class="tab-bar">
+    <a href="#" onclick="switchTab('theory',this)" id="nav-theory" class="active">Theory</a>
+    <a href="#" onclick="switchTab('selection',this)" id="nav-selection">Selection</a>
+    <a href="#" onclick="switchTab('housing',this)" id="nav-housing">Housing</a>
+    <a href="#" onclick="switchTab('rotor',this)" id="nav-rotor">Rotor</a>
+    <a href="#" onclick="switchTab('seals',this)" id="nav-seals">Seals</a>
+    <a href="#" onclick="switchTab('calc',this)" id="nav-calc">Calc</a>
+    <a href="#" onclick="switchTab('drive',this)" id="nav-drive">Drive &amp; Access.</a>
+    <a href="#" onclick="switchTab('foodpharma',this)" id="nav-foodpharma">Food &amp; Pharma</a>
+    <a href="#" onclick="switchTab('abrasion',this)" id="nav-abrasion">Abrasion</a>
+    <a href="#" onclick="switchTab('leakage',this)" id="nav-leakage">Leakage &amp; Vent</a>
+    <a href="#" onclick="switchTab('atex',this)" id="nav-atex">ATEX</a>
+  </div>
+
+  <!-- ═══════════════ THEORY ═══════════════ -->
+  <div class="tab-panel active" id="panel-theory">
+
+    <div class="card">
+      <h2>What is a Rotary Valve?</h2>
+      <ul>
+        <li>Compact device for <strong>continuous discharge</strong> of bulk powders / granules under gravity flow</li>
+        <li>Single moving part — <strong>multi-vane Rotor</strong> revolving with close clearances in housing</li>
+        <li>Housing: inlet at top, outlet at bottom</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Functional Uses</h2>
+      <div class="func-grid">
+        <div class="func-item"><span class="num">①</span>Control product flow rate (fixed or variable)</div>
+        <div class="func-item"><span class="num">②</span>Maintain gas pressure differential — airlock</div>
+        <div class="func-item"><span class="num">③</span>Act as explosion barrier</div>
+        <div class="func-item"><span class="num">④</span>Act as flame barrier</div>
+        <div class="func-item"><span class="num">⑤</span>Act as process isolator / barrier</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Limitations</h2>
+      <div class="warning-block">Rotary Valve does NOT create product flow — only passes what can fall under gravity</div>
+      <div class="warning-block">All Rotary Valves leak air/gas even with no pressure differential</div>
+      <div class="warning-block">Faster rotor speed → lower & more erratic filling efficiency</div>
+      <div class="warning-block">Greater pressure differential → less predictable filling efficiency</div>
+    </div>
+
+    <!-- <div class="card">
+      <h2>Reference</h2>
+      <ul>
+        <li><a href="https://www.shapa.co.uk/technical-downloads/Updated%20Papers%20May%202015/rotary_valves.pdf" style="color:#0066cc">SHAPA Technical Paper 13 — Practical Guide to Rotary Valves ↗</a></li>
+      </ul>
+    </div> -->
+
+  </div>
+
+  <!-- ═══════════════ SELECTION CRITERIA ═══════════════ -->
+  <div class="tab-panel" id="panel-selection">
+
+    <div class="card">
+      <h2>1. Basic Performance — Rotor Speed</h2>
+      <ul>
+        <li><strong>Max Rotor Tip Speed: 40 m/min</strong> — above this, increase in speed reduces throughput</li>
+        <li>Why: gravity-fed product must accelerate from rest & fill pockets before rotating away from inlet. Too fast → incomplete filling → throughput drops</li>
+      </ul>
+      <h3>May be LOWER if:</h3>
+      <ul>
+        <li>Low bulk density product — light materials take longer to settle; won't fill pockets fully at high speed</li>
+        <li>Significant pressure differential opposing product flow — upward airflow pushes product back; aeration worsens filling</li>
+      </ul>
+      <h3>May be HIGHER if:</h3>
+      <ul>
+        <li>Fed under cascade flow (screw feeders, belt feeders, weighers) — material enters more consistently; rotor doesn't wait for gravity</li>
+      </ul>
+      <h3>Normal Practice:</h3>
+      <table class="data-table" style="margin-top:10px">
+        <tr>
+          <th>Rotor Diameter</th>
+          <th>Speed Limit</th>
+        </tr>
+        <tr><td>Up to 300 mm</td><td>Below 25 RPM</td></tr>
+        <tr><td>Above 300 mm</td><td>Below 40 m/min tip speed</td></tr>
+        <tr><td>150 mm (6") rotor</td><td>Max ~85 RPM (theoretical)</td></tr>
+        <tr><td>1000 mm (39.3") rotor</td><td>Max ~12.7 RPM</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>2. Product Physical Characteristics</h2>
+      <ul>
+        <li>Dictates detailed design & construction of individual components</li>
+        <li>For abrasive materials entrained by high velocity leakage air → erosion of surfaces: <strong>lower pressure differential is better</strong></li>
+        <li>Challenging characteristics to handle: sticky, abrasive, corrosive, biologically sensitive, cohesive, toxic, flammable, explosive, non-friable — often in combination</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>3. System / Duty Requirements</h2>
+
+      <h3>Physical Installation</h3>
+      <ul>
+        <li>Flange details: Square / Round / Combination</li>
+        <li>Type of drive: Chain or Direct coupled</li>
+        <li>Inbuilt venting: present or not</li>
+      </ul>
+
+      <h3>Pressure Differential</h3>
+      <ul>
+        <li>Higher ΔP → greater air leakage</li>
+        <li>High upward leakage causes:
+          <ul>
+            <li>Reduced material flow by reducing bulk density (fluidisation)</li>
+            <li>Physically opposing product flow</li>
+            <li>Enhanced abrasiveness of hard fine particles</li>
+            <li>Moisture transfer & unstable flow conditions</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>Operating Clearances & Temperature</h3>
+      <table class="data-table">
+        <tr>
+          <th>Material</th>
+          <th>Nominal Clearance</th>
+          <th>Reason</th>
+        </tr>
+        <tr>
+          <td>Cast Iron / Carbon Steel</td>
+          <td>0.13 mm</td>
+          <td>Minimal leakage at ambient</td>
+        </tr>
+        <tr>
+          <td>Stainless Steel</td>
+          <td>0.18 mm</td>
+          <td>Minimise galling/seizing risk on rotor-housing contact</td>
+        </tr>
+      </table>
+      <ul style="margin-top:12px">
+        <li>Operating temp &gt;30°C above ambient → clearances need increasing</li>
+        <li>Rotor is lighter → heats faster than Housing → different expansion rates during warm-up</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>4. Individual Industry Needs</h2>
+      <div class="two-col">
+        <div>
+          <h3>General / Quarrying</h3>
+          <ul>
+            <li>Performance & durability primary concern</li>
+            <li>Standard construction acceptable</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Food & Pharmaceutical</h3>
+          <ul>
+            <li>Demanding in design detail, surface finish</li>
+            <li>cGMP manufacturing required</li>
+            <li>Extensive documentation, certification, FAT</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>5. Legislation</h2>
+      <ul>
+        <li><strong>Machinery Directive</strong> — applies to all</li>
+        <li><strong>PED (Pressure Equipment Directive)</strong> — mainly affects valves ≥450 mm; hydrostatic testing required</li>
+        <li><strong>ATEX 94/9/EC</strong> — can affect design & construction for explosive atmospheres</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ HOUSING & END COVERS ═══════════════ -->
+  <div class="tab-panel" id="panel-housing">
+
+    <div class="card">
+      <h2>Housing Body</h2>
+      <ul>
+        <li>Normally <strong>cast construction</strong> for rigidity & cost</li>
+        <li>Fabrications used for non-standard configurations & large one-off valves</li>
+        <li>Fabricated / machined-from-solid increasingly used for pharmaceutical (flaw-free validation)</li>
+      </ul>
+      <h3>Inlet Types</h3>
+      <div class="two-col">
+        <div style="background:#f9f9f9;border:1px solid #ccc;border-radius:8px;padding:14px">
+          <strong style="color:#0066cc">Inline Inlets</strong>
+          <ul style="margin-top:8px">
+            <li>Classic configuration</li>
+            <li>Practical for most applications</li>
+          </ul>
+        </div>
+        <div style="background:#f9f9f9;border:1px solid #ccc;border-radius:8px;padding:14px">
+          <strong style="color:#b85c00">Offset Inlets</strong>
+          <ul style="margin-top:8px">
+            <li>Ensures valve never achieves 100% filling efficiency</li>
+            <li>Minimises incident of product shearing</li>
+            <li>Some have 'plough' profile to disperse product away from shear point</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>End Covers</h2>
+      <div class="two-col">
+        <div>
+          <h3>Inboard Mounted Bearings</h3>
+          <ul>
+            <li>Low cost, low duty valves</li>
+            <li>Low pressure differential applications</li>
+            <li>Filter/cyclone & general discharge duties</li>
+            <li>Product must not have difficult handling characteristics</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Outboard / Outrigger Extensions</h3>
+          <ul>
+            <li>Limited protection from product contamination (seal failure → product jets at bearing)</li>
+            <li><strong>Primary reason:</strong> Space for wide range of shaft sealing arrangements</li>
+            <li>Larger to accommodate bigger shaft diameters — limits rotor deflection under high loads</li>
+          </ul>
+        </div>
+      </div>
+      <h3>Air Purge Connections</h3>
+      <ul>
+        <li>Sequentially pulsed or continuous — dislodge hanging product at valve outlet</li>
+        <li>Can pressurise void between End Cover & End Discs when using Closed Rotors — prevents product entry</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Blowing Seals (Blow-Through Models)</h2>
+      <div class="two-col">
+        <div>
+          <h3>Direct Purge</h3>
+          <ul>
+            <li>True blow-through of Rotor Pocket</li>
+            <li>Most efficient; wider range of materials</li>
+            <li>Restricts drive arrangements — pipe connections close to rotor shaft</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Semi-Direct Purge</h3>
+          <ul>
+            <li>Entrainment trough — air passes partly along trough, partly through rotor</li>
+            <li><strong>More common</strong> due to fewer drive constraints</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Entrainment Boxes</h2>
+      <ul>
+        <li>When blow-through not suitable — normal drop-through RVs used with separate Transition Box to connect to blowline</li>
+        <li>Adaptable for different pipe sizes; preferred for some products</li>
+        <li><strong>Best design:</strong> Simple straight-sided, tapering down to pipe — deeper the better</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ ROTOR ═══════════════ -->
+  <div class="tab-panel" id="panel-rotor">
+
+    <div class="card">
+      <h2>Rotor Types</h2>
+      <div class="two-col">
+        <div style="background:#f9f9f9;border:1px solid #2d6a2d;border-radius:8px;padding:16px">
+          <h3 style="margin-top:0">✓ Open Vane (Preferred)</h3>
+          <ul>
+            <li>Better performance</li>
+            <li>Adaptable with special features</li>
+            <li>More tolerant to product changes</li>
+            <li>Can be purged if necessary</li>
+            <li>Compatible with Blowing Seals</li>
+          </ul>
+        </div>
+        <div style="background:#f9f9f9;border:1px solid #b85c00;border-radius:8px;padding:16px">
+          <h3 style="margin-top:0;color:#b85c00">⚠ Closed Vane</h3>
+          <ul>
+            <li><strong style="color:#b85c00">NOT suitable</strong> for Blowing Seals</li>
+            <li>Problems: product enters void between End Cover & Rotor disc; high wear in bore; product hang-up risk</li>
+            <li>Use only when: heavy shearing unavoidable; squealing from product build-up on housing</li>
+            <li>Pros: more vane support & rigidity</li>
+          </ul>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px 14px;background:#f9f9f9;border-radius:6px;font-size:13px">
+        <strong>Typical:</strong> 8 pockets → minimum 4 vanes sealing at any time. More vanes = better sealing, but lower filling efficiency.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Replaceable Blades</h2>
+      <p style="font-size:13px;color:#666;margin-bottom:12px">Adjustable on assembly. Economic way to introduce alternative MOC for duty requirements. Note: NOT intended to compensate for wear (wear is uneven & not confined to blades).</p>
+      <div class="seal-grid">
+        <div class="seal-card">
+          <h4>Hardened / Alloy / Hard-faced Steel</h4>
+          <ul><li>For abrasion resistance</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Scraper</h4>
+          <ul><li>Controls product build-up on Housing bore & End Cover faces</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Flexible (PU / Natural Rubber)</h4>
+          <ul><li>Fibrous products or products containing large non-friable particles</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Plastic</h4>
+          <ul><li>Non-stick / product compatible</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Bronze / Bronze-Tipped</h4>
+          <ul><li>Ultra close clearances</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Sticky Product — Hang-up Solutions</h2>
+      <ul>
+        <li><strong>Scalloped pockets</strong> — standard approach for sticky materials</li>
+        <li><strong>Non-stick coating</strong> — PTFE, Zylon (subject to wear; ok if no contamination concern)</li>
+        <li><strong>Stainless Steel + polished surfaces</strong> — more expensive but suitable when contamination is issue</li>
+        <li><strong>Air purging</strong> — lateral pulses injected at End Covers for extreme cases</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Helical Vanes / Staggered Pockets</h2>
+      <ul>
+        <li>Purpose: smooth out pulsed discharge from valve</li>
+        <li>Standard rotor discharges bulk of product within 10% of pocket exposure → pulsed output</li>
+        <li>Use when pulsed output is a problem</li>
+        <li><strong>Only for Fixed Vane Rotors</strong></li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ SEALS ═══════════════ -->
+  <div class="tab-panel" id="panel-seals">
+
+    <div class="card">
+      <h2>Shaft Seal Types</h2>
+      <div class="seal-grid">
+
+        <div class="seal-card">
+          <h4>Felt</h4>
+          <ul>
+            <li>Very low cost, low duty only</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>Lip Seals</h4>
+          <ul>
+            <li>Standard: replaces or supports Felt seals</li>
+            <li>Specialised FDA-approved versions for high-end food & pharma</li>
+          </ul>
+        </div>
+
+        <div class="seal-card" style="border-color:#2d6a2d">
+          <h4 style="color:#2d6a2d">Gland Packing ★ Most Common</h4>
+          <ul>
+            <li>Low cost, versatile, replaceable in-situ</li>
+            <li>Various woven fibres + lubricant</li>
+            <li>General, food & pharma use</li>
+            <li>With Carbon fibres: up to 1000°C+</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>Pressurised Seals</h4>
+          <ul>
+            <li>Double seal; void pressurised above max working pressure</li>
+            <li>Leaks inward on seal failure</li>
+            <li>Failure detectable via pressure/flow sensors</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>Lantern Ring Air Purge</h4>
+          <ul>
+            <li>Positive inward air/gas flow → keeps product out of seal area</li>
+            <li>Recommended: fine abrasive products, 'searching' materials</li>
+            <li>Warning: loss of air supply when running → blocked passages</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>Labyrinth Scroll Air Purge</h4>
+          <ul>
+            <li>Purge air through scrolled channel</li>
+            <li>Mechanically screws ingressing product back into valve</li>
+            <li>Best for fine, highly abrasive products</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>Mechanical Seals</h4>
+          <ul>
+            <li>Most products, especially fine abrasive</li>
+            <li>Normally used with air purge</li>
+            <li>Expensive</li>
+          </ul>
+        </div>
+
+        <div class="seal-card">
+          <h4>CIP Seals</h4>
+          <ul>
+            <li>Wet cleaning & drying in-place</li>
+            <li>Food & pharma specific</li>
+            <li>Integral with End Cover — bespoke valves only</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ CALCULATIONS ═══════════════ -->
+  <div class="tab-panel" id="panel-calc">
+
+    <div class="calc-grid">
+
+      <!-- ROTOR VOLUME -->
+      <div class="calc-card" style="grid-column: 1 / -1">
+        <h2>① Rotor Volume</h2>
+        <div class="formula">V = π/4 × (D_O² − D_I²) × W − (D_O − D_I)/2 × W × Thk × N</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <p style="font-size:11px;color:#b85c00;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Inputs</p>
+            <div class="calc-row">
+              <span class="calc-label">OD of Rotor</span>
+              <span class="calc-unit">mm</span>
+              <input class="calc-input" type="number" id="Rotor_OD" oninput="RotorVol()" placeholder="0">
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">ID of Rotor</span>
+              <span class="calc-unit">mm</span>
+              <input class="calc-input" type="number" id="Rotor_ID" oninput="RotorVol()" placeholder="0">
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Width of Rotor</span>
+              <span class="calc-unit">mm</span>
+              <input class="calc-input" type="number" id="Rotor_Width" oninput="RotorVol()" placeholder="0">
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Vane Thickness</span>
+              <span class="calc-unit">mm</span>
+              <input class="calc-input" type="number" id="Vane_Thk" oninput="RotorVol()" placeholder="0">
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">No. of Vanes</span>
+              <span class="calc-unit">—</span>
+              <input class="calc-input" type="number" id="Vane_Num" oninput="RotorVol()" placeholder="0">
+            </div>
+          </div>
+          <div>
+            <p style="font-size:11px;color:#2d6a2d;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Outputs</p>
+            <div class="calc-row">
+              <span class="calc-label">Area of OD</span>
+              <span class="calc-unit">m²</span>
+              <input class="calc-input" type="number" id="Area_OD" readonly>
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Area of ID</span>
+              <span class="calc-unit">m²</span>
+              <input class="calc-input" type="number" id="Area_ID" readonly>
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Area of Vane</span>
+              <span class="calc-unit">m²</span>
+              <input class="calc-input" type="number" id="Area_Vanes" readonly>
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Vol of Rotor</span>
+              <span class="calc-unit">m³</span>
+              <input class="calc-input" type="number" id="Vol_Rotor" readonly>
+            </div>
+            <div class="calc-row">
+              <span class="calc-label">Vol of Rotor</span>
+              <span class="calc-unit">Lit</span>
+              <input class="calc-input" type="number" id="Vol_Rotor_Lit" readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAPACITY -->
+      <div class="calc-card">
+        <h2>② Capacity</h2>
+        <div class="formula">C = (F% / 100) × BD × RPM × 60 × (V / 1000)</div>
+        <p style="font-size:11px;color:#b85c00;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Inputs</p>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Vol</span>
+          <span class="calc-unit">Lit/rev</span>
+          <input class="calc-input" type="number" id="Rotor_Vol_cap" oninput="Capacity()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Bulk Density</span>
+          <span class="calc-unit">kg/m³</span>
+          <input class="calc-input" type="number" id="BulkDensity_cap" oninput="Capacity()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Filling %</span>
+          <span class="calc-unit">%</span>
+          <input class="calc-input" type="number" id="Filling_cap" oninput="Capacity()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Speed</span>
+          <span class="calc-unit">RPM</span>
+          <input class="calc-input" type="number" id="Rotor_RPM_cap" oninput="Capacity()" placeholder="0">
+        </div>
+        <p class="divider-label">Output</p>
+        <div class="calc-row">
+          <span class="calc-label">Capacity</span>
+          <span class="calc-unit">kg/hr</span>
+          <input class="calc-input" type="number" id="Capacity_cap" readonly>
+        </div>
+      </div>
+
+      <!-- RPM -->
+      <div class="calc-card">
+        <h2>③ Rotor RPM</h2>
+        <div class="formula">RPM = C / ((F% / 100) × BD × 60 × (V / 1000))</div>
+        <p style="font-size:11px;color:#b85c00;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Inputs</p>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Vol</span>
+          <span class="calc-unit">Lit/rev</span>
+          <input class="calc-input" type="number" id="Rotor_Vol_rpm" oninput="RotorRPM()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Bulk Density</span>
+          <span class="calc-unit">kg/m³</span>
+          <input class="calc-input" type="number" id="BulkDensity_rpm" oninput="RotorRPM()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Filling %</span>
+          <span class="calc-unit">%</span>
+          <input class="calc-input" type="number" id="Filling_rpm" oninput="RotorRPM()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Capacity</span>
+          <span class="calc-unit">kg/hr</span>
+          <input class="calc-input" type="number" id="Capacity_rpm" oninput="RotorRPM()" placeholder="0">
+        </div>
+        <p class="divider-label">Output</p>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Speed</span>
+          <span class="calc-unit">RPM</span>
+          <input class="calc-input" type="number" id="Rotor_RPM_rpm" readonly>
+        </div>
+      </div>
+
+      <!-- TIP SPEED -->
+      <div class="calc-card">
+        <h2>④ Rotor Tip Speed</h2>
+        <div class="formula">Tip Speed = π × D × RPM / 1000 &nbsp;[m/min]</div>
+        <p style="font-size:11px;color:#b85c00;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Inputs</p>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Diameter</span>
+          <span class="calc-unit">mm</span>
+          <input class="calc-input" type="number" id="TipSpeed_D" oninput="TipSpeed()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Speed</span>
+          <span class="calc-unit">RPM</span>
+          <input class="calc-input" type="number" id="TipSpeed_RPM" oninput="TipSpeed()" placeholder="0">
+        </div>
+        <p class="divider-label">Output</p>
+        <div class="calc-row">
+          <span class="calc-label">Tip Speed</span>
+          <span class="calc-unit">m/min</span>
+          <input class="calc-input" type="number" id="TipSpeed_Result" readonly>
+        </div>
+        <div id="TipSpeed_Warn" style="margin-top:10px;font-size:12px;display:none"></div>
+      </div>
+
+      <!-- MAX RPM FROM TIP SPEED -->
+      <div class="calc-card">
+        <h2>⑤ Max RPM from Tip Speed</h2>
+        <div class="formula">RPM_max = (Tip Speed × 1000) / (π × D)</div>
+        <p style="font-size:11px;color:#b85c00;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Inputs</p>
+        <div class="calc-row">
+          <span class="calc-label">Rotor Diameter</span>
+          <span class="calc-unit">mm</span>
+          <input class="calc-input" type="number" id="MaxRPM_D" oninput="MaxRPM()" placeholder="0">
+        </div>
+        <div class="calc-row">
+          <span class="calc-label">Max Tip Speed</span>
+          <span class="calc-unit">m/min</span>
+          <input class="calc-input" type="number" id="MaxRPM_TS" oninput="MaxRPM()" value="40">
+        </div>
+        <p class="divider-label">Output</p>
+        <div class="calc-row">
+          <span class="calc-label">Max RPM</span>
+          <span class="calc-unit">RPM</span>
+          <input class="calc-input" type="number" id="MaxRPM_Result" readonly>
+        </div>
+        <div class="warning-block" style="margin-top:10px;font-size:12px">Default tip speed limit = 40 m/min. Use 25 RPM ceiling for rotors ≤300 mm dia.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════ DRIVE & ACCESSORIES ═══════════════ -->
+  <div class="tab-panel" id="panel-drive">
+
+    <div class="card">
+      <h2>Bearings</h2>
+      <ul>
+        <li>Standard: <strong>sealed-for-life deep groove ball race</strong> — grease filled, neoprene/similar integral seals</li>
+        <li>Standard ratings: up to <strong>200°C</strong>; alternative materials, shields & lubricants extend to <strong>800°C</strong>; plain bearings above 800°C</li>
+        <li>Size dictated by rotor shaft diameter (not pure load/speed) → typically oversized → near-infinite life in clean conditions</li>
+        <li><strong>Vulnerable to product contamination</strong> — shaft seals must be checked & maintained regularly</li>
+        <li>Mounted directly in End Cover for concentricity control; cartridge/pillow block bearings lack finesse for close-clearance valves</li>
+        <li>Very large valves: cartridge assemblies may be used to avoid removing heavy End Covers for bearing replacement</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Drive Arrangements</h2>
+      <div class="two-col">
+        <div style="background:#f9f9f9;border:1px solid #2d6a2d;border-radius:8px;padding:14px">
+          <strong style="color:#2d6a2d">Chain & Sprocket Drive ★ Most Popular</strong>
+          <ul style="margin-top:8px">
+            <li>Easy on-site speed change → calibrates throughput</li>
+            <li>Chain rated against breaking strain → acts as crude overload protection</li>
+            <li>Limited space for sprocket on smaller Blowing Seals</li>
+          </ul>
+        </div>
+        <div style="background:#f9f9f9;border:1px solid #ccc;border-radius:8px;padding:14px">
+          <strong style="color:#0066cc">Direct Drive</strong>
+          <ul style="margin-top:8px">
+            <li>Preferred for valves requiring regular dismantling for internal cleaning</li>
+            <li>Facilitates easy withdrawal of both End Covers</li>
+          </ul>
+        </div>
+      </div>
+      <div class="warning-block" style="margin-top:12px">All Rotary Valves driven via reduction gearbox + electric induction motor. Hydraulic motors also used in some cases.</div>
+    </div>
+
+    <div class="card">
+      <h2>Accessories</h2>
+      <div class="seal-grid">
+        <div class="seal-card">
+          <h4>Positive Overload Protection</h4>
+          <ul><li>Shear pin or proprietary torque limiting devices</li><li>Costly; subject to abuse — often omitted in favour of chain breakage</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Non-Rotation Detection</h4>
+          <ul><li>Detects rotor stoppage</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Speed Monitors</h4>
+          <ul><li>Monitors rotor speed in real time</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Safety Switches</h4>
+          <ul><li>Fitted on Easy-Clean valves</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Variable Speed Controls</h4>
+          <ul><li>Allows feed rate adjustment; ensure speed doesn't exceed ATEX limits</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Air Purge Equipment</h4>
+          <ul><li>Pressure regulators & flow meters for Air Purge Seals; rotor pocket purging equipment</li></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>RotaSafe RM — Rotor Contact Detection</h2>
+      <ul>
+        <li>Intrinsically safe instant detection of rotor-to-housing contact</li>
+        <li>Automatically cuts power to drive motor on contact</li>
+      </ul>
+      <h3>Benefits</h3>
+      <ul>
+        <li>Protects valve from internal damage</li>
+        <li>Eliminates metal shedding contamination in product</li>
+        <li>Prevents start-up if valve reassembled incorrectly</li>
+        <li>Detects bearing failure</li>
+        <li>Protects ATEX 'autonomous safety system' certification — internal surface damage immediately renders valve unsafe</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ FOOD & PHARMA ═══════════════ -->
+  <div class="tab-panel" id="panel-foodpharma">
+
+    <div class="card">
+      <h2>Food Applications — Overview</h2>
+      <table class="data-table">
+        <tr>
+          <th>Product Type</th>
+          <th>Risk Level</th>
+          <th>Construction Requirement</th>
+        </tr>
+        <tr>
+          <td>Sugar, salt, chocolate (sterilising/preserving agents)</td>
+          <td>Low</td>
+          <td>Standard valve construction; StSt preferred as good practice</td>
+        </tr>
+        <tr>
+          <td>Flour, rice (long storage life if dry; further cooked)</td>
+          <td>Low–Medium</td>
+          <td>Standard; StSt preferred</td>
+        </tr>
+        <tr>
+          <td>Biodegradable food products</td>
+          <td>Medium</td>
+          <td>StSt essential; crack/crevice free; welds & surfaces polished Ra 0.8 or better; USDA/FDA approved materials; easy access for cleaning</td>
+        </tr>
+        <tr>
+          <td>Baby food, high fat milk powder</td>
+          <td>High</td>
+          <td>Mirror finish; support rails for safe extraction; regular cleaning required</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Food — Cleaning Access Options</h2>
+      <div class="two-col">
+        <div style="background:#f9f9f9;border:1px solid #ccc;border-radius:8px;padding:14px">
+          <strong style="color:#0066cc">'Easy-Clean' — Quick Release Rotor</strong>
+          <ul style="margin-top:8px">
+            <li>Low cost option</li>
+            <li>Components can be easily damaged</li>
+            <li>Not operator-friendly for larger sizes — weight & sharp edges are hazards</li>
+            <li>Requires risk assessment under Safe Handling regulations</li>
+          </ul>
+        </div>
+        <div style="background:#f9f9f9;border:1px solid #2d6a2d;border-radius:8px;padding:14px">
+          <strong style="color:#2d6a2d">'Fast Clean' — Support Rails</strong>
+          <ul style="margin-top:8px">
+            <li>Safe & easy extraction via support rails</li>
+            <li>Access to both ends of valve</li>
+            <li>No additional handling equipment required</li>
+            <li>Recommended for high-sensitivity materials requiring frequent cleaning</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pharmaceutical Applications — Key Requirements</h2>
+      <div class="warning-block">Active pharmaceutical chemicals are typically toxic — purity of production is paramount. Construction must meet cGMP with full validation & documentary support.</div>
+      <ul style="margin-top:12px">
+        <li>Manufacture & assembly to highest standards or per User Requirement Specification (URS)</li>
+        <li>All internal contact surfaces cleanable via <strong>Clean-In-Place (CIP)</strong> — including shaft sealing</li>
+        <li>Zero product trapment within valve</li>
+        <li>Operator Exposure Levels (OEL) within acceptable limits</li>
+        <li>Construction integrity (inc. surface finish) maintained throughout service life</li>
+        <li>All aspects verified by measurement or test</li>
+        <li>Explosion risk secured through full containment; valves must pass explosion & flame containment testing</li>
+      </ul>
+      <div class="warning-block" style="margin-top:12px">Flame containment capability requires close operating clearances. FAT inspection requires hot water flush testing (normally 85°C at 20°C ambient) to prove differential expansion during CIP does not cause rotor-body contact.</div>
+    </div>
+
+    <div class="card">
+      <h2>Pharmaceutical — Typical Design Features</h2>
+      <div class="seal-grid">
+        <div class="seal-card">
+          <h4>Solid / Coded Weld Fabrication</h4>
+          <ul><li>Eliminates castings — no pin-hole porosity or contaminant inclusions</li><li>Allows quick-release pharma-standard flange connections</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Surface Finish</h4>
+          <ul><li>Contact surfaces: Ra 0.08 or better, electro-polished (minimises pathogen build-up)</li><li>External surfaces: Ra 0.5</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Precision Manufacture</h4>
+          <ul><li>No rotor–bore contact during extraction</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Seals</h4>
+          <ul><li>FDA-standard seal design</li><li>No material shedding</li><li>CIP & drying-in-place capable</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Isolator Enclosure (Glove Box)</h4>
+          <ul><li>Operable via gloved access, no tools</li><li>Minimum components (anti-galling materials, no washers)</li><li>Easy cleaning of external & internal surfaces</li><li>Easy extraction of rotor/end cover (up to 350 kg) at arm's length</li></ul>
+        </div>
+        <div class="seal-card">
+          <h4>Bearings & Drainage</h4>
+          <ul><li>All surfaces self-draining</li><li>Bearings in sealed housings</li></ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ ABRASION & PRODUCT DAMAGE ═══════════════ -->
+  <div class="tab-panel" id="panel-abrasion">
+
+    <div class="card">
+      <h2>Two Types of Abrasion</h2>
+      <div class="two-col">
+        <div style="background:#f9f9f9;border:1px solid #0066cc;border-radius:8px;padding:14px">
+          <strong style="color:#0066cc">Type 1 — Mechanical Attrition</strong>
+          <p style="font-size:13px;color:#666;margin:8px 0">Large hard particles / fibrous materials trapped in running clearances</p>
+          <h3 style="margin-top:10px">Solutions:</h3>
+          <ul>
+            <li><strong>Hardfacing</strong> — plasma-sprayed ceramics (Tungsten Carbide) or electro-deposited (Hard Chrome, Nickel). Thin coating; once breached ineffective. Suitable for moderately aggressive products only.</li>
+            <li><strong>Replaceable internal contact components</strong> — much longer service life due to greater hardness thickness; refurbishable on-site.</li>
+            <li><strong>All-ceramic linings</strong> — best abrasion resistance; extremely expensive; must be fully replaced when worn.</li>
+          </ul>
+        </div>
+        <div style="background:#f9f9f9;border:1px solid #b85c00;border-radius:8px;padding:14px">
+          <strong style="color:#b85c00">Type 2 — High Velocity Erosion</strong>
+          <p style="font-size:13px;color:#666;margin:8px 0">Fine abrasive powders drawn through clearances by leakage air under high pressure differential</p>
+          <ul style="margin-top:8px">
+            <li>Primarily an issue above <strong>250 mbar ΔP</strong></li>
+            <li>Velocities can reach <strong>400 m/s</strong> through clearances</li>
+            <li>Hard-faced valves <strong>rarely suitable</strong> for this type</li>
+            <li>Lower pressure differential = lower erosion risk</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Product Shearing & Damage</h2>
+      <ul>
+        <li>On average <strong>~5% of granular product</strong> entering valve is subject to shearing between rotor tip & inlet throat</li>
+        <li>Reduction to <strong>~1%</strong> achievable using:
+          <ul>
+            <li><strong>Offset Inlet</strong> design — keeps product away from shear point</li>
+            <li><strong>Inlet Baffle</strong> — physical barrier away from shear zone</li>
+          </ul>
+        </li>
+        <li>Shearing <strong>cannot be totally eliminated</strong></li>
+      </ul>
+      <div class="warning-block" style="margin-top:12px">
+        <strong>Zero Tolerance / Unshearable Products:</strong> Use two valves in tandem — 'Metering / Sealing Assembly'. Top valve fitted with reduced-capacity rotor (clearances > max particle size) discharges in phase with lower valve rotor pockets. Lower valve never fills to point of shear. Takes twice the headroom.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ LEAKAGE & VENTING ═══════════════ -->
+  <div class="tab-panel" id="panel-leakage">
+
+    <div class="card">
+      <h2>Air Leakage — Overview</h2>
+      <ul>
+        <li>All rotary valves leak air/gas even with <strong>no pressure differential</strong> — product entering valve displaces air into inlet area</li>
+        <li>Leakage significantly increases under pressure differential: losses past clearances + carry-over of high-pressure pockets decompressing into inlet</li>
+        <li>Manufacturer leakage charts based on <strong>static, product-free</strong> tests. Presence of product has mitigating 'Blocking Factor' → published rates provide contingency for blower/fan sizing</li>
+        <li>Where leakage is critical → detailed analysis required taking all duty conditions into account</li>
+      </ul>
+      <div class="warning-block">Upward leakage can significantly impact system performance — positively or negatively — especially under flooded feed conditions.</div>
+    </div>
+
+    <div class="card">
+      <h2>Effects of Upward Leakage</h2>
+      <ul>
+        <li>Opposes product flow → <strong>reduces throughput</strong></li>
+        <li>Aerates product → <strong>reduces bulk density</strong></li>
+        <li>Increases abrasiveness of hard fine-particle products</li>
+        <li>Transfers moisture; creates unstable flow</li>
+        <li>Less problematic as valve size increases — larger throat = better leakage air dispersion</li>
+        <li>Valve should be fitted <strong>direct to hopper outlet</strong> so leakage air can disperse easily</li>
+      </ul>
+      <h3>Mitigation</h3>
+      <ul>
+        <li>For abrasive products under flood conditions: maintain a head of product above valve to partially suppress leakage — set low-level control high in feed vessel to eliminate internal wear</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Venting</h2>
+      <ul>
+        <li>Required when upward air flow causes unacceptable flow problems</li>
+        <li>Venting is <strong>system designer's responsibility</strong> — must be allowed for in upstream equipment</li>
+        <li>Difficult to add retrospectively → <strong>decide at outset</strong></li>
+        <li>Some manufacturers offer built-in vent dividers in throat — more effective than fabrications; simplifies installation & maintenance removal</li>
+      </ul>
+      <h3>Disadvantages of Venting</h3>
+      <ul>
+        <li>Unvented leakage air can <strong>help</strong> product flow by fluidising — vent removes this advantage & adds a physical restriction in throat → may require additional flow aids</li>
+        <li>A head of product above valve suppresses leakage (height × permeability × ΔP × bulk density); venting removes this benefit for abrasive products</li>
+        <li>Poorly designed vent compromises system & valve performance</li>
+        <li>Unnecessary venting adds cost & makes cleaning harder (hygiene/contamination applications)</li>
+      </ul>
+      <div class="warning-block">Venting is not always necessary or desirable. Always consider carefully whether to vent and what type to apply.</div>
+    </div>
+
+    <div class="card">
+      <h2>Feeding Pneumatic Conveying Systems</h2>
+      <ul>
+        <li>Represents ~<strong>50% of rotary valve applications</strong> (positive pressure systems)</li>
+        <li>Performance (throughput) affected by pressure differential; pressure differential is itself driven by line loading (throughput) — creates cyclic, erratic behaviour if system has design/construction weaknesses</li>
+        <li>Valve sits at interface between inlet feed system and conveying system → often blamed for poor throughput or high wear; cause usually lies elsewhere in system</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ ATEX ═══════════════ -->
+  <div class="tab-panel" id="panel-atex">
+
+    <div class="card">
+      <h2>ATEX 94/9/EC Overview</h2>
+      <ul>
+        <li>Directive imposes responsibility on suppliers to guarantee integrity of supply to defined standards</li>
+        <li>Has both <strong>procedural and design consequences</strong> depending on category of use</li>
+        <li>Most food & pharmaceutical dust forms are potentially explosive → ATEX applies</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Category 1 — Explosion / Flame Containment (Autonomous Protective System)</h2>
+      <div class="warning-block">ATEX mandates: if explosion risk exists inside equipment, no ignition must transfer to any external zoned atmosphere. Rotary Valves classified as 'Autonomous Protective System'.</div>
+      <h3>Certification Requirements</h3>
+      <ul>
+        <li>Each valve must have an <strong>EC-Type Examination Certificate from a Notified Body</strong></li>
+        <li>Note: Explosion/Flame Containment certificate from a test house alone does NOT satisfy ATEX — does not prove material or manufacturing integrity of individual valve supplied</li>
+        <li>Notified Body (not manufacturer) responsible for having tests conducted</li>
+        <li>Certificate identifies limits: dust class, internal clearances, vane thickness, pressure limits etc.</li>
+        <li><strong>Hydrostatic pressure testing</strong> of each valve required in production — especially critical when using castings</li>
+        <li>Manufacturer's Notified Body must sight & approve technical files</li>
+        <li>Manufacturer must maintain an approved Quality Assurance & Manufacturing system audited by Notified Body</li>
+        <li>Limited use of replaceable components (scraper blades, knife blades) may be allowed — must be supported by adequate fixed vanes to maintain containment; must be approved & certified</li>
+        <li>End user must regularly check clearances remain within certified limits — especially important for abrasive products</li>
+        <li>At elevated temperatures: ensure cold clearances do not exceed certified limits</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Categories 2 & 3 — Zone 21 & 22 Dust</h2>
+      <ul>
+        <li>Rotary Valves generally do not present ignition risk if material selection is careful and rotor tip speed does not exceed <strong>1 m/s</strong></li>
+        <li>Virtually all normal applications result in speeds below 1 m/s</li>
+        <li><strong>Variable speed drives:</strong> take care that valve cannot inadvertently exceed 1 m/s limit</li>
+        <li>Manufacturers carry out own risk assessment, establish technical files, and produce IOM instructions to satisfy directive</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Zone 20 — External Atmosphere</h2>
+      <ul>
+        <li>Basic valve does not pose hazard</li>
+        <li>Drive motors must be mounted <strong>external</strong> to the atmosphere</li>
+        <li>All Zone 20 equipment must be certified by Notified Body who approves: design, technical file, IOM instructions, manufacturing procedures</li>
+      </ul>
+      <h3>Internal Atmospheres (Valve NOT Used as Autonomous Safety System)</h3>
+      <ul>
+        <li>Internal zoning is almost invariably Zone 20 regardless of safety systems</li>
+        <li>EC Type Examination Certificate required: confirms valve does not provide ignition source and can withstand any explosion pressure present</li>
+        <li>Where internal pressure &gt;2 barg: hydrostatic testing to agreed level required</li>
+        <li>Replaceable/adjustable blades normally allowed (valve is not performing flame containment)</li>
+      </ul>
+      <div class="warning-block">Above is guidance only. Responsibility for conforming to current legislation rests with individual manufacturer.</div>
+    </div>
+
+  </div>
+
+</div><!-- /wrapper -->
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+<script>
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-bar a').forEach(a => a.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    return false;
+  }
+
+  function RotorVol() {
+    const D_O = parseFloat(document.getElementById("Rotor_OD").value) || 0;
+    const D_I = parseFloat(document.getElementById("Rotor_ID").value) || 0;
+    const W   = parseFloat(document.getElementById("Rotor_Width").value) || 0;
+    const Thk = parseFloat(document.getElementById("Vane_Thk").value) || 0;
+    const N   = parseFloat(document.getElementById("Vane_Num").value) || 0;
+
+    const Area_OD = 3.14159 * D_O * D_O / 4000000;
+    const Area_ID = 3.14159 * D_I * D_I / 4000000;
+    const Area_Vanes = W * (D_O - D_I) / 2000000;
+    const Vol_Lit = W * (Area_OD - Area_ID) - Area_Vanes * Thk * N;
+    const Vol_m3 = Vol_Lit / 1000;
+
+    document.getElementById("Area_OD").value = Area_OD.toFixed(4);
+    document.getElementById("Area_ID").value = Area_ID.toFixed(4);
+    document.getElementById("Area_Vanes").value = Area_Vanes.toFixed(4);
+    document.getElementById("Vol_Rotor").value = Vol_m3.toFixed(4);
+    document.getElementById("Vol_Rotor_Lit").value = Vol_Lit.toFixed(1);
+  }
+
+  function Capacity() {
+    const V   = parseFloat(document.getElementById("Rotor_Vol_cap").value) || 0;
+    const BD  = parseFloat(document.getElementById("BulkDensity_cap").value) || 0;
+    const F   = parseFloat(document.getElementById("Filling_cap").value) || 0;
+    const RPM = parseFloat(document.getElementById("Rotor_RPM_cap").value) || 0;
+    const C = (F / 100) * BD * (RPM * 60) * (V / 1000);
+    document.getElementById("Capacity_cap").value = C.toFixed(1);
+  }
+
+  function RotorRPM() {
+    const V  = parseFloat(document.getElementById("Rotor_Vol_rpm").value) || 0;
+    const BD = parseFloat(document.getElementById("BulkDensity_rpm").value) || 0;
+    const F  = parseFloat(document.getElementById("Filling_rpm").value) || 0;
+    const C  = parseFloat(document.getElementById("Capacity_rpm").value) || 0;
+    const RPM = C / (60 * BD * (F / 100) * (V / 1000));
+    document.getElementById("Rotor_RPM_rpm").value = isFinite(RPM) ? RPM.toFixed(1) : '';
+  }
+
+  function TipSpeed() {
+    const D   = parseFloat(document.getElementById("TipSpeed_D").value) || 0;
+    const RPM = parseFloat(document.getElementById("TipSpeed_RPM").value) || 0;
+    const ts  = Math.PI * D * RPM / 1000;
+    document.getElementById("TipSpeed_Result").value = ts.toFixed(2);
+    const warn = document.getElementById("TipSpeed_Warn");
+    if (D > 0 && RPM > 0) {
+      if (D <= 300 && RPM > 25) {
+        warn.style.display = 'block';
+        warn.style.color = '#b85c00';
+        warn.textContent = '⚠ Rotor ≤300 mm: recommended max is 25 RPM';
+      } else if (ts > 40) {
+        warn.style.display = 'block';
+        warn.style.color = '#b85c00';
+        warn.textContent = '⚠ Tip speed exceeds 40 m/min limit — throughput will drop';
+      } else {
+        warn.style.display = 'block';
+        warn.style.color = '#2d6a2d';
+        warn.textContent = '✓ Within recommended tip speed limit';
+      }
+    } else { warn.style.display = 'none'; }
+  }
+
+  function MaxRPM() {
+    const D  = parseFloat(document.getElementById("MaxRPM_D").value) || 0;
+    const TS = parseFloat(document.getElementById("MaxRPM_TS").value) || 40;
+    const rpm = (TS * 1000) / (Math.PI * D);
+    document.getElementById("MaxRPM_Result").value = isFinite(rpm) && D > 0 ? rpm.toFixed(1) : '';
+  }
+</script>
+
+</body>
+</html>

@@ -1,252 +1,363 @@
-<!-- secret.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit Conversions</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <link rel="stylesheet" href="../Notes-styles.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; }
+
+    /* ── TOP NAV ── */
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #222; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; z-index: 1000;
+    }
+    .navbar-left { font-size: 20px; font-weight: bold; }
+    .navbar-right button {
+      background: #444; color: white; border: none;
+      padding: 8px 14px; margin-left: 10px; cursor: pointer; font-size: 14px;
+      border-radius: 4px;
+    }
+    .navbar-right button:hover { background-color: #666; }
+
+    /* ── LAYOUT ── */
+    .main-container {
+      max-width: 1400px;
+      margin: 76px auto 40px auto;
+      padding: 20px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eeeeee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+    }
+    .tab-bar button:hover { background: #dddddd; }
+    .tab-bar button.active { background: #ffffff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CONVERTER CARD ── */
+    .conv-card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .conv-card h2 {
+      font-size: 17px; font-weight: 700; color: #222;
+      margin-bottom: 6px; padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+    .conv-card .subtitle {
+      font-size: 12px; color: #888; margin-bottom: 20px; margin-top: 4px;
+    }
+
+    /* ── DROPDOWN ROW ── */
+    .conv-controls {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .conv-controls label { font-size: 13px; color: #555; font-weight: 600; }
+    .unit-select {
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 6px;
+      padding: 8px 12px; font-size: 13px; font-family: inherit;
+      color: #222; cursor: pointer; min-width: 160px;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+      padding-right: 30px;
+    }
+    .unit-select:focus { outline: none; border-color: #888; }
+    .swap-btn {
+      background: #f2f2f2; border: 1px solid #ccc; border-radius: 6px;
+      padding: 8px 14px; cursor: pointer; font-size: 16px; color: #444;
+      transition: background 0.15s;
+    }
+    .swap-btn:hover { background: #ddd; }
+
+    /* ── INPUT / OUTPUT ── */
+    .conv-io {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0;
+      align-items: stretch; border: 1px solid #ccc; border-radius: 10px; overflow: hidden;
+    }
+    .io-box {
+      display: flex; flex-direction: column;
+    }
+    .io-box .io-label {
+      background: #f2f2f2; padding: 8px 16px;
+      font-size: 11px; font-weight: 700; color: #555;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .io-box input {
+      border: none; outline: none; padding: 18px 16px;
+      font-size: 28px; font-weight: 300; color: #222;
+      font-family: 'Segoe UI', sans-serif; background: #fff; width: 100%;
+    }
+    .io-box input[readonly] {
+      background: #fafff8; color: #2d6a2d; font-weight: 400;
+    }
+    .io-box .io-unit {
+      padding: 0 16px 14px; font-size: 12px; color: #999;
+      font-weight: 600; letter-spacing: 0.5px;
+    }
+    .io-divider {
+      display: flex; align-items: center; justify-content: center;
+      background: #f2f2f2; border-left: 1px solid #ddd; border-right: 1px solid #ddd;
+      padding: 0 16px; font-size: 20px; color: #aaa; font-weight: 300;
+    }
+
+    /* ── REFERENCE TABLE ── */
+    .ref-toggle {
+      margin-top: 20px; display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-size: 13px; color: #0066cc; user-select: none;
+    }
+    .ref-toggle:hover { color: #004499; }
+    .ref-table-wrap { display: none; margin-top: 12px; overflow-x: auto; }
+    .ref-table-wrap.open { display: block; }
+
+    table.ref-table {
+      width: 100%; border-collapse: collapse; font-size: 12.5px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.06);
+    }
+    table.ref-table th {
+      background: #f2f2f2; color: #222; font-weight: 700;
+      padding: 7px 12px; text-align: left; border: 1px solid #ccc;
+    }
+    table.ref-table td {
+      padding: 6px 12px; border: 1px solid #ddd; color: #333;
+    }
+    table.ref-table tr:nth-child(even) td { background: #fafafa; }
+    table.ref-table td:first-child { font-weight: 600; color: #0066cc; }
+
+    /* ── FORMULA BOX ── */
+    .formula-box {
+      background: #f9f9f9; border-left: 4px solid #aaa;
+      border-radius: 0 4px 4px 0; padding: 10px 14px;
+      font-size: 12.5px; color: #444; margin-top: 16px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── GRID OF CARDS ── */
+    .conv-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 20px;
+    }
+
+    @media (max-width: 500px) {
+      .conv-grid { grid-template-columns: 1fr; }
+      .conv-io { grid-template-columns: 1fr; }
+      .io-divider { border: none; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px; }
+    }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      font-size: 13px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      margin: 28px 0 14px; padding-bottom: 6px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .section-header:first-child { margin-top: 0; }
+
+    /* ── WARN BOX ── */
+    .warn-box {
+      background: #fff8f2; border-left: 4px solid #b85c00;
+      border-radius: 0 4px 4px 0; padding: 10px 14px;
+      font-size: 12.5px; color: #444; margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
-    <nav class="top-navbar">
-        <div class="navbar-left">Unit Conversions</div>
-        <div class="navbar-right">
-            <button onclick='location.href = "../secret.html"'>Home</button>
-        </div>
-    </nav>
-    <main class="container">
-        <h2>Units of Pressure</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>atm</td>
-                    <td>Kg/cm2</td>
-                    <td>psi</td>
-                    <td>mmHg</td>
-                    <td>mmH2O</td>
-                    <td>mbar</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_atm" oninput="pressureUnits()"></td>
-                    <td>atm</td>
-                    <td><input type="number" id="Vout_atm_atm" readonly></td>
-                    <td><input type="number" id="Vout_atm_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_atm_psi" readonly></td>
-                    <td><input type="number" id="Vout_atm_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_atm_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_atm_mbar" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_Kgcm2" oninput="pressureUnits()"></td>
-                    <td>Kg/cm2</td>
-                    <td><input type="number" id="Vout_Kgcm2_atm" readonly></td>
-                    <td><input type="number" id="Vout_Kgcm2_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_Kgcm2_psi" readonly></td>
-                    <td><input type="number" id="Vout_Kgcm2_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_Kgcm2_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_Kgcm2_mbar" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_psi" oninput="pressureUnits()"></td>
-                    <td>psi</td>
-                    <td><input type="number" id="Vout_psi_atm" readonly></td>
-                    <td><input type="number" id="Vout_psi_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_psi_psi" readonly></td>
-                    <td><input type="number" id="Vout_psi_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_psi_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_psi_mbar" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_mmHg" oninput="pressureUnits()"></td>
-                    <td>mmHg</td>
-                    <td><input type="number" id="Vout_mmHg_atm" readonly></td>
-                    <td><input type="number" id="Vout_mmHg_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_mmHg_psi" readonly></td>
-                    <td><input type="number" id="Vout_mmHg_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_mmHg_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_mmHg_mbar" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_mmH2O" oninput="pressureUnits()"></td>
-                    <td>mmH2O</td>
-                    <td><input type="number" id="Vout_mmH2O_atm" readonly></td>
-                    <td><input type="number" id="Vout_mmH2O_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_mmH2O_psi" readonly></td>
-                    <td><input type="number" id="Vout_mmH2O_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_mmH2O_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_mmH2O_mbar" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_mbar" oninput="pressureUnits()"></td>
-                    <td>mbar</td>
-                    <td><input type="number" id="Vout_mbar_atm" readonly></td>
-                    <td><input type="number" id="Vout_mbar_Kgcm2" readonly></td>
-                    <td><input type="number" id="Vout_mbar_psi" readonly></td>
-                    <td><input type="number" id="Vout_mbar_mmHg" readonly></td>
-                    <td><input type="number" id="Vout_mbar_mmH2O" readonly></td>
-                    <td><input type="number" id="Vout_mbar_mbar" readonly></td>
-                </tr>
-            </tbody>
-        </table>
 
-        <h2>Units of Length</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>ft</td>
-                    <td>m</td>
-                    <td>inch</td>
-                    <td>mm</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_ft" oninput="LengthUnits()"></td>
-                    <td>ft</td>
-                    <td><input type="number" id="Vout_ft_ft" readonly></td>
-                    <td><input type="number" id="Vout_ft_m" readonly></td>
-                    <td><input type="number" id="Vout_ft_inch" readonly></td>
-                    <td><input type="number" id="Vout_ft_mm" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_m" oninput="LengthUnits()"></td>
-                    <td>m</td>
-                    <td><input type="number" id="Vout_m_ft" readonly></td>
-                    <td><input type="number" id="Vout_m_m" readonly></td>
-                    <td><input type="number" id="Vout_m_inch" readonly></td>
-                    <td><input type="number" id="Vout_m_mm" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_inch" oninput="LengthUnits()"></td>
-                    <td>inch</td>
-                    <td><input type="number" id="Vout_inch_ft" readonly></td>
-                    <td><input type="number" id="Vout_inch_m" readonly></td>
-                    <td><input type="number" id="Vout_inch_inch" readonly></td>
-                    <td><input type="number" id="Vout_inch_mm" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_mm" oninput="LengthUnits()"></td>
-                    <td>mm</td>
-                    <td><input type="number" id="Vout_mm_ft" readonly></td>
-                    <td><input type="number" id="Vout_mm_m" readonly></td>
-                    <td><input type="number" id="Vout_mm_inch" readonly></td>
-                    <td><input type="number" id="Vout_mm_mm" readonly></td>
-                </tr>
-            </tbody>
-        </table>
+<nav class="top-navbar">
+  <div class="navbar-left">Unit Conversions</div>
+  <div class="navbar-right">
+    <button onclick="location.href='../secret.html'">Home</button>
+  </div>
+</nav>
 
-        <h2>Units of Weight</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>pound</td>
-                    <td>Kg</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_pound" oninput="WeightUnits()"></td>
-                    <td>pound</td>
-                    <td><input type="number" id="Vout_pound_pound" readonly></td>
-                    <td><input type="number" id="Vout_pound_Kg" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_Kg" oninput="WeightUnits()"></td>
-                    <td>Kg</td>
-                    <td><input type="number" id="Vout_Kg_pound" readonly></td>
-                    <td><input type="number" id="Vout_Kg_Kg" readonly></td>
-                </tr>
-            </tbody>
-        </table>
+<div class="main-container">
 
-        <h2>Units of Power</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>Hp</td>
-                    <td>kW</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_Hp" oninput="PowerUnits()"></td>
-                    <td>Hp</td>
-                    <td><input type="number" id="Vout_Hp_Hp" readonly></td>
-                    <td><input type="number" id="Vout_Hp_kW" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_kW" oninput="PowerUnits()"></td>
-                    <td>kW</td>
-                    <td><input type="number" id="Vout_kW_Hp" readonly></td>
-                    <td><input type="number" id="Vout_kW_kW" readonly></td>
-                </tr>
-            </tbody>
-        </table>
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('pressure',this)">Pressure</button>
+    <button onclick="showTab('length',this)">Length</button>
+    <button onclick="showTab('area',this)">Area</button>
+    <button onclick="showTab('volume',this)">Volume</button>
+    <button onclick="showTab('mass',this)">Mass</button>
+    <button onclick="showTab('force',this)">Force</button>
+    <button onclick="showTab('stress',this)">Stress / Modulus</button>
+    <button onclick="showTab('energy',this)">Energy</button>
+    <button onclick="showTab('power',this)">Power</button>
+    <button onclick="showTab('torque',this)">Torque</button>
+    <button onclick="showTab('flow',this)">Flow Rate</button>
+    <button onclick="showTab('velocity',this)">Velocity</button>
+    <button onclick="showTab('density',this)">Density</button>
+    <button onclick="showTab('temperature',this)">Temperature</button>
+    <button onclick="showTab('viscosity',this)">Viscosity</button>
+    <button onclick="showTab('angle',this)">Angle</button>
+  </div>
 
-        <h2>Units of Densiy</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>lbs/cuft</td>
-                    <td>Kg/m3</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_lbscuft" oninput="DensityUnits()"></td>
-                    <td>lbs/cuft</td>
-                    <td><input type="number" id="Vout_lbscuft_lbscuft" readonly></td>
-                    <td><input type="number" id="Vout_lbscuft_Kgm3" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_Kgm3" oninput="DensityUnits()"></td>
-                    <td>Kg/m3</td>
-                    <td><input type="number" id="Vout_Kgm3_lbscuft" readonly></td>
-                    <td><input type="number" id="Vout_Kgm3_Kgm3" readonly></td>
-                </tr>
-            </tbody>
-        </table>
+  <!-- ═══ PRESSURE ═══ -->
+  <div class="tab-panel active" id="tab-pressure">
+    <div class="conv-card">
+      <h2>Pressure</h2>
+      <p class="subtitle">Gauge vs absolute note: these conversions are between units only — gauge/absolute distinction must be handled separately.</p>
+      <div id="pressure-widget"></div>
+    </div>
+  </div>
 
-        <h2>Units of Temperature</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Value</td>
-                    <td>units</td>
-                    <td>deg F</td>
-                    <td>deg C</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><input type="number" id="Vin_degF" oninput="TempUnits()"></td>
-                    <td>deg F</td>
-                    <td><input type="number" id="Vout_degF_degF" readonly></td>
-                    <td><input type="number" id="Vout_degF_degC" readonly></td>
-                </tr>
-                <tr>
-                    <td><input type="number" id="Vin_degC" oninput="TempUnits()"></td>
-                    <td>deg C</td>
-                    <td><input type="number" id="Vout_degC_degF" readonly></td>
-                    <td><input type="number" id="Vout_degC_degC" readonly></td>
-                </tr>
-            </tbody>
-        </table>
-    </main>
-    <script type="module">
+  <!-- ═══ LENGTH ═══ -->
+  <div class="tab-panel" id="tab-length">
+    <div class="conv-card">
+      <h2>Length</h2>
+      <p class="subtitle">Linear dimensions and distances.</p>
+      <div id="length-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ AREA ═══ -->
+  <div class="tab-panel" id="tab-area">
+    <div class="conv-card">
+      <h2>Area</h2>
+      <p class="subtitle">Surface and cross-sectional areas.</p>
+      <div id="area-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ VOLUME ═══ -->
+  <div class="tab-panel" id="tab-volume">
+    <div class="conv-card">
+      <h2>Volume</h2>
+      <p class="subtitle">Volumetric capacity and displacement.</p>
+      <div id="volume-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MASS ═══ -->
+  <div class="tab-panel" id="tab-mass">
+    <div class="conv-card">
+      <h2>Mass / Weight</h2>
+      <p class="subtitle">Mass units. Note: weight (force) is in the Force tab.</p>
+      <div id="mass-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ FORCE ═══ -->
+  <div class="tab-panel" id="tab-force">
+    <div class="conv-card">
+      <h2>Force</h2>
+      <p class="subtitle">Mechanical force and load units.</p>
+      <div id="force-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ STRESS ═══ -->
+  <div class="tab-panel" id="tab-stress">
+    <div class="conv-card">
+      <h2>Stress / Pressure / Elastic Modulus</h2>
+      <p class="subtitle">Used for material strength, Young's modulus, yield stress, UTS etc.</p>
+      <div id="stress-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ENERGY ═══ -->
+  <div class="tab-panel" id="tab-energy">
+    <div class="conv-card">
+      <h2>Energy / Work / Heat</h2>
+      <p class="subtitle">Energy, work and heat quantity units.</p>
+      <div id="energy-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ POWER ═══ -->
+  <div class="tab-panel" id="tab-power">
+    <div class="conv-card">
+      <h2>Power</h2>
+      <p class="subtitle">Rate of energy transfer.</p>
+      <div id="power-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TORQUE ═══ -->
+  <div class="tab-panel" id="tab-torque">
+    <div class="conv-card">
+      <h2>Torque / Moment</h2>
+      <p class="subtitle">Rotational force units — used in shaft, bolt and gear design.</p>
+      <div id="torque-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ FLOW ═══ -->
+  <div class="tab-panel" id="tab-flow">
+    <div class="conv-card">
+      <h2>Volumetric Flow Rate</h2>
+      <p class="subtitle">Used in pneumatic conveying, pump sizing and piping design.</p>
+      <div id="flow-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ VELOCITY ═══ -->
+  <div class="tab-panel" id="tab-velocity">
+    <div class="conv-card">
+      <h2>Velocity / Speed</h2>
+      <p class="subtitle">Linear velocity — conveying air velocity, belt speed, tip speed etc.</p>
+      <div id="velocity-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ DENSITY ═══ -->
+  <div class="tab-panel" id="tab-density">
+    <div class="conv-card">
+      <h2>Density / Bulk Density</h2>
+      <p class="subtitle">Material and bulk density units.</p>
+      <div id="density-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TEMPERATURE ═══ -->
+  <div class="tab-panel" id="tab-temperature">
+    <div class="conv-card">
+      <h2>Temperature</h2>
+      <p class="subtitle">Note: temperature conversions are non-linear — formula shown below.</p>
+      <div id="temperature-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ VISCOSITY ═══ -->
+  <div class="tab-panel" id="tab-viscosity">
+    <div class="conv-card">
+      <h2>Dynamic Viscosity</h2>
+      <p class="subtitle">Used in fluid flow, pump and seal selection calculations.</p>
+      <div id="viscosity-widget"></div>
+    </div>
+  </div>
+
+  <!-- ═══ ANGLE ═══ -->
+  <div class="tab-panel" id="tab-angle">
+    <div class="conv-card">
+      <h2>Angle</h2>
+      <p class="subtitle">Used in hopper design, screw helix angles, bevel gear calculations.</p>
+      <div id="angle-widget"></div>
+    </div>
+  </div>
+
+</div><!-- /main-container -->
+
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -266,6 +377,547 @@
         }
         });
     </script>
-    <script src="Units.js"></script>
+<script>
+// ── UNIT DEFINITIONS ──────────────────────────────────────────────
+// Each unit: { label, toBase, fromBase }
+// toBase/fromBase: multiply factor OR function for non-linear
+
+const UNITS = {
+
+  pressure: {
+    label: 'Pressure',
+    units: [
+      { label: 'Pa',        sym: 'Pa',       toBase: 1,           fromBase: 1 },
+      { label: 'kPa',       sym: 'kPa',      toBase: 1e3,         fromBase: 1e-3 },
+      { label: 'MPa',       sym: 'MPa',      toBase: 1e6,         fromBase: 1e-6 },
+      { label: 'bar',       sym: 'bar',      toBase: 1e5,         fromBase: 1e-5 },
+      { label: 'mbar',      sym: 'mbar',     toBase: 100,         fromBase: 0.01 },
+      { label: 'atm',       sym: 'atm',      toBase: 101325,      fromBase: 1/101325 },
+      { label: 'psi',       sym: 'psi',      toBase: 6894.757,    fromBase: 1/6894.757 },
+      { label: 'ksi',       sym: 'ksi',      toBase: 6894757,     fromBase: 1/6894757 },
+      { label: 'kg/cm²',    sym: 'kg/cm²',   toBase: 98066.5,     fromBase: 1/98066.5 },
+      { label: 'mmHg (Torr)',sym:'mmHg',     toBase: 133.322,     fromBase: 1/133.322 },
+      { label: 'mmH₂O',     sym: 'mmH₂O',   toBase: 9.80665,     fromBase: 1/9.80665 },
+      { label: 'inHg',      sym: 'inHg',     toBase: 3386.39,     fromBase: 1/3386.39 },
+      { label: 'inH₂O',     sym: 'inH₂O',   toBase: 249.089,     fromBase: 1/249.089 },
+    ],
+    refRows: [
+      ['1 atm','101.325 kPa','14.696 psi','760 mmHg','1.0332 kg/cm²'],
+      ['1 bar','100 kPa','14.504 psi','750.06 mmHg','1.0197 kg/cm²'],
+      ['1 psi','6.895 kPa','0.0689 bar','51.715 mmHg','70.31 mmH₂O'],
+      ['1 MPa','10 bar','145.04 psi','1000 kPa','—'],
+    ],
+    refHeaders: ['Unit','= kPa equiv.','= psi','= mmHg','= kg/cm²'],
+  },
+
+  length: {
+    label: 'Length',
+    units: [
+      { label: 'mm',    sym: 'mm',    toBase: 0.001,       fromBase: 1000 },
+      { label: 'cm',    sym: 'cm',    toBase: 0.01,        fromBase: 100 },
+      { label: 'm',     sym: 'm',     toBase: 1,           fromBase: 1 },
+      { label: 'km',    sym: 'km',    toBase: 1000,        fromBase: 0.001 },
+      { label: 'inch',  sym: 'in',    toBase: 0.0254,      fromBase: 1/0.0254 },
+      { label: 'ft',    sym: 'ft',    toBase: 0.3048,      fromBase: 1/0.3048 },
+      { label: 'yard',  sym: 'yd',    toBase: 0.9144,      fromBase: 1/0.9144 },
+      { label: 'mile',  sym: 'mi',    toBase: 1609.344,    fromBase: 1/1609.344 },
+      { label: 'µm (micron)',sym:'µm', toBase: 1e-6,       fromBase: 1e6 },
+    ],
+    refRows: [
+      ['1 inch','25.4 mm','2.54 cm','0.0254 m'],
+      ['1 ft','304.8 mm','12 inch','0.3048 m'],
+      ['1 m','1000 mm','39.37 inch','3.281 ft'],
+      ['1 yard','914.4 mm','36 inch','3 ft'],
+    ],
+    refHeaders: ['Unit','mm','inch / cm','m / ft'],
+  },
+
+  area: {
+    label: 'Area',
+    units: [
+      { label: 'mm²',    sym: 'mm²',   toBase: 1e-6,      fromBase: 1e6 },
+      { label: 'cm²',    sym: 'cm²',   toBase: 1e-4,      fromBase: 1e4 },
+      { label: 'm²',     sym: 'm²',    toBase: 1,         fromBase: 1 },
+      { label: 'in²',    sym: 'in²',   toBase: 6.4516e-4, fromBase: 1/6.4516e-4 },
+      { label: 'ft²',    sym: 'ft²',   toBase: 0.092903,  fromBase: 1/0.092903 },
+      { label: 'km²',    sym: 'km²',   toBase: 1e6,       fromBase: 1e-6 },
+      { label: 'acre',   sym: 'ac',    toBase: 4046.856,  fromBase: 1/4046.856 },
+      { label: 'hectare',sym: 'ha',    toBase: 10000,     fromBase: 1e-4 },
+    ],
+    refRows: [
+      ['1 in²','645.16 mm²','6.452 cm²'],
+      ['1 ft²','92903 mm²','929.03 cm²','0.0929 m²'],
+      ['1 m²','10000 cm²','1550 in²','10.764 ft²'],
+    ],
+    refHeaders: ['Unit','mm²','cm²','m² / in²'],
+  },
+
+  volume: {
+    label: 'Volume',
+    units: [
+      { label: 'mm³',    sym: 'mm³',   toBase: 1e-9,       fromBase: 1e9 },
+      { label: 'cm³ (cc)',sym:'cm³',   toBase: 1e-6,       fromBase: 1e6 },
+      { label: 'litre',  sym: 'L',     toBase: 0.001,      fromBase: 1000 },
+      { label: 'm³',     sym: 'm³',    toBase: 1,          fromBase: 1 },
+      { label: 'in³',    sym: 'in³',   toBase: 1.6387e-5,  fromBase: 1/1.6387e-5 },
+      { label: 'ft³',    sym: 'ft³',   toBase: 0.028317,   fromBase: 1/0.028317 },
+      { label: 'US gallon',sym:'gal',  toBase: 0.003785,   fromBase: 1/0.003785 },
+      { label: 'Imp gallon',sym:'Igal',toBase: 0.004546,   fromBase: 1/0.004546 },
+      { label: 'US barrel (oil)',sym:'bbl',toBase:0.158987,fromBase:1/0.158987},
+    ],
+    refRows: [
+      ['1 litre','1000 cm³','0.001 m³','0.264 US gal'],
+      ['1 m³','1000 L','35.315 ft³','264.17 US gal'],
+      ['1 ft³','28.317 L','1728 in³','7.481 US gal'],
+      ['1 US gal','3.785 L','231 in³','0.1337 ft³'],
+    ],
+    refHeaders: ['Unit','Litres / cm³','m³ / ft³','US gal'],
+  },
+
+  mass: {
+    label: 'Mass',
+    units: [
+      { label: 'g',          sym: 'g',    toBase: 0.001,      fromBase: 1000 },
+      { label: 'kg',         sym: 'kg',   toBase: 1,          fromBase: 1 },
+      { label: 'tonne (MT)', sym: 't',    toBase: 1000,       fromBase: 0.001 },
+      { label: 'pound (lb)', sym: 'lb',   toBase: 0.453592,   fromBase: 1/0.453592 },
+      { label: 'ounce (oz)', sym: 'oz',   toBase: 0.028350,   fromBase: 1/0.028350 },
+      { label: 'short ton',  sym: 'ST',   toBase: 907.185,    fromBase: 1/907.185 },
+      { label: 'long ton',   sym: 'LT',   toBase: 1016.047,   fromBase: 1/1016.047 },
+      { label: 'grain',      sym: 'gr',   toBase: 6.4799e-5,  fromBase: 1/6.4799e-5 },
+    ],
+    refRows: [
+      ['1 kg','2.2046 lb','1000 g','0.001 tonne'],
+      ['1 lb','0.4536 kg','453.6 g','16 oz'],
+      ['1 tonne','1000 kg','2204.6 lb','1.102 short ton'],
+      ['1 short ton','907.2 kg','2000 lb','0.9072 tonne'],
+    ],
+    refHeaders: ['Unit','kg','lb / g','tonne / ton'],
+  },
+
+  force: {
+    label: 'Force',
+    units: [
+      { label: 'N',           sym: 'N',    toBase: 1,          fromBase: 1 },
+      { label: 'kN',          sym: 'kN',   toBase: 1000,       fromBase: 0.001 },
+      { label: 'MN',          sym: 'MN',   toBase: 1e6,        fromBase: 1e-6 },
+      { label: 'lbf',         sym: 'lbf',  toBase: 4.44822,    fromBase: 1/4.44822 },
+      { label: 'kip (kip-f)', sym: 'kip',  toBase: 4448.22,    fromBase: 1/4448.22 },
+      { label: 'kgf',         sym: 'kgf',  toBase: 9.80665,    fromBase: 1/9.80665 },
+      { label: 'tonf (metric)',sym:'tonf',  toBase: 9806.65,    fromBase: 1/9806.65 },
+      { label: 'dyne',        sym: 'dyn',  toBase: 1e-5,       fromBase: 1e5 },
+    ],
+    refRows: [
+      ['1 N','0.2248 lbf','0.10197 kgf'],
+      ['1 kN','1000 N','224.8 lbf','101.97 kgf'],
+      ['1 lbf','4.448 N','0.4536 kgf'],
+      ['1 kgf','9.807 N','2.2046 lbf'],
+    ],
+    refHeaders: ['Unit','N','lbf','kgf'],
+  },
+
+  stress: {
+    label: 'Stress',
+    units: [
+      { label: 'Pa',    sym: 'Pa',    toBase: 1,         fromBase: 1 },
+      { label: 'kPa',   sym: 'kPa',   toBase: 1e3,       fromBase: 1e-3 },
+      { label: 'MPa',   sym: 'MPa',   toBase: 1e6,       fromBase: 1e-6 },
+      { label: 'GPa',   sym: 'GPa',   toBase: 1e9,       fromBase: 1e-9 },
+      { label: 'psi',   sym: 'psi',   toBase: 6894.757,  fromBase: 1/6894.757 },
+      { label: 'ksi',   sym: 'ksi',   toBase: 6894757,   fromBase: 1/6894757 },
+      { label: 'N/mm²', sym: 'N/mm²', toBase: 1e6,       fromBase: 1e-6 },
+      { label: 'kgf/cm²',sym:'kgf/cm²',toBase:98066.5,  fromBase:1/98066.5 },
+      { label: 'bar',   sym: 'bar',   toBase: 1e5,       fromBase: 1e-5 },
+    ],
+    refRows: [
+      ['1 MPa','1 N/mm²','145.04 psi','0.1 kgf/mm²','10 bar'],
+      ['1 GPa','1000 MPa','145038 psi','10.197 kgf/mm²'],
+      ['1 psi','6.895 kPa','0.006895 MPa','0.0703 kgf/cm²'],
+      ['1 ksi','6.895 MPa','1000 psi','70.3 kgf/cm²'],
+    ],
+    refHeaders: ['Unit','SI equivalent','psi / ksi','kgf equiv.'],
+    extraNote: '1 MPa = 1 N/mm² — exact. Use MPa for material properties and stress calculations.',
+  },
+
+  energy: {
+    label: 'Energy',
+    units: [
+      { label: 'J',            sym: 'J',    toBase: 1,          fromBase: 1 },
+      { label: 'kJ',           sym: 'kJ',   toBase: 1000,       fromBase: 0.001 },
+      { label: 'MJ',           sym: 'MJ',   toBase: 1e6,        fromBase: 1e-6 },
+      { label: 'Wh',           sym: 'Wh',   toBase: 3600,       fromBase: 1/3600 },
+      { label: 'kWh',          sym: 'kWh',  toBase: 3.6e6,      fromBase: 1/3.6e6 },
+      { label: 'kcal',         sym: 'kcal', toBase: 4186.8,     fromBase: 1/4186.8 },
+      { label: 'cal',          sym: 'cal',  toBase: 4.1868,     fromBase: 1/4.1868 },
+      { label: 'BTU',          sym: 'BTU',  toBase: 1055.056,   fromBase: 1/1055.056 },
+      { label: 'ft·lbf',       sym: 'ft·lbf',toBase:1.35582,   fromBase:1/1.35582 },
+      { label: 'eV',           sym: 'eV',   toBase: 1.602e-19,  fromBase: 1/1.602e-19 },
+    ],
+    refRows: [
+      ['1 kJ','1000 J','0.2388 kcal','0.9478 BTU'],
+      ['1 kWh','3600 kJ','859.8 kcal','3412 BTU'],
+      ['1 BTU','1055 J','1.055 kJ','0.2931 Wh'],
+      ['1 kcal','4186.8 J','4.187 kJ','3.968 BTU'],
+    ],
+    refHeaders: ['Unit','J / kJ','kcal','BTU'],
+  },
+
+  power: {
+    label: 'Power',
+    units: [
+      { label: 'W',          sym: 'W',    toBase: 1,           fromBase: 1 },
+      { label: 'kW',         sym: 'kW',   toBase: 1000,        fromBase: 0.001 },
+      { label: 'MW',         sym: 'MW',   toBase: 1e6,         fromBase: 1e-6 },
+      { label: 'HP (metric)',sym: 'PS',   toBase: 735.499,     fromBase: 1/735.499 },
+      { label: 'HP (UK/US)', sym: 'hp',   toBase: 745.700,     fromBase: 1/745.700 },
+      { label: 'BTU/hr',     sym: 'BTU/h',toBase: 0.29307,     fromBase: 1/0.29307 },
+      { label: 'kcal/hr',    sym: 'kcal/h',toBase:1.16279,    fromBase:1/1.16279 },
+      { label: 'ft·lbf/min', sym: 'ft·lbf/min',toBase:0.022597,fromBase:1/0.022597},
+    ],
+    refRows: [
+      ['1 kW','1.341 hp (UK)','1.360 PS','3412 BTU/hr'],
+      ['1 hp (UK)','0.7457 kW','745.7 W','0.7604 PS'],
+      ['1 PS (metric)','0.7355 kW','0.9863 hp'],
+      ['1 BTU/hr','0.2931 W','0.000393 hp'],
+    ],
+    refHeaders: ['Unit','kW','hp (UK)','BTU/hr'],
+  },
+
+  torque: {
+    label: 'Torque',
+    units: [
+      { label: 'N·m',       sym: 'N·m',    toBase: 1,          fromBase: 1 },
+      { label: 'kN·m',      sym: 'kN·m',   toBase: 1000,       fromBase: 0.001 },
+      { label: 'N·mm',      sym: 'N·mm',   toBase: 0.001,      fromBase: 1000 },
+      { label: 'kgf·m',     sym: 'kgf·m',  toBase: 9.80665,    fromBase: 1/9.80665 },
+      { label: 'kgf·cm',    sym: 'kgf·cm', toBase: 0.0980665,  fromBase: 1/0.0980665 },
+      { label: 'lbf·ft',    sym: 'lbf·ft', toBase: 1.35582,    fromBase: 1/1.35582 },
+      { label: 'lbf·in',    sym: 'lbf·in', toBase: 0.112985,   fromBase: 1/0.112985 },
+      { label: 'ozf·in',    sym: 'ozf·in', toBase: 0.007062,   fromBase: 1/0.007062 },
+    ],
+    refRows: [
+      ['1 N·m','8.851 lbf·in','0.7376 lbf·ft','0.1020 kgf·m'],
+      ['1 lbf·ft','1.356 N·m','12 lbf·in','0.1383 kgf·m'],
+      ['1 kgf·m','9.807 N·m','7.233 lbf·ft','86.796 lbf·in'],
+      ['1 kN·m','1000 N·m','737.6 lbf·ft','101.97 kgf·m'],
+    ],
+    refHeaders: ['Unit','N·m','lbf·ft','kgf·m'],
+    extraNote: 'Torque = Force × Radius. Ensure consistent units: N·m for SI, lbf·ft for imperial.',
+  },
+
+  flow: {
+    label: 'Flow Rate',
+    units: [
+      { label: 'm³/s',      sym: 'm³/s',   toBase: 1,           fromBase: 1 },
+      { label: 'm³/hr',     sym: 'm³/hr',  toBase: 1/3600,      fromBase: 3600 },
+      { label: 'm³/min',    sym: 'm³/min', toBase: 1/60,        fromBase: 60 },
+      { label: 'L/s',       sym: 'L/s',    toBase: 0.001,       fromBase: 1000 },
+      { label: 'L/min',     sym: 'L/min',  toBase: 1/60000,     fromBase: 60000 },
+      { label: 'L/hr',      sym: 'L/hr',   toBase: 1/3600000,   fromBase: 3600000 },
+      { label: 'ft³/min (CFM)',sym:'CFM',  toBase: 0.000471947, fromBase: 1/0.000471947 },
+      { label: 'ft³/hr',    sym: 'ft³/hr', toBase: 7.8658e-6,   fromBase: 1/7.8658e-6 },
+      { label: 'US gal/min (GPM)',sym:'GPM',toBase:6.30902e-5,  fromBase:1/6.30902e-5},
+      { label: 'Imp gal/min',sym:'IGPM',  toBase: 7.57682e-5,  fromBase: 1/7.57682e-5 },
+    ],
+    refRows: [
+      ['1 m³/hr','16.667 L/min','4.403 GPM','0.5886 CFM'],
+      ['1 CFM','1.699 m³/hr','28.317 L/min','7.481 GPM'],
+      ['1 GPM','0.2271 m³/hr','3.785 L/min','0.1337 CFM'],
+      ['1 L/s','3.6 m³/hr','15.85 GPM','2.119 CFM'],
+    ],
+    refHeaders: ['Unit','m³/hr','L/min','GPM / CFM'],
+  },
+
+  velocity: {
+    label: 'Velocity',
+    units: [
+      { label: 'm/s',       sym: 'm/s',    toBase: 1,           fromBase: 1 },
+      { label: 'm/min',     sym: 'm/min',  toBase: 1/60,        fromBase: 60 },
+      { label: 'km/hr',     sym: 'km/h',   toBase: 1/3.6,       fromBase: 3.6 },
+      { label: 'ft/s',      sym: 'ft/s',   toBase: 0.3048,      fromBase: 1/0.3048 },
+      { label: 'ft/min',    sym: 'ft/min', toBase: 0.00508,     fromBase: 1/0.00508 },
+      { label: 'mph',       sym: 'mph',    toBase: 0.44704,     fromBase: 1/0.44704 },
+      { label: 'knot',      sym: 'kn',     toBase: 0.514444,    fromBase: 1/0.514444 },
+    ],
+    refRows: [
+      ['1 m/s','3.281 ft/s','196.85 ft/min','3.6 km/h'],
+      ['1 m/min','0.01667 m/s','3.281 ft/min','0.06 km/h'],
+      ['40 m/min','0.667 m/s','131.2 ft/min','2.4 km/h'],
+      ['1 ft/s','0.3048 m/s','18.288 m/min','1.097 km/h'],
+    ],
+    refHeaders: ['Unit','m/s','ft/s or ft/min','km/h'],
+    extraNote: 'Rotary valve max tip speed = 40 m/min = 0.667 m/s = 2.185 ft/s.',
+  },
+
+  density: {
+    label: 'Density',
+    units: [
+      { label: 'kg/m³',     sym: 'kg/m³',  toBase: 1,           fromBase: 1 },
+      { label: 'g/cm³',     sym: 'g/cm³',  toBase: 1000,        fromBase: 0.001 },
+      { label: 'g/L',       sym: 'g/L',    toBase: 1,           fromBase: 1 },
+      { label: 'kg/L',      sym: 'kg/L',   toBase: 1000,        fromBase: 0.001 },
+      { label: 'lb/ft³',    sym: 'lb/ft³', toBase: 16.0185,     fromBase: 1/16.0185 },
+      { label: 'lb/in³',    sym: 'lb/in³', toBase: 27679.9,     fromBase: 1/27679.9 },
+      { label: 'lb/US gal', sym: 'lb/gal', toBase: 119.826,     fromBase: 1/119.826 },
+      { label: 't/m³',      sym: 't/m³',   toBase: 1000,        fromBase: 0.001 },
+    ],
+    refRows: [
+      ['Water','1000 kg/m³','1 g/cm³','62.43 lb/ft³','8.34 lb/gal'],
+      ['Air (STP)','1.225 kg/m³','0.001225 g/cm³','0.0765 lb/ft³'],
+      ['Steel','7850 kg/m³','7.85 g/cm³','490 lb/ft³'],
+      ['Aluminium','2700 kg/m³','2.7 g/cm³','168.6 lb/ft³'],
+    ],
+    refHeaders: ['Reference Material','kg/m³','g/cm³','lb/ft³'],
+  },
+
+  temperature: {
+    label: 'Temperature',
+    isNonLinear: true,
+    units: [
+      { label: '°C', sym: '°C' },
+      { label: '°F', sym: '°F' },
+      { label: 'K',  sym: 'K'  },
+      { label: '°R', sym: '°R' },
+    ],
+    convert(val, from, to) {
+      let c;
+      if (from === '°C') c = val;
+      else if (from === '°F') c = (val - 32) * 5/9;
+      else if (from === 'K')  c = val - 273.15;
+      else if (from === '°R') c = (val - 491.67) * 5/9;
+      if (to === '°C') return c;
+      if (to === '°F') return c * 9/5 + 32;
+      if (to === 'K')  return c + 273.15;
+      if (to === '°R') return (c + 273.15) * 9/5;
+    },
+    refRows: [
+      ['-40','−40','233.15','419.67'],
+      ['0','32','273.15','491.67'],
+      ['20','68','293.15','527.67'],
+      ['100','212','373.15','671.67'],
+      ['200','392','473.15','851.67'],
+      ['500','932','773.15','1391.67'],
+    ],
+    refHeaders: ['°C','°F','K','°R'],
+    extraNote: '°F = (°C × 9/5) + 32   |   K = °C + 273.15   |   °R = °F + 459.67',
+  },
+
+  viscosity: {
+    label: 'Dynamic Viscosity',
+    units: [
+      { label: 'Pa·s',        sym: 'Pa·s',   toBase: 1,          fromBase: 1 },
+      { label: 'mPa·s (cP)',  sym: 'mPa·s',  toBase: 0.001,      fromBase: 1000 },
+      { label: 'poise (P)',   sym: 'P',       toBase: 0.1,        fromBase: 10 },
+      { label: 'centipoise (cP)',sym:'cP',    toBase: 0.001,      fromBase: 1000 },
+      { label: 'lbf·s/ft²',  sym: 'lbf·s/ft²',toBase:47.8803,   fromBase:1/47.8803 },
+      { label: 'lb/(ft·s)',   sym: 'lb/ft·s', toBase: 1.48816,   fromBase:1/1.48816 },
+      { label: 'lb/(ft·hr)',  sym: 'lb/ft·h', toBase: 4.13378e-4,fromBase:1/4.13378e-4},
+    ],
+    refRows: [
+      ['Water (20°C)','1.002 cP','0.001002 Pa·s','0.001002 P'],
+      ['Air (20°C)','0.0183 cP','1.83×10⁻⁵ Pa·s'],
+      ['Honey (20°C)','~5000–10000 cP','5–10 Pa·s'],
+      ['Engine oil SAE30','~110 cP at 40°C'],
+    ],
+    refHeaders: ['Fluid / Reference','cP','Pa·s','Notes'],
+    extraNote: '1 cP = 1 mPa·s (exact). Water at 20°C ≈ 1 cP. For kinematic viscosity: ν = μ/ρ  (m²/s).',
+  },
+
+  angle: {
+    label: 'Angle',
+    units: [
+      { label: 'degree (°)',  sym: '°',    toBase: Math.PI/180,  fromBase: 180/Math.PI },
+      { label: 'radian (rad)',sym: 'rad',  toBase: 1,            fromBase: 1 },
+      { label: 'gradian (gon)',sym:'gon',  toBase: Math.PI/200,  fromBase: 200/Math.PI },
+      { label: 'arcminute (\')',sym:'\'',  toBase: Math.PI/10800,fromBase:10800/Math.PI},
+      { label: 'arcsecond (")',sym:'"',    toBase: Math.PI/648000,fromBase:648000/Math.PI},
+      { label: 'revolution',  sym: 'rev',  toBase: 2*Math.PI,    fromBase: 1/(2*Math.PI) },
+    ],
+    refRows: [
+      ['45°','π/4 rad','0.7854 rad','50 gon'],
+      ['90°','π/2 rad','1.5708 rad','100 gon'],
+      ['180°','π rad','3.1416 rad','200 gon'],
+      ['1 rad','57.296°','3438\' arcmin'],
+      ['1 revolution','360°','2π rad','400 gon'],
+    ],
+    refHeaders: ['Angle','Degrees','Radians','Gradians / Notes'],
+    extraNote: 'Hopper half-angle of friction: typically 15°–30° (0.26–0.52 rad). Screw helix angle: typically 17°–20° for bulk handling.',
+  },
+
+};
+
+// ── WIDGET BUILDER ────────────────────────────────────────────────
+
+function buildWidget(key, containerId) {
+  const def = UNITS[key];
+  const container = document.getElementById(containerId);
+  if (!container || !def) return;
+
+  const unitLabels = def.units.map(u => u.label);
+  const isNL = def.isNonLinear;
+
+  let fromIdx = 0, toIdx = 1;
+
+  function makeSelect(selectedIdx, onChange) {
+    const sel = document.createElement('select');
+    sel.className = 'unit-select';
+    def.units.forEach((u, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = u.label + (u.sym !== u.label.split(' ')[0] ? '  [' + u.sym + ']' : '');
+      if (i === selectedIdx) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', onChange);
+    return sel;
+  }
+
+  function convert(val, fi, ti) {
+    if (isNL) {
+      return def.convert(val, def.units[fi].sym, def.units[ti].sym);
+    }
+    const base = val * def.units[fi].toBase;
+    return base * def.units[ti].fromBase;
+  }
+
+  function fmt(v) {
+    if (v === null || isNaN(v)) return '';
+    if (Math.abs(v) === 0) return '0';
+    const abs = Math.abs(v);
+    if (abs >= 1e9 || (abs < 1e-4 && abs > 0)) return v.toExponential(6);
+    if (abs >= 1000) return +v.toPrecision(8) + '';
+    return +parseFloat(v.toPrecision(8)) + '';
+  }
+
+  // DOM
+  const fromSel = makeSelect(fromIdx, e => { fromIdx = +e.target.value; refreshLabels(); doConvert(); });
+  const toSel   = makeSelect(toIdx,   e => { toIdx   = +e.target.value; refreshLabels(); doConvert(); });
+
+  const swapBtn = document.createElement('button');
+  swapBtn.className = 'swap-btn'; swapBtn.title = 'Swap units'; swapBtn.textContent = '⇄';
+  swapBtn.onclick = () => {
+    const tmp = fromIdx; fromIdx = toIdx; toIdx = tmp;
+    fromSel.value = fromIdx; toSel.value = toIdx;
+    refreshLabels();
+    // swap values
+    const tmp2 = inputEl.value; inputEl.value = outputEl.value; outputEl.value = tmp2;
+    doConvert();
+  };
+
+  const controls = document.createElement('div');
+  controls.className = 'conv-controls';
+  const lbl1 = document.createElement('label'); lbl1.textContent = 'From:';
+  const lbl2 = document.createElement('label'); lbl2.textContent = 'To:';
+  controls.append(lbl1, fromSel, swapBtn, lbl2, toSel);
+
+  // IO
+  const ioWrap = document.createElement('div');
+  ioWrap.className = 'conv-io';
+
+  const fromBox  = document.createElement('div'); fromBox.className = 'io-box';
+  const fromLbl  = document.createElement('div'); fromLbl.className = 'io-label'; fromLbl.textContent = 'Input';
+  const inputEl  = document.createElement('input'); inputEl.type = 'number'; inputEl.placeholder = '0';
+  inputEl.addEventListener('input', doConvert);
+  const fromUnit = document.createElement('div'); fromUnit.className = 'io-unit';
+  fromBox.append(fromLbl, inputEl, fromUnit);
+
+  const divider = document.createElement('div');
+  divider.className = 'io-divider'; divider.textContent = '=';
+
+  const toBox   = document.createElement('div'); toBox.className = 'io-box';
+  const toLbl   = document.createElement('div'); toLbl.className = 'io-label'; toLbl.textContent = 'Result';
+  const outputEl= document.createElement('input'); outputEl.type = 'number'; outputEl.readOnly = true;
+  const toUnit  = document.createElement('div'); toUnit.className = 'io-unit';
+  toBox.append(toLbl, outputEl, toUnit);
+
+  ioWrap.append(fromBox, divider, toBox);
+
+  function refreshLabels() {
+    fromUnit.textContent = def.units[fromIdx].sym;
+    toUnit.textContent   = def.units[toIdx].sym;
+  }
+  refreshLabels();
+
+  function doConvert() {
+    const val = parseFloat(inputEl.value);
+    if (isNaN(val)) { outputEl.value = ''; return; }
+    outputEl.value = fmt(convert(val, fromIdx, toIdx));
+  }
+
+  container.append(controls, ioWrap);
+
+  // Extra note
+  if (def.extraNote) {
+    const nb = document.createElement('div');
+    nb.className = 'formula-box'; nb.textContent = def.extraNote;
+    container.appendChild(nb);
+  }
+
+  // Reference table toggle
+  if (def.refRows) {
+    const toggle = document.createElement('div');
+    toggle.className = 'ref-toggle';
+    toggle.innerHTML = '▶ Show reference table';
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'ref-table-wrap';
+
+    const tbl = document.createElement('table');
+    tbl.className = 'ref-table';
+    const thead = document.createElement('thead');
+    const hRow = document.createElement('tr');
+    def.refHeaders.forEach(h => { const th = document.createElement('th'); th.textContent = h; hRow.appendChild(th); });
+    thead.appendChild(hRow); tbl.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    def.refRows.forEach(row => {
+      const tr = document.createElement('tr');
+      row.forEach((cell, ci) => {
+        const td = document.createElement('td'); td.textContent = cell; tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    tableWrap.appendChild(tbl);
+
+    toggle.onclick = () => {
+      const open = tableWrap.classList.toggle('open');
+      toggle.innerHTML = (open ? '▼' : '▶') + ' ' + (open ? 'Hide' : 'Show') + ' reference table';
+    };
+
+    container.append(toggle, tableWrap);
+  }
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+const widgetMap = {
+  pressure: 'pressure-widget',
+  length:   'length-widget',
+  area:     'area-widget',
+  volume:   'volume-widget',
+  mass:     'mass-widget',
+  force:    'force-widget',
+  stress:   'stress-widget',
+  energy:   'energy-widget',
+  power:    'power-widget',
+  torque:   'torque-widget',
+  flow:     'flow-widget',
+  velocity: 'velocity-widget',
+  density:  'density-widget',
+  temperature:'temperature-widget',
+  viscosity:'viscosity-widget',
+  angle:    'angle-widget',
+};
+
+Object.entries(widgetMap).forEach(([key, cid]) => buildWidget(key, cid));
+</script>
+
 </body>
 </html>
