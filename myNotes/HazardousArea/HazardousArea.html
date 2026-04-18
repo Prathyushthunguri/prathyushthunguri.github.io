@@ -1,214 +1,815 @@
-<!-- secret.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Hazardous Area Classification</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-  <link rel="stylesheet" href="../Notes-styles.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<title>ATEX Basis of Safety — Reference &amp; Configurator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; font-size: 14px; line-height: 1.6; }
+
+/* ── Navbar ── */
+.top-navbar {
+  position: fixed; top: 0; width: 100%;
+  background-color: #222; color: #fff;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 20px; z-index: 1000;
+}
+.navbar-left { font-size: 20px; font-weight: bold; }
+.navbar-right { display: flex; gap: 6px; flex-wrap: wrap; }
+.navbar-right button {
+  background: #444; color: #fff; border: none;
+  padding: 8px 14px; cursor: pointer; font-size: 14px;
+  margin-left: 10px; transition: background 0.2s;
+}
+.navbar-right button:hover { background-color: #666; }
+
+/* ── Layout ── */
+.main-container {
+  max-width: 1800px; margin: 80px auto 40px auto;
+  padding: 20px; background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: 12px;
+}
+@media (max-width: 768px) { .main-container { margin: 100px 10px 20px 10px; padding: 15px; } }
+
+/* ── Tab bar ── */
+.tab-bar {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-bottom: 20px; border-bottom: 2px solid #ccc;
+}
+.tab-bar button {
+  background: #eeeeee; color: #444; border: 1px solid #ccc;
+  border-bottom: none; padding: 8px 16px; cursor: pointer;
+  font-size: 13px; border-radius: 6px 6px 0 0;
+  font-family: 'Segoe UI', sans-serif; transition: background 0.2s;
+}
+.tab-bar button:hover { background: #dddddd; }
+.tab-bar button.active {
+  background: #ffffff; color: #222; font-weight: bold;
+  border-bottom: 2px solid #fff; margin-bottom: -2px;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Section headings ── */
+h2 { color: #222; margin-bottom: 12px; font-size: 18px; }
+h3 { margin-top: 20px; margin-bottom: 8px; color: #444; font-size: 15px; }
+h4 { margin-top: 14px; margin-bottom: 6px; color: #555; font-size: 13px; font-weight: 600; }
+p { margin-bottom: 8px; color: #444; }
+ul { padding-left: 24px; margin-bottom: 10px; }
+li { margin-bottom: 6px; font-size: 13.5px; line-height: 1.6; color: #444; }
+li > ul li { color: #555; font-size: 13px; }
+strong { color: #222; }
+
+/* ── Tables ── */
+table {
+  width: 100%; border-collapse: collapse;
+  background: #fff; box-shadow: 0 0 6px rgba(0,0,0,0.08);
+  margin-bottom: 18px; border-radius: 8px; overflow: hidden;
+}
+thead { color: #222; }
+th { background-color: #f2f2f2; color: #222; padding: 8px 12px; text-align: left; font-weight: bold; border: 1px solid #ccc; font-size: 12px; }
+td { border: 1px solid #ccc; padding: 8px 12px; vertical-align: top; font-size: 13px; }
+tr:nth-child(even) td { background-color: #fafafa; }
+tr:hover td { background: #f5f5f5; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid #ccc;
+}
+.bg  { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+.bw  { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+.bb  { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+.bn  { background: #f0f0f0; color: #444;    border-color: #ccc; }
+.br  { background: #fff0e0; color: #7a3a00; border-color: #e8c090; }
+
+/* ── Note/Warn boxes ── */
+.note-box {
+  background: #f9f9f9; border-left: 4px solid #aaa;
+  padding: 12px 16px; margin: 8px 0; font-size: 13px; color: #333;
+  border-radius: 0 4px 4px 0;
+}
+.warn-box {
+  background: #fff8f2; border-left: 4px solid #b85c00;
+  padding: 12px 16px; margin: 8px 0; font-size: 13px; color: #333;
+  border-radius: 0 4px 4px 0;
+}
+.warn-box strong { color: #b85c00; }
+.info-box {
+  background: #f9f9f9; border-left: 4px solid #aaa;
+  padding: 12px 16px; margin: 8px 0; font-size: 13px; color: #333;
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── Two-column grid ── */
+.two-col { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.two-col > div { flex: 1; padding: 14px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media(max-width:768px) { .two-col, .three-col { flex-direction: column; grid-template-columns: 1fr; } }
+.col-card {
+  background: #fff; border: 1px solid #ddd; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.col-card-title {
+  font-weight: 700; font-size: 16px; color: #222;
+  margin-bottom: 14px; border-bottom: 2px solid #eee; padding-bottom: 8px;
+}
+
+/* ── Zone cards ── */
+.zone-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 18px; }
+.zone-row-dust { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 18px; }
+@media(max-width:640px) { .zone-row, .zone-row-dust { grid-template-columns: 1fr; } }
+.zone-card {
+  border-radius: 10px; padding: 20px 24px;
+  border: 1px solid #ddd; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.zone-card.z0   { background: #fff0f0; border-color: #f0b8b8; }
+.zone-card.z1   { background: #fefce8; border-color: #ddd09a; }
+.zone-card.z2   { background: #eaf4ea; border-color: #b0d4b0; }
+.zone-card.z20  { background: #fff0f0; border-color: #f0b8b8; }
+.zone-card.z21  { background: #fefce8; border-color: #ddd09a; }
+.zone-card.z22  { background: #eaf4ea; border-color: #b0d4b0; }
+.zone-num { font-size: 26px; font-weight: bold; margin-bottom: 4px; }
+.z0 .zone-num, .z20 .zone-num  { color: #9b2c2c; }
+.z1 .zone-num, .z21 .zone-num  { color: #7a6000; }
+.z2 .zone-num, .z22 .zone-num  { color: #2d6a2d; }
+.zone-label { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: #666; }
+.zone-body { font-size: 12.5px; color: #444; line-height: 1.55; }
+.zone-eg { font-size: 11.5px; color: #888; margin-top: 6px; font-style: italic; }
+.zone-hrs { font-size: 11px; font-family: 'Courier New', monospace; background: #fff; border: 1px solid #ddd; border-radius: 3px; padding: 2px 7px; display: inline-block; margin-top: 6px; color: #555; }
+
+/* ── Configurator ── */
+.config-section {
+  background: #fff; border: 1px solid #ddd; border-radius: 10px;
+  padding: 20px 24px; margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.config-section h3 { margin-top: 0; color: #222; font-size: 14px; font-weight: 700; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-bottom: 14px; }
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+.form-label { font-size: 11px; color: #888; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+.form-select, .form-input {
+  background: #f9f9f9; border: 1px solid #ccc; color: #333;
+  padding: 7px 10px; border-radius: 4px;
+  font-family: 'Segoe UI', sans-serif; font-size: 13px; outline: none;
+}
+.form-select:focus, .form-input:focus { border-color: #888; }
+.btn-primary {
+  background: #444; color: #fff; border: none;
+  padding: 8px 20px; border-radius: 4px; cursor: pointer;
+  font-size: 13px; font-weight: bold; transition: background 0.2s;
+  margin-top: 4px;
+}
+.btn-primary:hover { background: #222; }
+
+/* ── Result panel ── */
+.result-panel {
+  background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px;
+  padding: 16px 18px; margin-top: 14px;
+}
+.result-title { font-size: 11px; color: #999; font-weight: bold; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.result-cell {
+  background: #fff; border: 1px solid #ddd; border-radius: 5px;
+  padding: 9px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.result-cell-label { font-size: 10px; color: #999; font-weight: 600; letter-spacing: 0.4px; margin-bottom: 3px; }
+.result-cell-value { font-size: 14px; font-family: 'Courier New', monospace; font-weight: bold; color: #222; }
+.result-cell.red-border { border-left: 3px solid #b85c00; }
+.result-cell.red-border .result-cell-value { color: #b85c00; }
+.result-steps {
+  margin-top: 12px; font-size: 12.5px; color: #555; line-height: 1.9;
+  font-family: 'Courier New', monospace;
+  background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 10px 14px;
+}
+.result-hidden { display: none; }
+
+/* ── Ignition source matrix ── */
+.ign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media(max-width:640px) { .ign-grid { grid-template-columns: 1fr; } }
+.ign-card { background: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.ign-card-title { font-weight: bold; color: #222; margin-bottom: 6px; font-size: 13px; }
+.ign-card-body { font-size: 12.5px; color: #555; }
+.ign-card-control { font-size: 11.5px; color: #2d6a2d; margin-top: 6px; padding-top: 5px; border-top: 1px solid #eee; }
+
+/* ── Print styles ── */
+@media print { .top-navbar { display: none; } .main-container { margin-top: 0; box-shadow: none; } }
+</style>
 </head>
 <body>
-    <nav class="top-navbar">
-        <div class="navbar-left">Hazardous Area Classification Guide</div>
-        <div class="navbar-right">
-        <button onclick='location.href = "../secret.html"'>Home</button>
-        </div>
-    </nav>
-    <main class="main-container">
-        <p>Resource: Alison - Hazardous Area Classification Course</p>
-        <h2>Introduction</h2>
+
+<nav class="top-navbar">
+  <div class="navbar-left">⚡ ATEX — Basis of Safety Reference &amp; Configurator</div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <div class="tab-bar">
+    <button onclick="showTab('zones',this)" id="btn-zones" class="active">Hazardous Zones</button>
+    <button onclick="showTab('materials',this)" id="btn-materials">Material Hazards</button>
+    <button onclick="showTab('ignition',this)" id="btn-ignition">Ignition Sources</button>
+    <button onclick="showTab('equipment',this)" id="btn-equipment">Equipment &amp; T-Rating</button>
+    <button onclick="showTab('prevention',this)" id="btn-prevention">Prevention</button>
+    <button onclick="showTab('protection',this)" id="btn-protection">Protection</button>
+    <button onclick="showTab('configurator',this)" id="btn-configurator">⚙ Hazard Configurator</button>
+  </div>
+
+  <!-- ══ TAB 1: HAZARDOUS ZONES ══ -->
+  <div class="tab-panel active" id="tab-zones">
+    <h2>Hazardous Area Classification — Zone Definitions</h2>
+    <p style="color:#555;margin-bottom:14px;">Per EN 60079-10 / DSEAR 2002 / ATEX Directive. Area classification deals with <strong>reasonably foreseeable events only</strong> — catastrophic failures (vessel rupture, unpredictable events) are outside scope and require separate risk assessment.</p>
+
+    <h3>Gas / Vapour / Mist Zones (EN 60079-10)</h3>
+    <div class="zone-row">
+      <div class="zone-card z0">
+        <div class="zone-num">0</div>
+        <div class="zone-label">Continuous Hazard</div>
+        <div class="zone-body">Explosive atmosphere from gas, vapour, mist or spray is <strong>present continuously, or for long periods, or frequently</strong>.</div>
+        <div class="zone-eg">e.g. Inside solvent storage tank operating continuously above flash point</div>
+        <div><span class="zone-hrs">&gt; 1000 hrs/yr</span></div>
+      </div>
+      <div class="zone-card z1">
+        <div class="zone-num">1</div>
+        <div class="zone-label">Occasional Hazard</div>
+        <div class="zone-body">Explosive atmosphere is <strong>likely to occur in normal operation occasionally</strong>.</div>
+        <div class="zone-eg">e.g. Sampling point where liquid is above flash point temperature</div>
+        <div><span class="zone-hrs">10–1000 hrs/yr</span></div>
+      </div>
+      <div class="zone-card z2">
+        <div class="zone-num">2</div>
+        <div class="zone-label">Rare / Short Duration</div>
+        <div class="zone-body">Explosive atmosphere <strong>not likely in normal operation</strong> but if it does occur, persists for a short period only.</div>
+        <div class="zone-eg">e.g. Leakage from gas pipework flanges, fittings</div>
+        <div><span class="zone-hrs">&lt; 10 hrs/yr</span></div>
+      </div>
+    </div>
+
+    <h3>Combustible Dust Zones (ATEX / IEC 61241)</h3>
+    <div class="zone-row-dust">
+      <div class="zone-card z20">
+        <div class="zone-num">20</div>
+        <div class="zone-label">Continuous Dust Cloud</div>
+        <div class="zone-body">Explosive atmosphere as a <strong>cloud of combustible dust in air present continuously, or for long periods, or frequently</strong>.</div>
+        <div class="zone-eg">e.g. Inside cyclones, hoppers, containers, pipework, grinding equipment</div>
+        <div><span class="zone-hrs">&gt; 1000 hrs/yr</span></div>
+      </div>
+      <div class="zone-card z21">
+        <div class="zone-num">21</div>
+        <div class="zone-label">Occasional Dust Cloud</div>
+        <div class="zone-body">Explosive dust cloud atmosphere <strong>likely to occur in normal operation occasionally</strong>, or where dust layers likely to give rise to explosive concentration.</div>
+        <div class="zone-eg">e.g. Powder filling/discharge points, weigh stations, sampling points</div>
+        <div><span class="zone-hrs">10–1000 hrs/yr</span></div>
+      </div>
+      <div class="zone-card z22">
+        <div class="zone-num">22</div>
+        <div class="zone-label">Rare Dust Cloud</div>
+        <div class="zone-body">Explosive dust cloud atmosphere <strong>not likely in normal operation</strong> but if it does occur, persists for a short period only.</div>
+        <div class="zone-eg">e.g. Outlets from cyclones, clean-side of dust filters</div>
+        <div><span class="zone-hrs">&lt; 10 hrs/yr</span></div>
+      </div>
+    </div>
+
+    <h3>Key Parameters for Zone Determination</h3>
+    <div class="two-col">
+      <div>
+        <table>
+          <thead><tr><th>Parameter</th><th>Relevance</th></tr></thead>
+          <tbody>
+            <tr><td>Flash Point</td><td>Determines if flammable vapour-air mixture forms at ambient temp. 5K safety margin for pure solvents; 15K for liquid/solid mixtures</td></tr>
+            <tr><td>Gas / Vapour Density</td><td>Heavier-than-air gases accumulate at low points; lighter-than-air rise to ceiling</td></tr>
+            <tr><td>Leak / Emission Rate</td><td>Determines source grade (continuous / primary / secondary)</td></tr>
+            <tr><td>LEL / MEC</td><td>Lower Explosive Limit (gases) or Min. Explosible Concentration (dusts ~30–60 g/m³)</td></tr>
+            <tr><td>Ventilation Level</td><td>High (VH), Medium (VM), Low (VL) — determines extent of zone</td></tr>
+            <tr><td>Height of Release</td><td>Affects dispersion and accumulation patterns</td></tr>
+            <tr><td>Temperature</td><td>Affects vapour pressure, gas density and MEC</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <table>
+          <thead><tr><th>Ventilation Category</th><th>Effect on Zone</th></tr></thead>
+          <tbody>
+            <tr><td><strong>High (VH)</strong></td><td>Reduces concentration at source virtually instantaneously, below LEL. Zone of small or negligible extent results.</td></tr>
+            <tr><td><strong>Medium (VM)</strong></td><td>Can control concentration — stable situation below LEL at zone boundary. Hazardous area does not persist unduly after release stops.</td></tr>
+            <tr><td><strong>Low (VL)</strong></td><td>Cannot control concentration whilst release is in progress or prevent undue persistence of hazardous area after release has stopped.</td></tr>
+          </tbody>
+        </table>
+        <div class="warn-box"><strong>Ventilation key considerations:</strong> Effectiveness must be monitored; extract discharge point; air drawn from non-hazardous area; consider heavier-than-air gas flow; local obstacles to airflow; changes in gas density with temperature.</div>
+      </div>
+    </div>
+
+    <div class="note-box">⚠️ <strong>Catastrophic failures</strong> (vessel rupture, unpredictable events) are outside the scope of area classification per EN 60079-10 §1.1(d). Such events may cause explosive atmospheres in areas classified as non-hazardous and require risk assessment under separate legislation.</div>
+
+    <h3>Dust Layer Risks</h3>
+    <div class="three-col">
+      <div class="col-card">
+        <div class="col-card-title">⚡ Risk 1 — Secondary Explosion</div>
+        A primary explosion within a building may raise dust layers into clouds, causing secondary explosions more damaging than the primary event. <strong>Always control dust layers.</strong>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">🔥 Risk 2 — Layer Fire</div>
+        Dust layers may be ignited by heat flux from equipment on which the layer rests. Risk is of fire rather than explosion — this may be a slow process.
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">💥 Risk 3 — Cloud Ignition on Hot Surface</div>
+        Dust layer raised into cloud may ignite on a hot surface causing explosion. Note: cloud ignition temperatures often much higher than layer temperatures (e.g. Paper: layer 210–275°C, cloud &gt;450°C).
+      </div>
+    </div>
+    <div class="warn-box"><strong>Dust layer rule:</strong> A 1mm deposit in a 10×10×5m room = ~75 kg powder. If dispersed → 150 g/m³ (well within flammable range). <em>Never use air-jetting to clean dust deposits.</em> Equipment surface layers must not exceed <strong>5 mm</strong>.</div>
+  </div>
+
+  <!-- ══ TAB 2: MATERIAL HAZARDS ══ -->
+  <div class="tab-panel" id="tab-materials">
+    <h2>Section 2 — Characterising Material Hazards</h2>
+    <p>Per DSEAR 2002 / ATEX Directives, the employer shall make a suitable and sufficient assessment of the risks from dangerous substances. The first step is to check suppliers' MSDS, own records, and the Gestis database (&gt;6000 dust samples, EU-funded).</p>
+
+    <div class="two-col">
+      <div>
+        <h3>Dust Explosion Test Methods</h3>
+        <table>
+          <thead><tr><th>Test</th><th>Determines</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Group A/B Vertical Tube</strong></td><td>Basic explosibility classification</td><td>Group A = ignites &amp; propagates flame. Group B = does not propagate. Further testing if Group B &gt;110°C.</td></tr>
+            <tr><td><strong>20-Litre Sphere / 1m³</strong></td><td>Kst, Pmax — explosion severity</td><td>10 kJ ignition source. Tests conducted over range of concentrations.</td></tr>
+            <tr><td><strong>MIT Cloud</strong></td><td>Minimum Ignition Temperature of dust cloud</td><td>Relevant to heated surfaces: dryers, mills, electrical equipment</td></tr>
+            <tr><td><strong>MIT Layer (5mm)</strong></td><td>Minimum surface temp to ignite 5mm dust layer</td><td>Surface layers must not exceed 5mm. Thicker layers invalidate T-rating.</td></tr>
+            <tr><td><strong>MIE</strong></td><td>Minimum Ignition Energy (dust cloud)</td><td>Capacitive circuit (electrostatic) and inductive (friction spark). MIEcap: 3–1000 mJ dusts; 0.017–0.4 mJ gases.</td></tr>
+            <tr><td><strong>MEC</strong></td><td>Minimum Explosible Concentration</td><td>Typically 30–60 g/m³ for dusts; LEL ~45 g/m³ for gases. UEL for dusts usually &gt;1000 g/m³.</td></tr>
+            <tr><td><strong>MOC / LOC</strong></td><td>Minimum Oxygen Concentration for combustion</td><td>Powders: 8–15% v/v. Gases/vapours: 5–10% v/v. Depends on material AND inert gas type.</td></tr>
+            <tr><td><strong>Diffusion / Aerated Cell / Air-Over-Layer</strong></td><td>Thermal stability in bulk/layer form</td><td>Preferred for dryer applications. Key parameters: Tonset, Tmarked (&gt;5K/min), Trapid (&gt;50K/min).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Dust ST Classification (Kst)</h3>
+        <table>
+          <thead><tr><th>Class</th><th>Kst (bar·m/s)</th><th>Explosion Hazard</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge bg">ST 0</span></td><td>0</td><td>No explosion</td><td>Table salt, sand</td></tr>
+            <tr><td><span class="badge bw">ST 1</span></td><td>1–200</td><td>Weak explosion</td><td>Sugar (80), Coal (85), Starch (150)</td></tr>
+            <tr><td><span class="badge bb">ST 2</span></td><td>201–300</td><td>Strong explosion</td><td>Cellulose (160→), Dextrin (200)</td></tr>
+            <tr><td><span class="badge" style="background:#3a0000;color:#ff8080;border-color:#880000">ST 3</span></td><td>&gt;300</td><td>Very strong explosion</td><td>Aluminium (555), Hydrogen (503)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Reference Kst / Pmax Values</h3>
+        <table>
+          <thead><tr><th>Material</th><th>Pmax (bar)</th><th>Kst (bar·m/s)</th><th>Class</th></tr></thead>
+          <tbody>
+            <tr><td>Methane (gas)</td><td>8.4</td><td>58</td><td><span class="badge bw">ST1 equiv</span></td></tr>
+            <tr><td>Hydrogen (gas)</td><td>8.2</td><td>503</td><td><span class="badge" style="background:#3a0000;color:#ff8080;border-color:#880000">ST3</span></td></tr>
+            <tr><td>Sugar</td><td>8.0</td><td>80</td><td><span class="badge bw">ST1</span></td></tr>
+            <tr><td>Coal</td><td>7.7</td><td>85</td><td><span class="badge bw">ST1</span></td></tr>
+            <tr><td>Starch</td><td>9.4</td><td>150</td><td><span class="badge bw">ST1</span></td></tr>
+            <tr><td>Cellulose</td><td>10.0</td><td>160</td><td><span class="badge bb">ST2</span></td></tr>
+            <tr><td>Milk Powder</td><td>8.2</td><td>147</td><td><span class="badge bw">ST1</span></td></tr>
+            <tr><td>Dextrin</td><td>8.7</td><td>200</td><td><span class="badge bb">ST2</span></td></tr>
+            <tr><td>Aluminium</td><td>11.5</td><td>555</td><td><span class="badge" style="background:#3a0000;color:#ff8080;border-color:#880000">ST3</span></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Moisture Effect on Dust Explosibility</h3>
+        <table>
+          <thead><tr><th>Moisture Content</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>0–5%</td><td><span class="badge bw">Little effect</span></td></tr>
+            <tr><td>5–10%</td><td><span class="badge bg">Decreases sensitivity</span></td></tr>
+            <tr><td>&gt;25%</td><td><span class="badge bg">Particles unlikely to stay in suspension</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Particle Size Guidance</h3>
+    <div class="note-box">Particles <strong>&gt;500 µm</strong> are unlikely to cause dust explosion hazards. Most tests are carried out below 100 µm or standardised 63 µm. Note: transportation of granular material may create a fines fraction through attrition — test the finest, driest material from the actual process.</div>
+
+    <h3>FIBC Bag Types for Explosible Dust Handling</h3>
+    <table>
+      <thead><tr><th>Type</th><th>Properties</th><th>Use with Explosible Powders?</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Type A</strong></td><td>No dissipative properties; high breakdown strength</td><td><span class="badge bb">NOT suitable — do not use</span></td></tr>
+        <tr><td><strong>Type B</strong></td><td>Breakdown voltage &lt;4 kV through FIBC wall</td><td><span class="badge bw">Limited — check specific case</span></td></tr>
+        <tr><td><strong>Type C</strong></td><td>Resistance to earth from any location &lt;100 MΩ</td><td><span class="badge bg">Suitable — must be earthed</span></td></tr>
+        <tr><td><strong>Type D</strong></td><td>Interwoven conductive threads — no earth connection needed</td><td><span class="badge bg">Suitable — no earth connection required</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ TAB 3: IGNITION SOURCES ══ -->
+  <div class="tab-panel" id="tab-ignition">
+    <h2>Section 4 &amp; 5 — Potential Sources of Ignition</h2>
+    <p>Per BS EN 1127-1:2011, 13 types of ignition source are distinguished. Equipment must be matched to the zone to control effective ignition sources.</p>
+
+    <h3>Equipment Category vs. Zone vs. Ignition Control</h3>
+    <table>
+      <thead><tr><th>Equipment Category</th><th>Zone (Gas)</th><th>Zone (Dust)</th><th>Required Control of Effective Ignition Sources</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Category 1G/D</strong></td><td><span class="badge bb">Zone 0</span></td><td><span class="badge bb">Zone 20</span></td><td>No sources of ignition in <strong>normal operation</strong>, during <strong>expected malfunctions</strong> AND during <strong>rare malfunctions</strong></td></tr>
+        <tr><td><strong>Category 2G/D</strong></td><td><span class="badge bw">Zone 1</span></td><td><span class="badge bw">Zone 21</span></td><td>No sources of ignition in <strong>normal operation</strong> AND during <strong>expected malfunctions</strong></td></tr>
+        <tr><td><strong>Category 3G/D</strong></td><td><span class="badge bg">Zone 2</span></td><td><span class="badge bg">Zone 22</span></td><td>No sources of ignition in <strong>normal operation only</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Ignition Source Reference</h3>
+    <div class="ign-grid">
+      <div class="ign-card">
+        <div class="ign-card-title">⚡ Mechanical Sparks</div>
+        <div class="ign-card-body">Arise when two hardened materials contact with force — glancing impact and friction sparks. Thermite reaction (Al, Ti, Mg, Zr with rusty steel) produces highly incendive white-hot sparks capable of igniting most flammable gases, vapours, mists and dusts.</div>
+        <div class="ign-card-control">✔ Control: Maintain circumferential contact velocity below <strong>1 m/s</strong>. Use pneumatic separators to remove debris upstream of mills.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">🌡 Hot Surfaces</div>
+        <div class="ign-card-body">Binding friction (screw conveyors, mills), drying operations, hot particles from exhausts. Dryer inlet/outlet temperatures must be restricted. Surface layers must not exceed 5mm. Category-dependent max surface temperature limits apply (see Equipment tab).</div>
+        <div class="ign-card-control">✔ Control: 50K below MIT cloud; 10–20K below Air-Over-Layer exotherm onset. Clean burners, fit 3mm mesh on inlets, clean/filter recirculated air.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">🔥 Flames &amp; Hot Gases</div>
+        <div class="ign-card-body">Unauthorised hot work is the most obvious risk. Smouldering material inside plant may cause ignition on start-up. Burning embers from truck engines in bulk storage areas. Hot work is a well-known cause of dust explosions.</div>
+        <div class="ign-card-control">✔ Control: Strict hot-work permit system. Certified flame arrester on bulk storage truck access. Fit flame traps on all vents handling flammable gases/vapours.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">⚡ Electrical Apparatus</div>
+        <div class="ign-card-body">Must be ATEX certified for the correct Gas Group and Temperature Class (T-rating). Correct Ingress Protection (IP) rating essential — typically IP5X or IP6X for dust. Clean more than daily → replace or relocate if not IP6X.</div>
+        <div class="ign-card-control">✔ Control: ATEX certification to match zone. Select T-rating &lt;2/3 MITcloud AND &gt;75K below MIT5mm layer. Use correct IP rating.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">⚡ Static Electricity</div>
+        <div class="ign-card-body">Contact electrification at interfaces — fluid flow in pipes, drum charging, walking on floors, pouring powders, spraying. Insulating materials (PTFE, poly-tubs, low-conductivity liquids like Toluene, n-Hexane) create highest charging currents. Brush discharges up to 4 mJ from charged insulating surfaces.</div>
+        <div class="ign-card-control">✔ Control: Earth ALL metal items — resistance &lt;10Ω. Charge-dissipative footwear/flooring where MIE &lt;30 mJ. Restrict insulating plastic surface area (see tab). Type C or D FIBCs only.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">⚡ Lightning</div>
+        <div class="ign-card-body">If lightning strikes a flammable atmosphere, ignition will always occur. High induced voltages from thunderstorms can also affect equipment even without direct strikes. Large currents from strike point can produce sparks nearby.</div>
+        <div class="ign-card-control">✔ Control: Consult specialist for site-specific risk. Fit suitable flame traps on all vents. Bond and earth all structures.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">🔬 Chemical Reactions / Thermal Instability</div>
+        <div class="ign-card-body">Auto-ignition in dryers/furnaces. Pyrophoric metal powders and catalysts. Smouldering deposits in dryers and grinders. Auto-oxidation of fibrous insulation contaminated with oil at elevated temperatures. Some materials self-heat from ~130°C with peak &gt;700°C.</div>
+        <div class="ign-card-control">✔ Control: Identify hot dry material accumulation areas. Use closed-cell insulation near oil systems. Remove contaminated lagging only under HOT WORK permit.</div>
+      </div>
+      <div class="ign-card">
+        <div class="ign-card-title">⚡ Electrostatic Discharge Types</div>
+        <div class="ign-card-body"><strong>Spark:</strong> Between two conductors (full plasma channel). <strong>Corona:</strong> Point discharge, no plasma channel. <strong>Brush:</strong> Charged non-conductor → earthed conductor (up to 4 mJ). <strong>Propagating Brush:</strong> Polarised insulating sheets — very high energy. <strong>Cone:</strong> Highly charged, high-resistivity granular materials.</div>
+        <div class="ign-card-control">✔ Most hazardous: Propagating brush discharge (requires Type A bags to be avoided). Restrict insulating surface areas. All metal items earthed.</div>
+      </div>
+    </div>
+
+    <h3>Insulating Plastic Surface Area Restrictions (Sheets)</h3>
+    <table>
+      <thead><tr><th>Zone</th><th>Gas Group IIA (cm²)</th><th>Gas Group IIB (cm²)</th><th>Gas Group IIC (cm²)</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge bb">Zone 0</span></td><td>50</td><td>25</td><td>4</td></tr>
+        <tr><td><span class="badge bw">Zone 1</span></td><td>100</td><td>100</td><td>20</td></tr>
+        <tr><td><span class="badge bg">Zone 2</span></td><td>No Limit</td><td>No Limit</td><td>No Limit</td></tr>
+      </tbody>
+    </table>
+    <div class="note-box">High resistivity plastics &gt;100 cm² cannot be used with IIA or IIB solvents in Zone 1 areas unless it can be shown that charge generation or incendive discharges will not arise even in the case of likely malfunctions.</div>
+  </div>
+
+  <!-- ══ TAB 4: EQUIPMENT & T-RATING ══ -->
+  <div class="tab-panel" id="tab-equipment">
+    <h2>Equipment Temperature Classification (T-Rating)</h2>
+    <p>The 'T' rating is the maximum surface temperature attained by equipment under the most adverse operating conditions (within recognised tolerance). Used to ensure no hot surface can ignite the surrounding explosive atmosphere.</p>
+
+    <div class="two-col">
+      <div>
+        <h3>Temperature Classes</h3>
+        <table>
+          <thead><tr><th>T-Class</th><th>Max Surface Temp (°C)</th><th>Typical Application Range</th></tr></thead>
+          <tbody>
+            <tr><td><strong>T1</strong></td><td>450°C</td><td>Methane, most common gases</td></tr>
+            <tr><td><strong>T2</strong></td><td>300°C</td><td>General industrial gases</td></tr>
+            <tr><td><strong>T3</strong></td><td>200°C</td><td>Petroleum products, solvents</td></tr>
+            <tr><td><strong>T4</strong></td><td>135°C</td><td>Acetaldehyde, many solvents</td></tr>
+            <tr><td><strong>T5</strong></td><td>100°C</td><td>Carbon disulphide</td></tr>
+            <tr><td><strong>T6</strong></td><td>85°C</td><td>Diethyl ether, some dusts</td></tr>
+          </tbody>
+        </table>
+
+        <h3>T-Rating Selection Criteria (Dusts)</h3>
+        <table>
+          <thead><tr><th>Criterion</th><th>Limit</th></tr></thead>
+          <tbody>
+            <tr><td>Max surface temp vs. MIT Cloud</td><td><span class="badge bb">&lt; 2/3 × MITcloud (°C)</span></td></tr>
+            <tr><td>Max surface temp vs. MIT Layer</td><td><span class="badge bb">&gt; 75K below MIT5mm layer</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note-box"><strong>Example — Typical wood fines:</strong><br>MITcloud = 470°C → 2/3 × 470 = <strong>313°C</strong><br>MIT5mm layer = 260°C → 260 − 75 = <strong>185°C</strong><br>∴ Required rating: <strong>T4 to T6</strong> (for max 5mm thickness)</div>
+      </div>
+      <div>
+        <h3>Hot Surface Max Temperatures per Category (Gases)</h3>
+        <p style="font-size:12.5px;color:#555;margin-bottom:8px;">Per BS EN 1127-1:1998</p>
+        <table>
+          <thead><tr><th>Category</th><th>Zone</th><th>Max Surface Temp</th><th>When?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Cat. 1</strong></td><td><span class="badge bb">Zone 0</span></td><td>80% of AIT</td><td>Even in case of rare malfunctions</td></tr>
+            <tr><td><strong>Cat. 2</strong></td><td><span class="badge bw">Zone 1</span></td><td>80% of AIT</td><td>Normal operation AND rare malfunctions</td></tr>
+            <tr><td><strong>Cat. 3</strong></td><td><span class="badge bg">Zone 2</span></td><td>100% of AIT</td><td>Normal operation only</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Ingress Protection (IP) Rating — First Digit (Solids)</h3>
+        <table>
+          <thead><tr><th>IP First Digit</th><th>Protection Level</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>No protection</td></tr>
+            <tr><td>1</td><td>Protected against solid objects up to 50mm (e.g. hands)</td></tr>
+            <tr><td>2</td><td>Protected against solid objects up to 12mm (e.g. fingers)</td></tr>
+            <tr><td>3</td><td>Protected against solid objects up to 2.5mm (e.g. tools)</td></tr>
+            <tr><td>4</td><td>Protected against solid objects over 1mm (e.g. wires)</td></tr>
+            <tr><td><strong>5</strong></td><td><span class="badge bw">Protected against dusts (no harmful deposits)</span></td></tr>
+            <tr><td><strong>6</strong></td><td><span class="badge bg">Totally protected against dust ingress</span></td></tr>
+          </tbody>
+        </table>
+        <div class="note-box">For dust hazard areas, use IP5X (dust protected) or preferably IP6X (dust tight). If electrical equipment requires cleaning more than daily to keep dust deposits to negligible thickness and is not IP6X → replace or relocate.</div>
+      </div>
+    </div>
+
+    <h3>Dryer Inlet/Outlet Temperature Limits</h3>
+    <div class="note-box">For explosion-protected dryers: Inlet/outlet temperatures must be restricted to: <strong>50K below MIT cloud value</strong> AND <strong>10–20K below Air-Over-Layer exotherm onset temperature.</strong> Hot particles from direct-fired systems must be eliminated (clean/filtered recirculated air; clean burners; 3mm mesh on air inlet).</div>
+
+    <h3>Gas Group Classification</h3>
+    <table>
+      <thead><tr><th>Group</th><th>Sensitivity</th><th>Example Materials</th><th>MIE Approx</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Group IIA</strong></td><td><span class="badge bg">Least sensitive</span></td><td>Propane, butane, ammonia, acetone</td><td>&gt;0.2 mJ</td></tr>
+        <tr><td><strong>Group IIB</strong></td><td><span class="badge bw">Medium sensitivity</span></td><td>Ethylene, diethyl ether, ethylene oxide</td><td>0.07–0.2 mJ</td></tr>
+        <tr><td><strong>Group IIC</strong></td><td><span class="badge bb">Most sensitive</span></td><td>Hydrogen, acetylene, carbon disulphide</td><td>&lt;0.017 mJ</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══ TAB 5: PREVENTION ══ -->
+  <div class="tab-panel" id="tab-prevention">
+    <h2>Section 6 — Prevention Strategies</h2>
+    <p>The question is: can we, under all normal and abnormal operations, eliminate one of the <strong>THREE basic components</strong> of combustion — Fuel, Oxidant, or Ignition Source?</p>
+
+    <div class="three-col">
+      <div class="col-card" style="border-top:3px solid #cc0000">
+        <div class="col-card-title">🔴 1. Inherent Safety (Preferred)</div>
+        Eliminate the hazard entirely. Per Trevor Kletz: <em>"You cannot fall down stairs you don't have."</em> Substitute flammable solvent with non-flammable alternative. Change process to avoid hazard formation. Reduce quantity of dangerous substances to minimum.
+      </div>
+      <div class="col-card" style="border-top:3px solid #b85c00">
+        <div class="col-card-title">🟡 2. Prevention of Atmosphere</div>
+        <strong>Dilution:</strong> Add water to alcohol — raises flash point. At 25°C with 5K margin, IPA/H₂O can be ≤15% v/v IPA (FP=30°C). Methanol/water: up to ~40% v/v at 25°C.<br><br>
+        <strong>Inerting:</strong> Maintain O₂ below MOC/LOC. Safety factor 2–3% below limiting value. Design basis max 5% O₂; shutdown at 7.5% O₂ (for Toluene/N₂: MOC=9.5%).
+      </div>
+      <div class="col-card" style="border-top:3px solid #2d6a2d">
+        <div class="col-card-title">🟢 3. Ventilation / Extraction</div>
+        Dilute airborne concentrations below LEL/MEC. Ductwork concentration max <strong>25% MEC</strong> (10–100 g/m³). Monitor airflow — fit LF alarm + LLF trip. Smoke/bubble tests to verify airflow effectiveness at point of interest. Enables Zone 2 NE (negligible extent) designation in boiler houses, battery charging areas, etc.
+      </div>
+    </div>
+
+    <h3>DSEAR Risk Reduction Hierarchy (Section 6.4)</h3>
+    <table>
+      <thead><tr><th>Priority</th><th>Measure</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge bb">1st</span></td><td><strong>Reduction</strong> of quantity of dangerous substances to minimum</td><td>Minimum inventory; small batch sizes</td></tr>
+        <tr><td><span class="badge bb">2nd</span></td><td><strong>Avoidance/minimisation</strong> of release of dangerous substance</td><td>Closed systems; sealed equipment</td></tr>
+        <tr><td><span class="badge bw">3rd</span></td><td><strong>Control</strong> of release at source</td><td>Local exhaust ventilation at point of release</td></tr>
+        <tr><td><span class="badge bw">4th</span></td><td><strong>Prevention</strong> of explosive atmosphere formation</td><td>Dilution ventilation; inerting</td></tr>
+        <tr><td><span class="badge bw">5th</span></td><td><strong>Collection/containment</strong> of releases</td><td>Bunded areas; scrubbers; safe discharge</td></tr>
+        <tr><td><span class="badge bg">6th</span></td><td><strong>Avoidance of ignition sources</strong></td><td>ATEX equipment; static control; hot work permits</td></tr>
+        <tr><td><span class="badge bg">7th</span></td><td><strong>Segregation</strong> of incompatible substances</td><td>Separate storage of oxidisers and flammables</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Dust Extraction — Capture Velocities</h3>
+    <table>
+      <thead><tr><th>Release Type</th><th>Required Capture Velocity</th></tr></thead>
+      <tbody>
+        <tr><td>Still air / low momentum</td><td>0.5–1.0 m/s</td></tr>
+        <tr><td>Moving air / particles</td><td>1.0–2.5 m/s</td></tr>
+        <tr><td>Turbulent / high momentum</td><td>2.5–10 m/s</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Flash Point / Flammable Atmosphere Formation</h3>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Safety Margins for Flash Point</div>
         <ul>
-            <li>Hazardous area classification is usually done in facilities and environments where there is a likelihood of explosive gas mixture either for a limited time or for an extended period of time. This is done to reduce the risk of explosion or fire to ensure the process area or plant is safe for work</li>
-            <li>Hazardous area classification is, therefore, the division of areas around equipment handling flammable fluids or process plants for explosive gases and fluids into hazardous and non-hazardous areas and the sub-division of hazardous areas into zones.</li>
+          <li><strong>Pure solvents:</strong> 5K safety margin above flash point</li>
+          <li><strong>Liquid/liquid or liquid/solid mixtures:</strong> 15K safety margin recommended</li>
+          <li><strong>Spillages:</strong> Use open-cup flash point value (not closed-cup)</li>
+          <li>High shear operations (mixing, splash loading) may produce non-equilibrium conditions — flammable mists well below flash point</li>
+          <li>Fine mists can form flammable mixtures 200K or more below flash point</li>
         </ul>
-        <div style="text-align: center;">
-            <img src="Components.jpeg" alt="Components of Hazardous Area" style="width: 300px; height: auto;">
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">IPA / Water Flash Point Formula</div>
+        Empirical relationship (Nugentec data):<br><br>
+        <span style="font-family:'Courier New',monospace;background:#f0f5ff;padding:5px 10px;border-radius:3px;display:inline-block;color:#1a4a8a;margin:5px 0;">y = 106.7 × x<sup>−0.4674</sup></span><br><br>
+        where y = flash point (°C), x = IPA concentration (% v/v)<br><br>
+        At 25°C ambient + 5K margin → max <strong>15% IPA v/v</strong> (FP≈30°C) to avoid flammable atmosphere.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB 6: PROTECTION ══ -->
+  <div class="tab-panel" id="tab-protection">
+    <h2>Section 7 — Explosion Protection Methods</h2>
+    <p>Protection assumes ignition and explosion <em>may</em> occur and mitigates the effects. Options depend on vessel/layout and material characteristics. <strong>ANY protection system must cover upstream and downstream interconnections.</strong></p>
+
+    <h3>Design Options</h3>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">EPRD — Explosion Pressure Resistant Design</div>
+        No deformation of vessel permitted. Must withstand full Pmax (typically 8–10 bar.g for dusts; 6–8 bar.g for common gases/hydrocarbons). Less common due to high design strength required.
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">EPSRD — Explosion Pressure Shock Resistant Design</div>
+        Deformation is acceptable, but not total failure. Allows vessel to absorb some explosion energy through plastic deformation.
+      </div>
+    </div>
+
+    <h3>Protection Methods Comparison</h3>
+    <table>
+      <thead><tr><th>Method</th><th>How It Works</th><th>Loss of Containment?</th><th>Key Considerations</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Explosion Venting</strong></td>
+          <td>Burst panel/vent opens when Pstat reached. Relieves pressure to safe area. Pred,max must not exceed vessel design pressure.</td>
+          <td><span class="badge bb">Yes — process material ejected</span></td>
+          <td>Vent duct increases back-pressure. Recoil force on vessel. Unburned dust ejected ahead of fireball. Sensors on vent panel for auto-shutdown. Flameless venting devices available for indoor use.</td>
+        </tr>
+        <tr>
+          <td><strong>Flameless Venting</strong></td>
+          <td>Flame-quenching device fitted to vent. Retains pressure relief but eliminates external fireball.</td>
+          <td><span class="badge bw">Yes — but no external flame</span></td>
+          <td>Useful for plant sited indoors or close to work areas. Eliminates need for long vent ducts.</td>
+        </tr>
+        <tr>
+          <td><strong>Explosion Suppression</strong></td>
+          <td>Detects incipient explosion (pressure/UV/IR). Injects suppressant into growing fireball within milliseconds to quench flame.</td>
+          <td><span class="badge bg">No — containment maintained</span></td>
+          <td>Suppressant quantity depends on Kst, Pred, vessel geometry and design pressure. Requires detection/control system. Typical minimum distance from source L &gt;5000 mm for isolation valves.</td>
+        </tr>
+        <tr>
+          <td><strong>Explosion Pressure Containment</strong></td>
+          <td>Vessel designed to withstand full Pmax with no relief.</td>
+          <td><span class="badge bg">No — full containment</span></td>
+          <td>Less common. Very high design strength needed (8–10 bar.g for dusts). Suitable for some milling operations.</td>
+        </tr>
+        <tr>
+          <td><strong>Isolation / Decoupling</strong></td>
+          <td>Prevents propagation of flame, pressure and burning particles between interconnected equipment.</td>
+          <td>Depends on method</td>
+          <td>Options: ATEX rotary valve, rapid-action slam-shut valve, chemical barrier, product choke. Per prEN 15089. All interconnections must be covered.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Isolation Device Options</h3>
+    <div class="three-col">
+      <div class="col-card">
+        <div class="col-card-title">Rotary Valve</div>
+        ATEX certified. Provides continuous isolation. Wear rates and blade-to-casing gap tolerances must be maintained. Periodic inspection critical. Often contentious due to ongoing wear requirements.
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Rapid-Action (Slam-Shut) Valve</div>
+        Active or passive. Design pressure applied up to isolation device — all ducting to this point must withstand Pred or Pmax. Closure time + detection response time + flame speed determines minimum distance L from explosion source (typically L &gt;5000 mm).
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Chemical Barrier / Product Choke</div>
+        Chemical extinguishing barrier suppresses flame propagation. Product choke uses material column to prevent flame travel. Simpler mechanically but requires careful design for specific material and flow conditions.
+      </div>
+    </div>
+
+    <div class="warn-box"><strong>Critical reminder:</strong> Venting does NOT prevent an explosion — it only limits explosion pressure. Flame, pressure effects, and flying debris outside the enclosure must be anticipated. Equipment must shut down automatically on explosion detection to prevent burning material transfer.</div>
+  </div>
+
+  <!-- ══ TAB 7: HAZARD CONFIGURATOR ══ -->
+  <div class="tab-panel" id="tab-configurator">
+    <h2>⚙ ATEX Hazard Assessment Configurator</h2>
+    <p style="color:#555;margin-bottom:18px;">Use this tool to determine zone classification, equipment category requirements, and protection needs based on your process parameters. Based on DSEAR 2002 / ATEX principles from the eBook.</p>
+
+    <!-- ─ Step 1: Material Type ─ -->
+    <div class="config-section">
+      <h3>Step 1 — Material &amp; Release Type</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Substance Type</label>
+          <select class="form-select" id="sub-type" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="gas">Gas / Vapour</option>
+            <option value="mist">Mist / Spray</option>
+            <option value="dust">Combustible Dust / Powder</option>
+          </select>
         </div>
-        <h2>Common Terms</h2>
-        <table>
-            <thead>
-                <tr>
-                    <td>Term</td>
-                    <td>Explanation</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Hazardous Area</td>
-                    <td>An area in which explosive gas/air mixtures are, or may be expected to be, present in quantities such as to require special precautions for the construction, installation, and use of electrical apparatus or other sources of ignition.</td>
-                </tr>
-                <tr>
-                    <td>Non-Hazardous Area</td>
-                    <td>An area where an explosive atmosphere is not expected to occur in quantities, such as to require special precautions for the construction, installation, and use of electrical apparatus or other sources of ignition.</td>
-                </tr>
-                <tr>
-                    <td>Flash point</td>
-                    <td>The flash point of any liquid is the lowest temperature (at normal air pressure) at which vapors develop in such a quantity that a flammable mixture forms above the liquid. An explosive hazard only results when a flammable liquid evaporates at the surface. This can result in a vapor/air mixture which, under given conditions, forms an explosive atmosphere. In order for that to happen, the liquid temperature must have exceeded its flash point.</td>
-                </tr>
-                <tr>
-                    <td>Auto Ignition Temperature</td>
-                    <td>The auto-ignition temperature or kindling point of a substance is the lowest temperature at which it will spontaneously ignite in a normal atmosphere without an external source of ignition, such as a flame or spark.</td>
-                </tr>
-                <tr>
-                    <td>Ventilation</td>
-                    <td>Ventilation is the movement of air and its replacement with fresh air due to the effects of wind, temperature gradients, or artificial means (for example, fans or extractors). Ventilation could be natural ventilation or artificial ventilation.</td>
-                </tr>
-                <tr>
-                    <td>Ignition Sources</td>
-                    <td>An ignition source is any object or event, or source from which heat, sparks, electricity, flames, or hot surfaces have sufficient energy to start the burning of a flammable or combustible substance.</td>
-                </tr>
-                <tr>
-                    <td>Sources of Release</td>
-                    <td>The sources of release can be defined as any location or spot where a flammable or explosive gas, vapor, mist, or liquid may be released into the atmosphere in such a way that an explosive gas atmosphere could be formed, e.g., storage tank vents. These releases may be in different grades, and a source of release may give rise to any or a combination of grades of release.</td>
-                </tr>
-            </tbody>
-        </table>
-        <div style="text-align: center;">
-            <img src="IgnitionSource.jpeg" alt="" style="width: 300px; height: auto;">
+        <div class="form-group" id="grp-flash" style="display:none">
+          <label class="form-label">Flash Point (°C)</label>
+          <input class="form-input" type="number" id="flash-point" placeholder="e.g. 12" oninput="updateConfig()">
         </div>
-        <h2>Grades Of Release</h2>
-        <p>There are three basic grades of release, as listed below in order of decreasing frequency and likelihood of the explosive gas atmosphere being present:</p>
-        <table>
-            <thead>
-                <tr>
-                    <td>Grade of release</td>
-                    <td>Description</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Primary Grade</td>
-                    <td>
-                        <ul>
-                            <li>This is a form of release that is likely to occur periodically or occasionally in normal operations.</li>
-                            <li>A release of which in normal operating procedures is expected to occur.</li>
-                            <li>These releases are usually more than 10h/year but less than 1000 h/year.</li>
-                            <li>An example is the releases from the seals of pumps and compressors, releases from relief valve leakages discharging into the atmosphere, manual sampling outlets, venting and draining points, automatic instrument gas vents., and vents from a sump.</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Continuous Grade</td>
-                    <td>
-                        <ul>
-                            <li>A continuous release is a form of release that is continuous or almost continuous and usually occurs frequently and for long periods.</li>
-                            <li>This type of release is more than 1000h/year, and it includes. Vents from an open tank or vessel, vents from the seal of a floating rook tank, etc.</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Secondary Grade Release</td>
-                    <td>
-                        <ul>
-                            <li>A secondary release is a form of release that, on normal operation, is unlikely to occur either periodically or even occasionally in any event and will only happen less frequently and for only short time periods.</li>
-                            <li>This type of release is never anticipated in normal operational procedures</li>
-                            <li>The size and quantity of these releases may be known or unknown as their release is usually less than 10h of release per year.</li>
-                            <li>Some examples of secondary releases include pump seal failure, failure of flanged joints, and instrument connections.</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>The grade of release is the likelihood or the rate of the release, while the zone is the area or location to which these releases occur.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>Under unrestricted conditions (Open surrounding air), there usually is a direct relationship between “Grade of release” and “type of zone,” as enumerated below.</td>
-                </tr>
-                <tr>
-                    <td>Zones</td>
-                    <td>
-                        <ul>
-                            <li>Continuous grade usually tends to lead to Zone 0</li>
-                            <li>Primary grade usually tends to lead to Zone 1</li>
-                            <li>Secondary grade usually tends to lead to Zone 2</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>
-                        <img src="Grades of Release.jpeg" alt="" style="width: 300px; height: auto;">
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <h2>Purpose of Hazardous Area Classification</h2>
-        <p>The main purpose of hazardous area classification is to identify areas around equipment handling flammable fluids into hazardous and non-hazardous areas and the sub-division of hazardous areas into zones.</p>
-        <p>In order to avoid the risk of fire and explosion, hazardous area classification was adopted to ensure the following.</p>
-        <ul>
-            <li>That the right electrical equipment designed and suitable for the location is selected.</li>
-            <li>The identification of a location of equipment or process plant there could be a source of ignition or its selection of the right equipment whose operation will not become the source of ignition for an explosive atmosphere.</li>
-            <li>Determining the maximum allowable surface temperature for particular areas and clearly marking out locations for escape routes.</li>
-            <li>Identify and determine the appropriate location for flammable gas detectors in process plants.</li>
-            <li>Appropriate location of air inlet and outlet for ventilation systems or combustion equipment.</li>
-            <li>Identify, plan, and control all forms of hot work to be carried out within the facility and in the process plant area.</li>
-            <li>Identify the right location to position lifesaving appliances, radioactive stores, and emergency control points in non-hazardous areas of the process plant.</li>
-        </ul>
-        <table>
-            <thead>
-                <tr>
-                    <td>Zone</td>
-                    <td>Description</td>
-                    <td>Examples</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Zone 0</td>
-                    <td>Zone 0 is an area where there is the presence of an explosive gas mixture or atmosphere continuously or for an extended period of time. In this zone, the explosive atmosphere is usually present for more than 1000 hours per year (1000h/yr).</td>
-                    <td>
-                        <p>As a general practice, you can hardly find electrical equipment installed in Zone 0</p>
-                        <ul>
-                            <li>Inside of AGO or PMS tanks Farms. In tank farms, the quantity of oil and gas products stored creates a large presence of a combustible atmosphere.</li>
-                            <li>Areas where there is the presence of combustible gas.</li>
-                            <li>Inside storage tanks: Tanks used for storing volatile substances like gasoline or crude oil can create explosive environments, particularly if there is inadequate ventilation or other safety measures.</li>
-                            <li>Fuel storage areas: Areas, where fuel is stored for generators or other equipment, can also be considered Zone 0 if the atmosphere is continuously or frequently explosive.  </li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Zone 1</td>
-                    <td>Zone 1 is an area where there are explosive gas mixtures or atmosphere is likely to occur in normal operation. The explosive gas mixture or atmosphere in this zone will last for more than 10h/year but will be less than 1000h/yr. This means that in a normal operation, the explosive atmosphere will exist but will not last continuously; it will be limited.</td>
-                    <td>
-                        <p> Some examples of Zone 1 areas are listed below.</p>
-                        <ul>
-                            <li>Wellhead platform: The wellhead platform is a common example of a zone 1 area in an oil and gas facility. This area is highly volatile and constitutes a significant risk of fire or explosion. Thus, it requires special design considerations to ensure the safety of personnel working in the area.</li>
-                            <li>Refinery processing units: The refinery processing units are another common zone 1 area in oil and gas facilities. These units involve the use of high-pressure equipment, intense heat, and volatile chemicals, making it a hazardous area. Thus, careful consideration of equipment and design is necessary to ensure the safety of the personnel working in these areas.</li>
-                            <li>Loading and unloading stations: Loading and unloading stations are also significant zone 1 areas in oil and gas facilities. These areas involve the handling and transfer of highly volatile fluids that can cause fires or explosions. Thus, special safety considerations are necessary to regulate these areas and ensure they comply With safety standards.</li>
-                            <li>Gas processing facilities: Gas processing facilities are also common examples of zone 1 areas in oil and gas facilities. These facilities involve the processing of various gases that can be highly combustible. Thus, the facility requires careful analysis of design and equipment to ensure the safety of the personnel working in the area.</li>
-                            <li>Tank farms: Tank farms, which are used for storing oil or gas, are also considered zone 1 areas in oil and gas facilities. These areas are highly susceptible to fires, explosions, and leakage of hazardous materials, making them a considerable safety concern. Thus, special precautions related to equipment and design are necessary to ensure the safety of personnel in these facility areas.</li>
-                        
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Zone 2</td>
-                    <td>Zone 2 area is an area where an explosive air mixture or atmosphere is likely not to occur during normal operations. If it does occur, it does not stay for an extended period. It only stays for a short time, usually less than 10/yr.</td>
-                    <td>
-                        <p>Below are some examples of areas that fall into Zone 2 with short time periods of explosive atmosphere present in a year's time.</p>
-                        <ul>
-                            <li>Pump houses: Pump houses are used to transport liquids and gases in pipelines. The presence of flammable liquids and gases makes this area a Zone 2 classification.</li>
-                            <li>Chemical storage and processing areas: Chemicals used in the oil and gas industry can be highly volatile and flammable. Chemical storage and processing areas are classified as Zone 2 to protect workers from exposure to hazardous materials and explosive atmospheres.</li>
-                        </ul>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div style="text-align: center;">
-            <img src="HAC_Zones-ex1.jpeg" alt="" style="width: 300px; height: auto;">
-            <img src="HAC_Zones-ex2.jpeg" alt="" style="width: 300px; height: auto;">
+        <div class="form-group" id="grp-amb" style="display:none">
+          <label class="form-label">Max Process / Ambient Temp (°C)</label>
+          <input class="form-input" type="number" id="amb-temp" placeholder="e.g. 25" oninput="updateConfig()">
         </div>
+        <div class="form-group" id="grp-kst" style="display:none">
+          <label class="form-label">Kst Value (bar·m/s)</label>
+          <input class="form-input" type="number" id="kst-val" placeholder="e.g. 150" oninput="updateConfig()">
+        </div>
+        <div class="form-group" id="grp-mit" style="display:none">
+          <label class="form-label">MIT Cloud (°C)</label>
+          <input class="form-input" type="number" id="mit-cloud" placeholder="e.g. 470" oninput="updateConfig()">
+        </div>
+        <div class="form-group" id="grp-mitl" style="display:none">
+          <label class="form-label">MIT Layer 5mm (°C)</label>
+          <input class="form-input" type="number" id="mit-layer" placeholder="e.g. 260" oninput="updateConfig()">
+        </div>
+        <div class="form-group" id="grp-mie" style="display:none">
+          <label class="form-label">MIE (mJ)</label>
+          <input class="form-input" type="number" id="mie-val" placeholder="e.g. 30" oninput="updateConfig()">
+        </div>
+      </div>
+    </div>
 
+    <!-- ─ Step 2: Source Grade ─ -->
+    <div class="config-section">
+      <h3>Step 2 — Release Source Grade &amp; Ventilation</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Source Grade</label>
+          <select class="form-select" id="src-grade" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="continuous">Continuous (&gt;1000 hrs/yr) — always present</option>
+            <option value="primary">Primary (10–1000 hrs/yr) — occasionally in normal operation</option>
+            <option value="secondary">Secondary (&lt;10 hrs/yr) — unlikely in normal operation</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ventilation Level</label>
+          <select class="form-select" id="vent-level" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="VH">High (VH) — reduces concentration virtually instantaneously</option>
+            <option value="VM">Medium (VM) — controls concentration; hazard does not persist unduly</option>
+            <option value="VL">Low (VL) — cannot control concentration; hazard persists</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ventilation Availability</label>
+          <select class="form-select" id="vent-avail" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="good">Good (continuous / reliable)</option>
+            <option value="fair">Fair (may fail occasionally)</option>
+            <option value="poor">Poor (unreliable)</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
+    <!-- ─ Step 3: Ignition Context ─ -->
+    <div class="config-section">
+      <h3>Step 3 — Ignition Risk Context</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Gas Group (if gas/vapour)</label>
+          <select class="form-select" id="gas-group" onchange="updateConfig()">
+            <option value="">— N/A or Unknown —</option>
+            <option value="IIA">Group IIA — Propane, Butane, Ammonia (least sensitive)</option>
+            <option value="IIB">Group IIB — Ethylene, Diethyl Ether (medium)</option>
+            <option value="IIC">Group IIC — Hydrogen, Acetylene (most sensitive)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Static Earthing in Place?</label>
+          <select class="form-select" id="earthing" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="yes">Yes — all metal items bonded and earthed (&lt;10Ω)</option>
+            <option value="partial">Partial — some items not verified</option>
+            <option value="no">No — earthing not confirmed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hot Work Permit System?</label>
+          <select class="form-select" id="hot-work" onchange="updateConfig()">
+            <option value="">— Select —</option>
+            <option value="yes">Yes — formal permit system in place</option>
+            <option value="no">No — not in place</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
+    <button class="btn-primary" onclick="runConfig()">▶ Generate Assessment</button>
 
-        
+    <!-- ─ Result ─ -->
+    <div class="result-panel result-hidden" id="config-result">
+      <div class="result-title">Assessment Output</div>
+      <div id="config-output"></div>
+    </div>
+  </div>
 
-        <!-- Add more as needed -->
-    </main>
-    <script type="module">
+</div><!-- end main-container -->
+
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -227,6 +828,217 @@
             window.location.href = "../login.html"; // Redirect if not logged in
         }
         });
-    </script>
+</script>
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Configurator — show/hide fields ────────────────────────────────────────
+function updateConfig() {
+  const subType = document.getElementById('sub-type').value;
+  const showFlash = subType === 'gas' || subType === 'mist';
+  const showDust  = subType === 'dust';
+
+  document.getElementById('grp-flash').style.display = showFlash ? '' : 'none';
+  document.getElementById('grp-amb').style.display   = showFlash ? '' : 'none';
+  document.getElementById('grp-kst').style.display   = showDust  ? '' : 'none';
+  document.getElementById('grp-mit').style.display   = showDust  ? '' : 'none';
+  document.getElementById('grp-mitl').style.display  = showDust  ? '' : 'none';
+  document.getElementById('grp-mie').style.display   = (showFlash || showDust) ? '' : 'none';
+}
+
+// ── Main configurator logic ────────────────────────────────────────────────
+function runConfig() {
+  const subType   = document.getElementById('sub-type').value;
+  const srcGrade  = document.getElementById('src-grade').value;
+  const ventLevel = document.getElementById('vent-level').value;
+  const ventAvail = document.getElementById('vent-avail').value;
+  const flashPt   = parseFloat(document.getElementById('flash-point').value);
+  const ambTemp   = parseFloat(document.getElementById('amb-temp').value);
+  const kst       = parseFloat(document.getElementById('kst-val').value);
+  const mitCloud  = parseFloat(document.getElementById('mit-cloud').value);
+  const mitLayer  = parseFloat(document.getElementById('mit-layer').value);
+  const mie       = parseFloat(document.getElementById('mie-val').value);
+  const earthing  = document.getElementById('earthing').value;
+  const hotWork   = document.getElementById('hot-work').value;
+  const gasGroup  = document.getElementById('gas-group').value;
+
+  if (!subType || !srcGrade || !ventLevel || !ventAvail) {
+    alert('Please complete Steps 1–3 before generating assessment.');
+    return;
+  }
+
+  const result = document.getElementById('config-result');
+  const output = document.getElementById('config-output');
+  result.classList.remove('result-hidden');
+
+  let zone = '', zoneClass = '', equip = '', cat = '';
+  let notes = [], warnings = [], actions = [];
+
+  // ── Zone determination ──────────────────────────────────────────────────
+  const isDust = subType === 'dust';
+  const zBase  = isDust ? '2' : '';
+
+  if (srcGrade === 'continuous') {
+    zone = isDust ? '20' : '0';
+    zoneClass = 'bb';
+  } else if (srcGrade === 'primary') {
+    zone = isDust ? '21' : '1';
+    zoneClass = 'bw';
+    // Upgrade if VL ventilation
+    if (ventLevel === 'VL') { zone = isDust ? '20' : '0'; zoneClass = 'bb'; notes.push('Zone upgraded: Low ventilation (VL) cannot control concentration — treated as continuous source.'); }
+  } else { // secondary
+    zone = isDust ? '22' : '2';
+    zoneClass = 'bg';
+    if (ventLevel === 'VH' && ventAvail === 'good') {
+      zone = isDust ? '22 NE' : '2 NE';
+      notes.push('With High ventilation (VH) of good availability, zone may be of negligible extent (NE) — verify with smoke/bubble test.');
+    }
+    if (ventLevel === 'VL') { zone = isDust ? '21' : '1'; zoneClass = 'bw'; notes.push('Zone upgraded: Low ventilation (VL) — secondary source treated as primary.'); }
+  }
+
+  // Equipment category
+  if (zone === '0' || zone === '20') {
+    equip = 'Category 1G/D'; cat = '1';
+    notes.push('Cat. 1 required: No effective ignition sources in normal operation, expected malfunctions AND rare malfunctions.');
+  } else if (zone === '1' || zone === '21') {
+    equip = 'Category 2G/D'; cat = '2';
+    notes.push('Cat. 2 required: No effective ignition sources in normal operation AND expected malfunctions.');
+  } else {
+    equip = 'Category 3G/D'; cat = '3';
+    notes.push('Cat. 3 required: No effective ignition sources in normal operation only.');
+  }
+
+  // ── Gas/vapour specific checks ───────────────────────────────────────────
+  if (subType === 'gas' || subType === 'mist') {
+    if (!isNaN(flashPt) && !isNaN(ambTemp)) {
+      const margin = flashPt - ambTemp;
+      const requiredMargin = 5;
+      if (margin < requiredMargin) {
+        warnings.push(`⚠ Flash Point (${flashPt}°C) is within 5K of ambient/process temperature (${ambTemp}°C) — flammable vapour-air mixtures WILL form at process temperature. Zone is CONFIRMED.`);
+      } else {
+        notes.push(`✔ Flash Point (${flashPt}°C) is ${margin.toFixed(0)}K above process temperature (${ambTemp}°C) — exceeds 5K safety margin. Monitor temperature control.`);
+      }
+    }
+    if (gasGroup === 'IIC') warnings.push('⚠ Group IIC (Hydrogen/Acetylene) — Most sensitive gas group. Stringent ignition control required. Very low MIE (~0.017 mJ). ATEX Group IIC equipment mandatory in zoned areas.');
+    if (gasGroup === 'IIB') notes.push('Group IIB — Medium sensitivity. Ensure insulating plastic area restrictions observed for Zone 0/1.');
+  }
+
+  // ── Dust specific checks ─────────────────────────────────────────────────
+  if (isDust) {
+    if (!isNaN(kst)) {
+      let stClass = '';
+      if (kst === 0) stClass = 'ST 0 — not explosible';
+      else if (kst <= 200) stClass = 'ST 1 — weak explosion';
+      else if (kst <= 300) stClass = 'ST 2 — strong explosion';
+      else stClass = 'ST 3 — very strong explosion ⚠';
+      notes.push(`Dust explosion class: Kst=${kst} bar·m/s → ${stClass}`);
+      if (kst > 300) warnings.push('⚠ ST 3 dust (Kst>300 bar·m/s) — high-violence explosion possible. Explosion suppression or robust containment design required. Consult specialist.');
+    }
+    if (!isNaN(mitCloud) && !isNaN(mitLayer)) {
+      const maxSurfCloud = Math.round(mitCloud * 2/3);
+      const maxSurfLayer = mitLayer - 75;
+      notes.push(`T-rating requirement: Max surface temp ≤ ${maxSurfCloud}°C (= 2/3 × MITcloud ${mitCloud}°C) AND ≤ ${maxSurfLayer}°C (= MIT5mm ${mitLayer}°C − 75K)`);
+      const reqTemp = Math.min(maxSurfCloud, maxSurfLayer);
+      let tRating = '';
+      if (reqTemp >= 450) tRating = 'T1 or better';
+      else if (reqTemp >= 300) tRating = 'T2 or better';
+      else if (reqTemp >= 200) tRating = 'T3 or better';
+      else if (reqTemp >= 135) tRating = 'T4 or better';
+      else if (reqTemp >= 100) tRating = 'T5 or better';
+      else tRating = 'T6 (85°C max) — most restrictive';
+      notes.push(`Required T-class for this dust: <strong>${tRating}</strong> (controlling limit: ${reqTemp}°C)`);
+    }
+  }
+
+  // ── Static electricity check ─────────────────────────────────────────────
+  if (earthing === 'no') warnings.push('⚠ Earthing not confirmed — significant static ignition risk. ALL metal items must be bonded and earthed (<10Ω) before use in zoned area.');
+  if (earthing === 'partial') warnings.push('⚠ Partial earthing — verify all metal items, flexible trunking helices, couplings, funnels. Electrical continuity checks required before each use.');
+  if (!isNaN(mie) && mie < 30) {
+    actions.push('MIE < 30 mJ — Personnel grounding required: charge-dissipative footwear AND flooring. Clothing must not be removed or unfastened in hazardous area.');
+    if (mie < 3) warnings.push('⚠ Very low MIE (<3 mJ) — equivalent to Group IIC sensitivity. Treat ALL electrostatic sources as potential igniters. Avoid insulating materials entirely in zoned area.');
+  }
+
+  // ── Hot work check ───────────────────────────────────────────────────────
+  if (hotWork === 'no') warnings.push('⚠ No formal hot work permit system — critical safety gap. Implement immediately. Unauthorised hot work is a leading cause of explosions and fires.');
+
+  // ── Protection recommendation ─────────────────────────────────────────────
+  if (zone === '0' || zone === '20') {
+    actions.push('Consider explosion suppression or explosion pressure containment (EPRD/EPSRD) for equipment in Zone 0/20.');
+    actions.push('Inerting (maintaining O₂ below MOC with 2–3% safety margin) may be a viable prevention strategy — eliminates hazardous zone if effectively maintained.');
+  }
+  if (isDust && !isNaN(kst) && kst > 0) {
+    actions.push('Implement explosion protection: venting (per NFPA 68 / EN 14491), suppression, or containment. Provide isolation on all interconnections (per prEN 15089).');
+  }
+  actions.push('Conduct formal HAZOP study to examine ALL conditions that could form extensive flammable atmospheres inside plant equipment.');
+  actions.push('Ensure all ATEX-certified equipment is properly maintained, inspected, and documented. Implement regular DSEAR/ATEX training with attendance certificates.');
+
+  // ── Build output HTML ─────────────────────────────────────────────────────
+  const subtypeLabel = { gas:'Gas / Vapour', mist:'Mist / Spray', dust:'Combustible Dust' }[subType] || subType;
+  const srcLabel = { continuous:'Continuous', primary:'Primary', secondary:'Secondary' }[srcGrade] || srcGrade;
+  const ventLabel = { VH:'High (VH)', VM:'Medium (VM)', VL:'Low (VL)' }[ventLevel] || ventLevel;
+
+  const zoneDisplay = `Zone ${zone}`;
+  const zoneBadgeStyle = zoneClass === 'bb'
+    ? 'background:#fdecea;color:#9b2c2c;border:2px solid #f0b8b8'
+    : zoneClass === 'bw'
+    ? 'background:#fefce8;color:#7a6000;border:2px solid #ddd09a'
+    : 'background:#eaf4ea;color:#2d6a2d;border:2px solid #b0d4b0';
+
+  output.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+      <div class="result-cell red-border">
+        <div class="result-cell-label">Substance Type</div>
+        <div class="result-cell-value">${subtypeLabel}</div>
+      </div>
+      <div class="result-cell red-border">
+        <div class="result-cell-label">Classified Zone</div>
+        <div class="result-cell-value" style="${zoneBadgeStyle};padding:4px 10px;border-radius:4px;font-size:18px;">${zoneDisplay}</div>
+      </div>
+      <div class="result-cell red-border">
+        <div class="result-cell-label">Required Equipment</div>
+        <div class="result-cell-value" style="font-size:13px;">${equip}</div>
+      </div>
+      <div class="result-cell">
+        <div class="result-cell-label">Source Grade</div>
+        <div class="result-cell-value" style="font-size:13px;">${srcLabel}</div>
+      </div>
+      <div class="result-cell">
+        <div class="result-cell-label">Ventilation</div>
+        <div class="result-cell-value" style="font-size:13px;">${ventLabel}</div>
+      </div>
+      ${!isNaN(kst) && kst >= 0 ? `<div class="result-cell">
+        <div class="result-cell-label">Kst Input</div>
+        <div class="result-cell-value">${kst} bar·m/s</div>
+      </div>` : ''}
+      ${!isNaN(mie) ? `<div class="result-cell">
+        <div class="result-cell-label">MIE Input</div>
+        <div class="result-cell-value">${mie} mJ</div>
+      </div>` : ''}
+    </div>
+
+    ${warnings.length ? `<div class="warn-box" style="margin-bottom:10px;"><strong>⚠ Warnings / Action Required:</strong><ul style="margin-top:6px;padding-left:20px;">${warnings.map(w=>`<li style="margin-bottom:4px;">${w}</li>`).join('')}</ul></div>` : ''}
+
+    ${notes.length ? `<div class="note-box" style="margin-bottom:10px;"><strong>📋 Technical Notes:</strong><ul style="margin-top:6px;padding-left:20px;">${notes.map(n=>`<li style="margin-bottom:4px;">${n}</li>`).join('')}</ul></div>` : ''}
+
+    ${actions.length ? `<div class="info-box"><strong>✅ Recommended Actions:</strong><ol style="margin-top:6px;padding-left:20px;">${actions.map(a=>`<li style="margin-bottom:5px;">${a}</li>`).join('')}</ol></div>` : ''}
+
+    <div class="result-steps" style="margin-top:12px;">
+Source: ${subtypeLabel} | Grade: ${srcLabel} | Ventilation: ${ventLabel} (${ventAvail}) → Zone ${zone} → ${equip}
+${!isNaN(flashPt) ? `Flash Point: ${flashPt}°C | Ambient: ${ambTemp}°C | Margin: ${(flashPt-ambTemp).toFixed(0)}K` : ''}
+${!isNaN(mitCloud) ? `MITcloud: ${mitCloud}°C | T-surface max (cloud): ${Math.round(mitCloud*2/3)}°C | MIT5mm: ${mitLayer}°C | T-surface max (layer): ${mitLayer-75}°C` : ''}
+${!isNaN(kst) ? `Kst: ${kst} bar·m/s | ST Class: ${kst===0?'ST0':kst<=200?'ST1':kst<=300?'ST2':'ST3'}` : ''}
+Earthing: ${earthing||'not specified'} | Hot Work Permit: ${hotWork||'not specified'} | MIE: ${!isNaN(mie)?mie+' mJ':'not specified'}
+    </div>
+    <p style="font-size:11px;color:#999;margin-top:10px;">⚠ This tool is for reference and guidance purposes only, based on ATEX/DSEAR principles from the eBook by ATEX Explosion Hazards Ltd. &amp; Inburex UK Ltd. Always consult a qualified ATEX/DSEAR competent person for formal assessments.</p>
+  `;
+}
+</script>
 </body>
 </html>
