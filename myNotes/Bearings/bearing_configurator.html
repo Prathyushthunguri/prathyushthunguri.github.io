@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bearing Design Configurator</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f4f4f4;
+    --panel: #ffffff;
+    --panel2: #f9f9f9;
+    --border: #cccccc;
+    --accent: #cc0000;
+    --accent2: #b85c00;
+    --accent3: #1a6496;
+    --text: #333333;
+    --text-dim: #666666;
+    --green: #2d6a2d;
+    --green-bg: #eaf4ea;
+    --red: #cc0000;
+    --red-bg: #fdecea;
+    --warn-bg: #fff8f2;
+    --font-head: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+
+  /* ── Top Navbar ── */
+  .top-navbar {
+    position: fixed; top: 0; width: 100%;
+    background-color: #222; color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px; z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .navbar-left { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+  .navbar-left svg { width: 22px; height: 22px; fill: #cc0000; }
+  .navbar-right { display: flex; gap: 8px; }
+  .navbar-right button {
+    background: #444; color: white; border: none;
+    padding: 7px 14px; cursor: pointer; font-size: 13px; border-radius: 3px;
+  }
+  .navbar-right button:hover { background-color: #cc0000; }
+
+  .container {
+    max-width: 1200px;
+    margin: 72px auto 40px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+  }
+  @media(max-width:768px) { .container { margin: 80px 10px 20px; padding: 15px; } }
+
+  /* ── Old header — hidden, replaced by navbar ── */
+  header { display: none; }
+
+  /* ── Tab bar (MOC style) ── */
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    background: transparent; border-top: none; border-left: none; border-right: none;
+    padding: 0;
+  }
+  .tab-btn {
+    background: #eeeeee; color: #444; border: 1px solid #ccc;
+    border-bottom: none; padding: 8px 16px; cursor: pointer;
+    font-size: 13px; border-radius: 6px 6px 0 0;
+    font-family: var(--font-body); transition: background 0.2s;
+    flex: unset; min-width: unset; letter-spacing: normal; text-transform: none;
+  }
+  .tab-btn:hover:not(.active) { background: #dddddd; color: #222; }
+  .tab-btn.active {
+    background: #ffffff; color: #222; font-weight: bold;
+    border-bottom: 2px solid #fff; margin-bottom: -2px;
+  }
+
+  /* ── Panels ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media(max-width:800px) { .grid-2, .grid-3 { grid-template-columns:1fr; } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px; font-weight: bold;
+    color: #222;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+    display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* ── Form elements ── */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; margin-bottom: 5px;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .field label span { color: var(--accent3); margin-left: 4px; font-family: var(--font-mono); font-size: 10px; }
+  .field input, .field select {
+    width: 100%;
+    background: #fff; border: 1px solid #ccc;
+    color: var(--text); font-family: var(--font-mono); font-size: 14px;
+    padding: 8px 10px; border-radius: 4px;
+    outline: none; transition: border-color .2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent3); box-shadow: 0 0 0 2px rgba(26,100,150,0.1); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 22px;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 4px;
+    transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #aa0000; }
+  .btn-secondary { background: #eeeeee; color: #444; border: 1px solid #ccc; }
+  .btn-secondary:hover { background: #dddddd; color: #222; }
+
+  /* ── Results ── */
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+  .result-item {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .result-item .r-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .result-item .r-value { font-family: var(--font-mono); font-size: 20px; color: #222; margin-top: 4px; font-weight: bold; }
+  .result-item .r-unit { font-size: 11px; color: var(--text-dim); }
+  .result-item.highlight { border-color: var(--accent); border-left: 4px solid var(--accent); }
+  .result-item.highlight .r-value { color: var(--accent); }
+  .result-item.good { border-color: #b0d4b0; border-left: 4px solid var(--green); }
+  .result-item.good .r-value { color: var(--green); }
+  .result-item.warn { border-color: #ddd09a; border-left: 4px solid var(--accent2); }
+  .result-item.warn .r-value { color: var(--accent2); }
+
+  .verdict-box {
+    margin-top: 16px; padding: 12px 16px;
+    border-radius: 0 4px 4px 0; border-left: 4px solid var(--green);
+    background: var(--green-bg);
+    font-size: 13px; color: var(--text);
+  }
+  .verdict-box.bad { border-color: var(--red); background: var(--red-bg); }
+  .verdict-box.warn { border-color: var(--accent2); background: var(--warn-bg); }
+
+  /* ── Formula box ── */
+  .formula-box {
+    background: #f2f2f2; border: 1px solid #ddd; border-left: 4px solid var(--accent3);
+    border-radius: 0 4px 4px 0; padding: 12px 16px;
+    font-family: var(--font-mono); font-size: 13px;
+    color: #1a6496; margin-bottom: 16px;
+    line-height: 2;
+  }
+
+  /* ── Bearing selector cards ── */
+  .bearing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .bearing-card {
+    background: #fafafa; border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; cursor: pointer;
+    transition: all .2s;
+    position: relative; overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .bearing-card:hover { border-color: #999; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .bearing-card.selected { border-color: var(--accent); background: #fff5f5; border-left: 4px solid var(--accent); }
+  .bearing-card .bc-icon { font-size: 26px; margin-bottom: 8px; }
+  .bearing-card .bc-name { font-weight: 700; font-size: 14px; color: #222; }
+  .bearing-card .bc-tag {
+    display: inline-block; margin-top: 6px;
+    font-size: 10px; font-weight: bold; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 3px; border: 1px solid #ccc;
+  }
+  .tag-radial { background: #e8f4fd; color: #1a6496; border-color: #b8d8ee; }
+  .tag-thrust { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+  .tag-combo { background: var(--green-bg); color: var(--green); border-color: #b0d4b0; }
+  .bearing-card .bc-desc { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; }
+  .bearing-card .bc-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); display: none; place-items: center;
+    font-size: 11px; color: white;
+  }
+  .bearing-card.selected .bc-check { display: grid; }
+
+  /* ── Designation decoder ── */
+  .desig-display {
+    background: #f9f9f9; border: 1px solid #ddd;
+    padding: 16px; border-radius: 6px; margin-bottom: 16px;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .desig-seg {
+    padding: 6px 12px;
+    font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+    border-radius: 4px; text-align: center; min-width: 40px;
+    transition: background .2s; border: 1px solid #ccc;
+  }
+  .seg-prefix { background: #e8f4fd; color: #1a6496; border-color: #b8d8ee; }
+  .seg-type { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+  .seg-series { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+  .seg-bore { background: var(--green-bg); color: var(--green); border-color: #b0d4b0; }
+  .seg-suffix { background: #f3f0ff; color: #4a3d8f; border-color: #c8c0f0; }
+  .desig-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+  .dl-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); }
+  .dl-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── Section header ── */
+  .section-label {
+    font-size: 12px; font-weight: bold;
+    color: #444; text-transform: uppercase; letter-spacing: 1px;
+    margin: 20px 0 12px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #ddd; padding-bottom: 6px;
+  }
+  .section-label::after { display: none; }
+
+  /* ── Trumpler criteria bars ── */
+  .criteria-row { margin-bottom: 14px; }
+  .criteria-row .cr-label { font-size: 12px; color: var(--text-dim); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .cr-bar-bg { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+  .cr-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+  .bar-good { background: #4caf7d; }
+  .bar-warn { background: #b85c00; }
+  .bar-bad { background: #cc0000; }
+
+  /* ── Responsive tweaks ── */
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+  .hidden { display: none !important; }
+
+  /* ── Weibull table ── */
+  #weibullTable { border-collapse: collapse; }
+  #weibullTable th, #weibullTable td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; font-size: 13px; }
+  #weibullTable th { background: #f2f2f2; font-weight: bold; color: #cc0000; }
+  #weibullTable tr:nth-child(even) { background: #fafafa; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f0f0f0; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    Bearing Design Configurator
+  </div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>Bearing Design Configurator</h1>
+      <p>Rolling Element · Journal Bearing · Selection Guide · Designation Decoder · ME 423 Reference</p>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('type')">① Bearing Types</button>
+    <button class="tab-btn" onclick="switchTab('rolling')">② Rolling Element Life</button>
+    <button class="tab-btn" onclick="switchTab('journal')">③ Journal Bearing</button>
+    <button class="tab-btn" onclick="switchTab('desig')">④ Designation</button>
+    <button class="tab-btn" onclick="switchTab('theory')">⑤ Theory</button>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       TAB 1 — Bearing Type Selection
+       ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-type">
+    <div class="section-label">Select bearing type by application</div>
+    <div class="bearing-grid" id="bearingGrid">
+      <!-- generated by JS -->
+    </div>
+
+    <div id="bearingDetail" class="card" style="margin-top:20px; display:none;">
+      <div class="card-title">Bearing Details</div>
+      <div id="bearingDetailContent"></div>
+    </div>
+
+    <div class="section-label" style="margin-top:32px;">Bearing Selection Procedure (SKF / IS)</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Input Factors</div>
+        <div style="font-size:13px; line-height:1.9; color:var(--text-dim);">
+          <div style="color:var(--text)">① Performance & operating conditions</div>
+          <div>• Space, Speed, Load, Peak load</div>
+          <div>• Vibration, Misalignment</div>
+          <div style="color:var(--text); margin-top:8px;">② Precision & mounting</div>
+          <div>• Position control, Runout, Speed</div>
+          <div style="color:var(--text); margin-top:8px;">③ Lubrication factors</div>
+          <div>• Lubricant life, Relubrication interval</div>
+          <div>• Environment, Operating temperature, Seal type</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Selection Steps</div>
+        <div style="font-size:13px; line-height:1.9; color:var(--text-dim);">
+          <div style="color:var(--accent3);">① Performance & operating conditions</div>
+          <div style="color:var(--accent3);">② Bearing type and arrangement</div>
+          <div style="color:var(--accent3);">③ Bearing size (dynamic load rating)</div>
+          <div style="color:var(--accent3);">④ Lubrication</div>
+          <div style="color:var(--accent3);">⑤ Operating temperature and speed</div>
+          <div style="color:var(--accent3);">⑥ Bearing interfaces / fits</div>
+          <div style="color:var(--accent3);">⑦ Bearing execution (variant)</div>
+          <div style="color:var(--accent3);">⑧ Sealing, mounting and dismounting</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       TAB 2 — Rolling Element Life Calculator
+       ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-rolling">
+
+    <div class="formula-box">
+      C₁₀ = F_D × (L_D / L_R)^(1/a) &nbsp;|&nbsp; L_90 = (C / P_e)^a &nbsp;|&nbsp;
+      P_e = S·[X·V·F_r + Y·F_a] &nbsp;|&nbsp; a=3 (ball), a=10/3 (roller)
+    </div>
+
+    <div class="grid-2">
+      <!-- Inputs -->
+      <div class="card">
+        <div class="card-title">Operating Parameters</div>
+
+        <div class="field">
+          <label>Bearing Type <span>[affects exponent a]</span></label>
+          <select id="rb-type">
+            <option value="ball">Ball Bearing (a = 3)</option>
+            <option value="roller">Roller Bearing (a = 10/3)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Desired Radial Load F_D <span>[kN]</span></label>
+          <input type="number" id="rb-fd" value="5" step="0.1">
+        </div>
+        <div class="field">
+          <label>Axial Load F_a <span>[kN]</span></label>
+          <input type="number" id="rb-fa" value="0" step="0.1">
+        </div>
+        <div class="field">
+          <label>Operating Speed n_D <span>[rpm]</span></label>
+          <input type="number" id="rb-nd" value="1450" step="10">
+        </div>
+        <div class="field">
+          <label>Desired Life L_D <span>[hours]</span></label>
+          <input type="number" id="rb-ld" value="10000" step="500">
+        </div>
+        <div class="field">
+          <label>Catalog Rating Life L_R <span>[revolutions × 10⁶]</span></label>
+          <input type="number" id="rb-lr" value="1" step="0.5">
+        </div>
+      </div>
+
+      <!-- Equivalent load factors -->
+      <div class="card">
+        <div class="card-title">Equivalent Load Factors</div>
+        <div class="field">
+          <label>Radial Load Factor X</label>
+          <input type="number" id="rb-x" value="1" step="0.05">
+        </div>
+        <div class="field">
+          <label>Axial Load Factor Y</label>
+          <input type="number" id="rb-y" value="0" step="0.05">
+        </div>
+        <div class="field">
+          <label>Race Rotation Factor V <span>[1=inner ring rotates]</span></label>
+          <input type="number" id="rb-v" value="1" step="0.1">
+        </div>
+        <div class="field">
+          <label>Service / Shock Factor S</label>
+          <select id="rb-s">
+            <option value="1.0">1.0 — Smooth / uniform</option>
+            <option value="1.25">1.25 — Light shock</option>
+            <option value="1.5" selected>1.5 — Moderate shock</option>
+            <option value="2.0">2.0 — Heavy shock</option>
+            <option value="2.5">2.5 — Extreme shock</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Dynamic Load Capacity C (catalog) <span>[kN — for L₉₀ calc]</span></label>
+          <input type="number" id="rb-c" value="30" step="1">
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="calcRolling()">▶ Calculate</button>
+          <button class="btn btn-secondary" onclick="resetRolling()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="rollingResults" class="hidden">
+      <div class="section-label">Calculation Results</div>
+      <div class="result-grid" id="rollingResultGrid"></div>
+      <div id="rollingVerdict" style="margin-top:16px;"></div>
+
+      <!-- Reliability table -->
+      <div class="section-label" style="margin-top:24px;">Weibull Reliability vs. Life (x₀=0.02, θ-x₀=4.439, b=1.483)</div>
+      <div class="card" style="overflow-x:auto;">
+        <table id="weibullTable" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Reliability R</th>
+              <th>Dimensionless Life x = L/L₁₀</th>
+              <th>Life (Mrev)</th>
+              <th>Adjust. Factor a_R</th>
+            </tr>
+          </thead>
+          <tbody id="weibullBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       TAB 3 — Journal Bearing (Petroff / Sommerfeld)
+       ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-journal">
+
+    <div class="formula-box">
+      S = (r/c)² × (μN/P) &nbsp;|&nbsp; f = 2π²(μN/P)(r/c) &nbsp;|&nbsp;
+      P_e = W/(2rl) &nbsp;|&nbsp; Trumpler: h₀ ≥ 0.00508 + 0.00004d [mm] · T ≤ 121°C · W_st/ld ≤ 2068 kPa
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Journal Geometry & Loading</div>
+        <div class="field">
+          <label>Journal Radius r <span>[mm]</span></label>
+          <input type="number" id="jb-r" value="25" step="1">
+        </div>
+        <div class="field">
+          <label>Radial Clearance c <span>[mm]</span></label>
+          <input type="number" id="jb-c" value="0.05" step="0.005">
+        </div>
+        <div class="field">
+          <label>Bearing Length l <span>[mm]</span></label>
+          <input type="number" id="jb-l" value="50" step="1">
+        </div>
+        <div class="field">
+          <label>Bearing Load W <span>[N]</span></label>
+          <input type="number" id="jb-w" value="5000" step="100">
+        </div>
+        <div class="field">
+          <label>Starting Load W_st <span>[N — for Trumpler check]</span></label>
+          <input type="number" id="jb-wst" value="3000" step="100">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Lubrication & Speed</div>
+        <div class="field">
+          <label>Shaft Speed N <span>[rev/s]</span></label>
+          <input type="number" id="jb-n" value="25" step="1">
+        </div>
+        <div class="field">
+          <label>Absolute Viscosity μ <span>[mPa·s at operating temp]</span></label>
+          <input type="number" id="jb-mu" value="20" step="1">
+        </div>
+        <div class="field">
+          <label>Inlet Lubricant Temperature T₁ <span>[°C]</span></label>
+          <input type="number" id="jb-t1" value="40" step="1">
+        </div>
+        <div class="field">
+          <label>Bearing Type</label>
+          <select id="jb-btype">
+            <option value="full">Full bearing (β = 360°)</option>
+            <option value="partial">Partial bearing (β &lt; 360°)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>l/d Ratio <span>[for chart lookup]</span></label>
+          <select id="jb-ld">
+            <option value="0.25">l/d = 1/4</option>
+            <option value="0.5">l/d = 1/2</option>
+            <option value="1" selected>l/d = 1</option>
+            <option value="inf">l/d = ∞</option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="calcJournal()">▶ Calculate</button>
+          <button class="btn btn-secondary" onclick="resetJournal()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Journal Results -->
+    <div id="journalResults" class="hidden">
+      <div class="section-label">Sommerfeld & Performance Results</div>
+      <div class="result-grid" id="journalResultGrid"></div>
+
+      <div class="section-label" style="margin-top:24px;">Trumpler Design Criteria</div>
+      <div class="card">
+        <div id="trumplerChecks"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:24px;">Design Recommendations</div>
+      <div id="journalVerdict"></div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       TAB 4 — Designation Decoder
+       ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-desig">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">SKF Designation Builder</div>
+
+        <div class="field">
+          <label>Prefix (optional)</label>
+          <select id="d-prefix">
+            <option value="">— None —</option>
+            <option value="SKF">SKF</option>
+            <option value="L">L (rings/rollers only)</option>
+            <option value="WS">WS (thrust washers)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Bearing Type Code</label>
+          <select id="d-type" onchange="updateDesig()">
+            <option value="6">6 — Single row deep groove ball</option>
+            <option value="4">4 — Double row deep groove ball</option>
+            <option value="7">7 — Single row angular contact ball</option>
+            <option value="1">1 — Self-aligning ball</option>
+            <option value="2">2 — Spherical / spherical roller thrust</option>
+            <option value="3">3 — Tapered roller</option>
+            <option value="5">5 — Thrust ball</option>
+            <option value="N">N — Cylindrical roller (NU, NJ, NUP…)</option>
+            <option value="QJ">QJ — Four-point contact ball</option>
+            <option value="T">T — Tapered roller (ISO 355)</option>
+            <option value="C">C — CARB toroidal roller</option>
+            <option value="8">8 — Cylindrical roller thrust</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Diameter Series (width × OD)</label>
+          <select id="d-series" onchange="updateDesig()">
+            <option value="0">0 — Extra light</option>
+            <option value="1">1 — Extra light</option>
+            <option value="2" selected>2 — Light</option>
+            <option value="3">3 — Medium</option>
+            <option value="4">4 — Heavy</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Bore Diameter d <span>[mm]</span></label>
+          <select id="d-bore" onchange="updateDesig()">
+            <option value="00">10 mm → code 00</option>
+            <option value="01">12 mm → code 01</option>
+            <option value="02">15 mm → code 02</option>
+            <option value="03">17 mm → code 03</option>
+            <option value="04">20 mm → code 04</option>
+            <option value="05">25 mm → code 05</option>
+            <option value="06">30 mm → code 06</option>
+            <option value="07">35 mm → code 07</option>
+            <option value="08">40 mm → code 08</option>
+            <option value="09">45 mm → code 09</option>
+            <option value="10">50 mm → code 10</option>
+            <option value="12">60 mm → code 12</option>
+            <option value="14">70 mm → code 14</option>
+            <option value="16">80 mm → code 16</option>
+            <option value="18">90 mm → code 18</option>
+            <option value="20">100 mm → code 20</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Suffix (optional)</label>
+          <select id="d-suffix" onchange="updateDesig()">
+            <option value="">— None —</option>
+            <option value="-2Z">-2Z / ZZ (two shields)</option>
+            <option value="-2RS">-2RS (two rubber seals)</option>
+            <option value="-ZNR">-ZNR (shield + snap ring)</option>
+            <option value="-2ZNR">-2ZNR (2 shields + snap ring)</option>
+            <option value="-NR">-NR (snap ring groove)</option>
+            <option value="-C3">-C3 (greater radial clearance)</option>
+            <option value="-C4">-C4 (max radial clearance)</option>
+            <option value="-P6">-P6 (tolerance class 6)</option>
+            <option value="-P5">-P5 (tolerance class 5)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="updateDesig()" style="margin-top:4px;">Generate Designation</button>
+      </div>
+
+      <!-- Display -->
+      <div class="card">
+        <div class="card-title">Generated Designation</div>
+        <div class="desig-display" id="desigDisplay">
+          <!-- generated -->
+        </div>
+        <div class="desig-legend">
+          <div class="dl-item"><div class="dl-dot" style="background:rgba(79,195,247,0.5);"></div> Prefix</div>
+          <div class="dl-item"><div class="dl-dot" style="background:rgba(232,66,58,0.5);"></div> Type</div>
+          <div class="dl-item"><div class="dl-dot" style="background:rgba(245,166,35,0.5);"></div> Series</div>
+          <div class="dl-item"><div class="dl-dot" style="background:rgba(76,175,125,0.5);"></div> Bore code</div>
+          <div class="dl-item"><div class="dl-dot" style="background:rgba(180,180,255,0.3);"></div> Suffix</div>
+        </div>
+
+        <div class="section-label" style="margin-top:20px;">Bore Code Reference</div>
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--text-dim); line-height:2;">
+          <span style="color:var(--accent);">Special: </span>00→10mm, 01→12mm, 02→15mm, 03→17mm<br>
+          <span style="color:var(--accent3);">General: </span>04 onward → code × 5 = bore [mm]<br>
+          <span style="color:var(--text-dim);">e.g., 08 → 40mm, 12 → 60mm, 20 → 100mm</span>
+        </div>
+
+        <div class="section-label" style="margin-top:20px;">Indian Standard (IS) Format</div>
+        <div class="desig-display" id="isDisplay" style="font-size:16px; gap:6px;">
+          <!-- IS format -->
+        </div>
+        <div style="font-size:12px; color:var(--text-dim); margin-top:8px; font-family:var(--font-mono);">
+          Format: IS – [bore dia mm] – [type code] – [series]
+        </div>
+      </div>
+    </div>
+
+    <!-- Decoder -->
+    <div class="section-label" style="margin-top:28px;">Decode an Existing Designation</div>
+    <div class="card">
+      <div class="grid-2" style="align-items:start;">
+        <div>
+          <div class="field">
+            <label>Enter Designation <span>[e.g. 6205, 7308-2Z, NU2210]</span></label>
+            <input type="text" id="d-decode-input" placeholder="6205" oninput="decodeDesig()">
+          </div>
+        </div>
+        <div id="decodeResult" style="font-family:var(--font-mono); font-size:13px; line-height:2; color:var(--text-dim);">
+          Enter a designation above to decode it.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────
+       TAB 5 — Theory
+       ───────────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-theory">
+
+    <!-- 1. What is a bearing -->
+    <div class="section-label">1. What is a Bearing?</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Definition & Purpose</div>
+      <p style="font-size:13px; line-height:1.8; color:var(--text);">
+        A <strong>bearing</strong> is a machine element that constrains relative motion between two parts — typically a rotating shaft and a stationary housing — to a desired type (rotation, linear, etc.) while <strong>reducing friction and transferring loads</strong>. Without bearings, surfaces in contact would wear out rapidly due to sliding friction.
+      </p>
+      <div class="grid-3" style="margin-top:16px; gap:12px;">
+        <div class="result-item"><div class="r-label">Primary Function</div><div class="r-value" style="font-size:14px;">Reduce Friction</div><div class="r-unit">between moving parts</div></div>
+        <div class="result-item"><div class="r-label">Secondary Function</div><div class="r-value" style="font-size:14px;">Support Loads</div><div class="r-unit">radial, axial, or both</div></div>
+        <div class="result-item"><div class="r-label">Tertiary Function</div><div class="r-value" style="font-size:14px;">Guide Motion</div><div class="r-unit">constrain to 1 DOF</div></div>
+      </div>
+    </div>
+
+    <!-- 2. Load Types -->
+    <div class="section-label">2. Load Types on Bearings</div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">Radial Load</div>
+        <p style="font-size:13px; line-height:1.8;">Acts <strong>perpendicular to the shaft axis</strong>. Example: weight of a pulley sitting on a shaft. All deep groove ball bearings, cylindrical roller bearings are designed primarily for this.</p>
+        <div class="formula-box" style="margin-top:12px;">F<sub>r</sub> → perpendicular to shaft axis<br>P = F<sub>r</sub> / (2·r·l) &nbsp;[projected pressure]</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Axial (Thrust) Load</div>
+        <p style="font-size:13px; line-height:1.8;">Acts <strong>along the shaft axis</strong>. Example: force on a helical gear, propeller thrust. Thrust ball bearings handle pure axial. Angular contact bearings handle combined loads.</p>
+        <div class="formula-box" style="margin-top:12px;">F<sub>a</sub> → parallel to shaft axis<br>Combined: P<sub>e</sub> = X·V·F<sub>r</sub> + Y·F<sub>a</sub></div>
+      </div>
+    </div>
+
+    <!-- 3. Rolling vs Sliding -->
+    <div class="section-label">3. Rolling Element vs. Plain (Journal) Bearings</div>
+    <div class="card" style="margin-bottom:16px; overflow-x:auto;">
+      <div class="card-title">Comparison</div>
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:#f2f2f2;">
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Property</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Rolling Element Bearing</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Plain / Journal Bearing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Friction</strong></td><td style="border:1px solid #ccc; padding:7px;">Very low (rolling contact)</td><td style="border:1px solid #ccc; padding:7px;">Low–moderate (hydrodynamic film)</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Starting friction</strong></td><td style="border:1px solid #ccc; padding:7px;">Low</td><td style="border:1px solid #ccc; padding:7px;">High (no film at start)</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Speed range</strong></td><td style="border:1px solid #ccc; padding:7px;">Medium–high</td><td style="border:1px solid #ccc; padding:7px;">Very high (turbines, motors)</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Load capacity</strong></td><td style="border:1px solid #ccc; padding:7px;">Moderate–high</td><td style="border:1px solid #ccc; padding:7px;">Very high (area contact)</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Noise / vibration</strong></td><td style="border:1px solid #ccc; padding:7px;">More sensitive</td><td style="border:1px solid #ccc; padding:7px;">Quieter (damped by oil film)</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Lubrication</strong></td><td style="border:1px solid #ccc; padding:7px;">Grease or oil, simple</td><td style="border:1px solid #ccc; padding:7px;">Pressurised oil system needed</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Size / weight</strong></td><td style="border:1px solid #ccc; padding:7px;">Larger radial envelope</td><td style="border:1px solid #ccc; padding:7px;">Compact — thin shell</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Cost</strong></td><td style="border:1px solid #ccc; padding:7px;">Higher (precision parts)</td><td style="border:1px solid #ccc; padding:7px;">Lower (simple geometry)</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Typical use</strong></td><td style="border:1px solid #ccc; padding:7px;">Motors, pumps, gearboxes</td><td style="border:1px solid #ccc; padding:7px;">Crankshafts, turbines, large centrifugal pumps</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. Rolling element bearing anatomy -->
+    <div class="section-label">4. Anatomy of a Rolling Element Bearing</div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">Components</div>
+        <ul style="font-size:13px; line-height:2; color:var(--text); padding-left:18px;">
+          <li><strong>Inner ring (IR):</strong> Press-fitted on shaft. Rotates with shaft.</li>
+          <li><strong>Outer ring (OR):</strong> Fits in housing. Usually stationary.</li>
+          <li><strong>Rolling elements:</strong> Balls or rollers. Transfer load between rings via rolling contact.</li>
+          <li><strong>Cage (retainer):</strong> Keeps rolling elements evenly spaced. Prevents contact between them.</li>
+          <li><strong>Seals / shields:</strong> Retain lubricant, exclude contaminants. Suffix -2RS (rubber seal), -2Z (metal shield).</li>
+          <li><strong>Lubricant:</strong> Grease or oil. Reduces contact stress, removes heat.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Contact Geometry</div>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:10px;">
+          <strong>Ball bearings:</strong> Point contact → small contact patch → lower load capacity but lower friction and higher speed.
+        </p>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:10px;">
+          <strong>Roller bearings:</strong> Line contact → larger contact area → higher load capacity but more friction. Cylindrical, tapered, spherical, needle — all are line contact variants.
+        </p>
+        <div class="formula-box">
+          Hertz contact stress (ball): σ<sub>max</sub> = 0.578 × (F·E*²/R*²)^(1/3)<br>
+          Life exponent: a = 3 (ball) &nbsp;|&nbsp; a = 10/3 (roller)
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Bearing life theory -->
+    <div class="section-label">5. Bearing Life — L₁₀ Theory (Lundberg–Palmgren)</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Fatigue Life & Dynamic Load Rating</div>
+      <p style="font-size:13px; line-height:1.8; margin-bottom:12px;">
+        Bearings fail primarily by <strong>rolling contact fatigue</strong> — subsurface cracks that propagate until pitting/spalling occurs. Lundberg & Palmgren (1947) derived a statistical model relating load, life, and material.
+      </p>
+      <div class="formula-box">
+        L₁₀ = (C / P<sub>e</sub>)^a &nbsp;×&nbsp; 10⁶ revolutions<br><br>
+        C &nbsp;= Dynamic load rating [kN] — load at which 90% of bearings survive 10⁶ rev<br>
+        P<sub>e</sub> = Equivalent dynamic load [kN] = X·V·F<sub>r</sub> + Y·F<sub>a</sub><br>
+        a &nbsp;= 3 for ball bearings, 10/3 for roller bearings<br>
+        L₁₀(hours) = (10⁶ / 60n) × L₁₀(rev)
+      </div>
+      <p style="font-size:13px; line-height:1.8; margin-top:12px;">
+        <strong>Key insight:</strong> Doubling the load reduces life by a factor of 8 (ball) or ~10.6 (roller). Halving the load multiplies life by 8× — so reducing load is extremely effective.
+      </p>
+      <div class="grid-2" style="margin-top:12px; gap:12px;">
+        <div class="result-item highlight"><div class="r-label">Required Rating C₁₀</div><div class="r-value" style="font-size:16px;">C₁₀ = P<sub>e</sub> × (L_D/L_R)^(1/a)</div><div class="r-unit">minimum catalog C needed</div></div>
+        <div class="result-item good"><div class="r-label">Design Life Guide</div><div class="r-value" style="font-size:14px;">20,000–30,000 h</div><div class="r-unit">industrial machinery (pumps, motors)</div></div>
+      </div>
+    </div>
+
+    <!-- 6. Weibull & reliability -->
+    <div class="section-label">6. Reliability & Weibull Statistics</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Beyond L₁₀ — Adjusting for Reliability</div>
+      <p style="font-size:13px; line-height:1.8; margin-bottom:10px;">
+        L₁₀ corresponds to <strong>90% reliability</strong> (10% failure probability). For critical applications requiring higher reliability, a Weibull adjustment factor a<sub>R</sub> is applied:
+      </p>
+      <div class="formula-box">
+        L<sub>R</sub> = a<sub>R</sub> × L₁₀<br><br>
+        Weibull CDF: R(x) = exp[−((x − x₀)/(θ − x₀))^b]<br>
+        x₀ = 0.02, &nbsp;θ − x₀ = 4.439, &nbsp;b = 1.483 &nbsp;(SKF standard)<br><br>
+        R = 99% → a<sub>R</sub> ≈ 0.21 &nbsp;|&nbsp; R = 95% → a<sub>R</sub> ≈ 0.62 &nbsp;|&nbsp; R = 90% → a<sub>R</sub> = 1.0
+      </div>
+      <p style="font-size:13px; line-height:1.8; margin-top:10px; color:var(--text-dim);">
+        Note: Going from 90% to 99% reliability cuts the expected life to ~21% of L₁₀. This is why high-reliability applications (aerospace, nuclear) specify very conservative bearing loads.
+      </p>
+    </div>
+
+    <!-- 7. Journal bearing theory -->
+    <div class="section-label">7. Journal Bearing Theory — Hydrodynamic Lubrication</div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">Petroff's Law (lightly loaded)</div>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:10px;">
+          When a shaft rotates in a lubricated bore, it drags oil around, building up a <strong>hydrodynamic wedge</strong> that lifts the shaft off the bore surface. Petroff's equation gives friction for the concentric (lightly loaded) case:
+        </p>
+        <div class="formula-box">
+          f = 2π² × (μN/P) × (r/c)<br><br>
+          μ = absolute viscosity [Pa·s]<br>
+          N = shaft speed [rev/s]<br>
+          P = W/(2rl) — projected pressure [Pa]<br>
+          r/c = radius-to-clearance ratio
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Sommerfeld Number</div>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:10px;">
+          The <strong>Sommerfeld number S</strong> is the key dimensionless parameter governing journal bearing performance. It determines eccentricity ratio, minimum film thickness, and all performance characteristics:
+        </p>
+        <div class="formula-box">
+          S = (r/c)² × (μN/P)<br><br>
+          High S → concentric shaft, thick film, low eccentricity<br>
+          Low S &nbsp;→ eccentric shaft, thin film, risk of contact<br><br>
+          Stable thick-film: μN/P ≥ 1.7 × 10⁻⁶
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Lubrication regimes -->
+    <div class="section-label">8. Lubrication Regimes — Stribeck Curve</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Three Regimes of Lubrication</div>
+      <div class="grid-3" style="gap:12px; margin-bottom:14px;">
+        <div class="result-item" style="border-left:4px solid #cc0000;">
+          <div class="r-label">Boundary Lubrication</div>
+          <div class="r-value" style="font-size:14px; color:#cc0000;">μN/P → Low</div>
+          <div class="r-unit">Surfaces in contact. High wear. Additive-dependent. Start/stop conditions.</div>
+        </div>
+        <div class="result-item warn">
+          <div class="r-label">Mixed Lubrication</div>
+          <div class="r-value" style="font-size:14px;">Transition</div>
+          <div class="r-unit">Partial film. Some asperity contact. Moderate wear. Unstable regime — avoid sustained operation.</div>
+        </div>
+        <div class="result-item good">
+          <div class="r-label">Hydrodynamic (Full Film)</div>
+          <div class="r-value" style="font-size:14px; color:#2d6a2d;">μN/P → High</div>
+          <div class="r-unit">Complete oil film separation. Near-zero wear. Desired operating condition.</div>
+        </div>
+      </div>
+      <p style="font-size:13px; line-height:1.8; color:var(--text);">
+        The Stribeck curve plots friction coefficient vs. the bearing characteristic number (μN/P). Minimum friction occurs at the transition from mixed to hydrodynamic. Operating well into the hydrodynamic regime is the design goal for journal bearings.
+      </p>
+    </div>
+
+    <!-- 9. Trumpler criteria -->
+    <div class="section-label">9. Trumpler's Design Criteria for Journal Bearings</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Four Criteria — All Must Be Satisfied</div>
+      <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:4px;">
+        <thead>
+          <tr style="background:#f2f2f2;">
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000;">#</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000;">Criterion</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000;">Limit</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000;">Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border:1px solid #ccc; padding:7px; font-weight:bold;">T1</td><td style="border:1px solid #ccc; padding:7px;">Min. film thickness h₀</td><td style="border:1px solid #ccc; padding:7px; font-family:var(--font-mono);">≥ 0.00508 + 0.00004·d [mm]</td><td style="border:1px solid #ccc; padding:7px;">Prevent metal-to-metal contact considering surface roughness</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px; font-weight:bold;">T2</td><td style="border:1px solid #ccc; padding:7px;">Max lubricant temperature</td><td style="border:1px solid #ccc; padding:7px; font-family:var(--font-mono);">T<sub>max</sub> ≤ 121 °C</td><td style="border:1px solid #ccc; padding:7px;">Oil oxidation and viscosity breakdown above 120°C</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px; font-weight:bold;">T3</td><td style="border:1px solid #ccc; padding:7px;">Starting load pressure</td><td style="border:1px solid #ccc; padding:7px; font-family:var(--font-mono);">W<sub>st</sub>/(l·d) ≤ 2068 kPa</td><td style="border:1px solid #ccc; padding:7px;">Prevent wiping of Babbitt surface during boundary lubrication at start</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px; font-weight:bold;">T4</td><td style="border:1px solid #ccc; padding:7px;">Stable thick-film condition</td><td style="border:1px solid #ccc; padding:7px; font-family:var(--font-mono);">μN/P ≥ 1.7 × 10⁻⁶</td><td style="border:1px solid #ccc; padding:7px;">Ensure full hydrodynamic regime — not mixed or boundary</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 10. Fits & tolerances -->
+    <div class="section-label">10. Bearing Fits & Tolerances</div>
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">Shaft Fits (Inner Ring)</div>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:8px;">The inner ring must <strong>not creep on the shaft</strong> under rotating load. A <em>transition or interference</em> fit is used:</p>
+        <ul style="font-size:13px; line-height:2; padding-left:18px;">
+          <li><strong>k5 / m5:</strong> Light interference — small motors, light load</li>
+          <li><strong>n6 / p6:</strong> Medium interference — standard industrial</li>
+          <li><strong>r6 / s6:</strong> Heavy interference — heavy shock load</li>
+        </ul>
+        <p style="font-size:12px; color:var(--text-dim); margin-top:8px;">Interference expands bore slightly — reduces internal clearance (C3 suffix compensates).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Housing Fits (Outer Ring)</div>
+        <p style="font-size:13px; line-height:1.8; margin-bottom:8px;">Outer ring is usually stationary — a <em>clearance or transition</em> fit allows easy replacement:</p>
+        <ul style="font-size:13px; line-height:2; padding-left:18px;">
+          <li><strong>H7:</strong> Standard — allows axial float (floating bearing)</li>
+          <li><strong>J7 / K7:</strong> Transition — light press for fixed end</li>
+          <li><strong>M7 / N7:</strong> Interference — heavy load, non-separable housing</li>
+        </ul>
+        <p style="font-size:12px; color:var(--text-dim); margin-top:8px;">Fixed + floating arrangement: one end fixed (axial location), other end free to slide thermally.</p>
+      </div>
+    </div>
+
+    <!-- 11. Lubrication -->
+    <div class="section-label">11. Lubrication — Grease vs. Oil</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Selection Guide</div>
+      <div class="grid-2" style="gap:12px;">
+        <div>
+          <p style="font-size:13px; font-weight:bold; margin-bottom:8px; color:#1a6496;">Grease Lubrication</p>
+          <ul style="font-size:13px; line-height:1.9; padding-left:16px;">
+            <li>Used in ~80–90% of rolling bearings</li>
+            <li>Simple — sealed for life possible (-2RS bearings)</li>
+            <li>Speed limit: n·d<sub>m</sub> ≤ 300,000 mm/min typically</li>
+            <li>Relubrication interval from manufacturer charts</li>
+            <li>NLGI Grade 2 most common (medium stiffness)</li>
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:13px; font-weight:bold; margin-bottom:8px; color:#1a6496;">Oil Lubrication</p>
+          <ul style="font-size:13px; line-height:1.9; padding-left:16px;">
+            <li>Required for high speed, high temperature, or heat removal</li>
+            <li>Oil bath, circulating, oil mist, or jet systems</li>
+            <li>ISO VG 32–220 typical for rolling bearings</li>
+            <li>Viscosity must be adequate at operating temperature</li>
+            <li>Mandatory for journal (plain) bearings — full film needed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Failure modes -->
+    <div class="section-label">12. Common Bearing Failure Modes</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Failure Mode Reference</div>
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:#f2f2f2;">
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Failure Mode</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Appearance</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Root Cause</th>
+            <th style="border:1px solid #ccc; padding:8px; color:#cc0000; text-align:left;">Prevention</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Fatigue spalling</strong></td><td style="border:1px solid #ccc; padding:7px;">Flaking of raceway surface</td><td style="border:1px solid #ccc; padding:7px;">Normal end-of-life, or overload</td><td style="border:1px solid #ccc; padding:7px;">Size correctly (L₁₀), avoid overload</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Wear</strong></td><td style="border:1px solid #ccc; padding:7px;">Dull/grey raceway, loss of geometry</td><td style="border:1px solid #ccc; padding:7px;">Contamination, poor lubrication</td><td style="border:1px solid #ccc; padding:7px;">Proper sealing, regular relubrication</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Fretting corrosion</strong></td><td style="border:1px solid #ccc; padding:7px;">Red/brown oxide at bore or OD</td><td style="border:1px solid #ccc; padding:7px;">Loose fit — micro-slip between ring and seat</td><td style="border:1px solid #ccc; padding:7px;">Correct interference fit</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>False brinelling</strong></td><td style="border:1px solid #ccc; padding:7px;">Indentations at rolling element pitch</td><td style="border:1px solid #ccc; padding:7px;">Vibration while stationary</td><td style="border:1px solid #ccc; padding:7px;">Preload during storage, slow rotation during transport</td></tr>
+          <tr><td style="border:1px solid #ccc; padding:7px;"><strong>Electric erosion</strong></td><td style="border:1px solid #ccc; padding:7px;">Fluted/washboard raceway, grey pitting</td><td style="border:1px solid #ccc; padding:7px;">Stray current through bearing (VFD drives)</td><td style="border:1px solid #ccc; padding:7px;">Insulated bearings (suffix VL0241), shaft grounding</td></tr>
+          <tr style="background:#fafafa;"><td style="border:1px solid #ccc; padding:7px;"><strong>Overheating / seizure</strong></td><td style="border:1px solid #ccc; padding:7px;">Discolouration (blue/brown), cage deform</td><td style="border:1px solid #ccc; padding:7px;">Too tight fit, over-greasing, wrong lubricant</td><td style="border:1px solid #ccc; padding:7px;">Correct fit, correct grease quantity (~30–50% fill)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 13. Quick selection rules -->
+    <div class="section-label">13. Quick Selection Rules of Thumb</div>
+    <div class="grid-3" style="margin-bottom:8px; gap:12px;">
+      <div class="card">
+        <div class="card-title">Speed Priority</div>
+        <p style="font-size:12px; line-height:1.8;">High speed → <strong>Deep groove ball</strong> or <strong>angular contact ball</strong>. Roller bearings have higher friction at speed. Check speed rating (n × d<sub>m</sub> limit).</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Load Priority</div>
+        <p style="font-size:12px; line-height:1.8;">Heavy load → <strong>Cylindrical roller</strong> (radial), <strong>Spherical roller</strong> (combined + misalignment), <strong>Tapered roller</strong> (heavy combined). C rating ~30–50% higher than ball for same size.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Misalignment</div>
+        <p style="font-size:12px; line-height:1.8;">Shaft deflection or housing bore misalignment → <strong>Self-aligning ball</strong> (light load) or <strong>Spherical roller</strong> (heavy load). Both tolerate 1–3° misalignment.</p>
+      </div>
+    </div>
+
+  </div><!-- end tab-theory -->
+
+</div>
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// Tab switching
+// ─────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const names = ['type','rolling','journal','desig','theory'];
+    b.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-'+name);
+  });
+  if(name === 'desig') updateDesig();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Bearing type data
+// ─────────────────────────────────────────────────────────────────
+const bearings = [
+  {
+    icon:'⚙️', name:'Deep Groove Ball',
+    tags:['Radial','Light Thrust'], tagClass:['tag-radial','tag-thrust'],
+    code:'6xxx',
+    desc:'Most common. Low friction, high speed, moderate radial and axial loads. Available shielded/sealed.',
+    loads:'Radial + axial (moderate)',
+    speed:'Very high',
+    misalign:'Poor',
+    install:'Easy',
+    apps:'Motors, pumps, gearboxes, conveyors'
+  },
+  {
+    icon:'🔄', name:'Angular Contact Ball',
+    tags:['Radial','Thrust'], tagClass:['tag-combo','tag-thrust'],
+    code:'7xxx',
+    desc:'Designed for combined axial and radial loads. Used in pairs (back-to-back / face-to-face).',
+    loads:'High axial + radial',
+    speed:'High',
+    misalign:'Poor',
+    install:'Moderate',
+    apps:'Machine tool spindles, gearboxes, pumps'
+  },
+  {
+    icon:'🌀', name:'Self-Aligning Ball',
+    tags:['Radial'], tagClass:['tag-radial'],
+    code:'1xxx',
+    desc:'Two rows of balls in spherical outer ring. Accommodates shaft misalignment and deflection.',
+    loads:'Radial (light axial)',
+    speed:'High',
+    misalign:'Excellent',
+    install:'Easy',
+    apps:'Agricultural, paper machines, fans, textile'
+  },
+  {
+    icon:'🛞', name:'Cylindrical Roller',
+    tags:['Radial'], tagClass:['tag-radial'],
+    code:'NUxxx',
+    desc:'High radial load capacity due to line contact. Low friction. Various flange configs (NU, NJ, NUP).',
+    loads:'High radial',
+    speed:'High',
+    misalign:'Very poor',
+    install:'Moderate',
+    apps:'Gearboxes, rolling mills, traction motors'
+  },
+  {
+    icon:'🔺', name:'Tapered Roller',
+    tags:['Radial','Thrust'], tagClass:['tag-radial','tag-thrust'],
+    code:'3xxx / T',
+    desc:'Separate inner and outer ring. Takes combined loads. Inner/outer assembled separately. Often used in pairs.',
+    loads:'High radial + high axial',
+    speed:'Moderate',
+    misalign:'Poor',
+    install:'Complex',
+    apps:'Wheel hubs, heavy gearboxes, crane hooks'
+  },
+  {
+    icon:'🌐', name:'Spherical Roller',
+    tags:['Radial','Thrust'], tagClass:['tag-combo','tag-thrust'],
+    code:'2xxx',
+    desc:'Very high load capacity. Self-aligning. Two rows of asymmetric barrel rollers on spherical raceway.',
+    loads:'Very high radial + axial',
+    speed:'Moderate',
+    misalign:'Good',
+    install:'Moderate',
+    apps:'Paper mills, mining, vibrating screens'
+  },
+  {
+    icon:'🎯', name:'Needle Roller',
+    tags:['Radial'], tagClass:['tag-radial'],
+    code:'NA / HK',
+    desc:'Very thin cross-section. High radial capacity in compact space. Cage or full complement.',
+    loads:'High radial (no axial)',
+    speed:'Moderate',
+    misalign:'Poor',
+    install:'Easy (no inner ring versions)',
+    apps:'Connecting rods, rocker arms, compressors'
+  },
+  {
+    icon:'⬆️', name:'Thrust Ball',
+    tags:['Thrust'], tagClass:['tag-thrust'],
+    code:'5xxx',
+    desc:'Pure axial load in one or both directions. Cannot support radial loads. Low speed.',
+    loads:'Axial only',
+    speed:'Low',
+    misalign:'Very poor',
+    install:'Easy',
+    apps:'Steering columns, screw jacks, turntables'
+  }
+];
+
+function renderBearings() {
+  const grid = document.getElementById('bearingGrid');
+  grid.innerHTML = bearings.map((b,i) => `
+    <div class="bearing-card" onclick="selectBearing(${i})" id="bc-${i}">
+      <div class="bc-check">✓</div>
+      <div class="bc-icon">${b.icon}</div>
+      <div class="bc-name">${b.name}</div>
+      <div>${b.tags.map((t,ti) => `<span class="bc-tag ${b.tagClass[ti]}">${t}</span>`).join(' ')}</div>
+      <div class="bc-desc">${b.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectBearing(i) {
+  document.querySelectorAll('.bearing-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('bc-'+i).classList.add('selected');
+  const b = bearings[i];
+  const detail = document.getElementById('bearingDetail');
+  detail.style.display = 'block';
+  document.getElementById('bearingDetailContent').innerHTML = `
+    <div class="result-grid">
+      <div class="result-item"><div class="r-label">Code Prefix</div><div class="r-value" style="font-size:18px;">${b.code}</div></div>
+      <div class="result-item"><div class="r-label">Load Capacity</div><div class="r-value" style="font-size:14px; line-height:1.3;">${b.loads}</div></div>
+      <div class="result-item"><div class="r-label">Max Speed</div><div class="r-value" style="font-size:14px;">${b.speed}</div></div>
+      <div class="result-item"><div class="r-label">Misalignment</div><div class="r-value" style="font-size:14px;">${b.misalign}</div></div>
+      <div class="result-item"><div class="r-label">Installation</div><div class="r-value" style="font-size:14px;">${b.install}</div></div>
+    </div>
+    <div style="margin-top:12px; font-size:13px; color:var(--text-dim); font-family:var(--font-body);">
+      <strong style="color:var(--accent3);">Typical Applications:</strong> ${b.apps}
+    </div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Rolling Element Calculator
+// ─────────────────────────────────────────────────────────────────
+function calcRolling() {
+  const type = document.getElementById('rb-type').value;
+  const Fd = parseFloat(document.getElementById('rb-fd').value);
+  const Fa = parseFloat(document.getElementById('rb-fa').value);
+  const nd = parseFloat(document.getElementById('rb-nd').value);
+  const Ld_h = parseFloat(document.getElementById('rb-ld').value);
+  const Lr_mrev = parseFloat(document.getElementById('rb-lr').value);
+  const X = parseFloat(document.getElementById('rb-x').value);
+  const Y = parseFloat(document.getElementById('rb-y').value);
+  const V = parseFloat(document.getElementById('rb-v').value);
+  const S = parseFloat(document.getElementById('rb-s').value);
+  const C = parseFloat(document.getElementById('rb-c').value);
+
+  const a = type === 'ball' ? 3 : 10/3;
+  const Lr_rev = Lr_mrev * 1e6;
+  const Ld_rev = Ld_h * 60 * nd;
+  const xD = Ld_rev / Lr_rev;
+
+  // Equivalent dynamic load
+  const Pe = S * (X * V * Fd + Y * Fa);
+
+  // Required catalog rating
+  const C10 = Pe * Math.pow(xD, 1/a);
+
+  // Actual bearing life (in millions of revolutions) given catalog C
+  const L90_mrev = Math.pow(C / Pe, a);
+  const L90_h = (L90_mrev * 1e6) / (60 * nd);
+
+  // Sommerfeld-style loading ratio
+  const loadRatio = C / Pe;
+
+  document.getElementById('rollingResults').classList.remove('hidden');
+  document.getElementById('rollingResultGrid').innerHTML = `
+    <div class="result-item highlight">
+      <div class="r-label">Required C₁₀</div>
+      <div class="r-value">${C10.toFixed(1)}</div>
+      <div class="r-unit">kN — catalog rating to select</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Equiv. Load Pₑ</div>
+      <div class="r-value">${Pe.toFixed(2)}</div>
+      <div class="r-unit">kN</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Life Ratio x_D</div>
+      <div class="r-value">${xD.toFixed(1)}</div>
+      <div class="r-unit">L_D / L_R</div>
+    </div>
+    <div class="result-item ${L90_h >= Ld_h ? 'good' : 'warn'}">
+      <div class="r-label">L₉₀ (catalog C)</div>
+      <div class="r-value">${L90_h.toFixed(0)}</div>
+      <div class="r-unit">hours at ${nd} rpm</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">L₉₀ in Mrev</div>
+      <div class="r-value">${L90_mrev.toFixed(2)}</div>
+      <div class="r-unit">× 10⁶ revolutions</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Loading Ratio C/Pₑ</div>
+      <div class="r-value">${loadRatio.toFixed(2)}</div>
+      <div class="r-unit">higher = more margin</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Exponent a</div>
+      <div class="r-value">${a.toFixed(2)}</div>
+      <div class="r-unit">${type === 'ball' ? 'ball bearing' : 'roller bearing'}</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Design Life L_D</div>
+      <div class="r-value">${Ld_h.toLocaleString()}</div>
+      <div class="r-unit">hours required</div>
+    </div>
+  `;
+
+  const ok = L90_h >= Ld_h;
+  document.getElementById('rollingVerdict').innerHTML = `
+    <div class="verdict-box ${ok ? '' : 'bad'}">
+      ${ok
+        ? `✅ Bearing with catalog C = ${C} kN provides <strong>L₉₀ = ${L90_h.toFixed(0)} h</strong>, which exceeds the required ${Ld_h.toLocaleString()} h life. Select a bearing with C₁₀ ≥ ${C10.toFixed(1)} kN.`
+        : `⚠️ Catalog bearing C = ${C} kN gives only <strong>L₉₀ = ${L90_h.toFixed(0)} h</strong>, which is below the required ${Ld_h.toLocaleString()} h. Select a bearing with C₁₀ ≥ <strong>${C10.toFixed(1)} kN</strong>.`
+      }
+    </div>
+  `;
+
+  // Weibull table
+  const x0 = 0.02, theta_x0 = 4.439, b_w = 1.483;
+  const reliabilities = [0.99, 0.98, 0.95, 0.92, 0.90, 0.85, 0.80, 0.70, 0.60, 0.50];
+  let rows = '';
+  reliabilities.forEach(R => {
+    const x = x0 + theta_x0 * Math.pow(Math.log(1/R), 1/b_w);
+    const life_mrev = x * Lr_mrev;
+    const aR = x; // dimensionless adjustment factor relative to L10
+    rows += `<tr>
+      <td style="color:${R>=0.9?'var(--green)':R>=0.7?'var(--accent2)':'var(--text-dim)'};">${(R*100).toFixed(0)}%</td>
+      <td>${x.toFixed(3)}</td>
+      <td>${life_mrev.toFixed(3)} M rev</td>
+      <td style="color:var(--accent3);">${aR.toFixed(3)}</td>
+    </tr>`;
+  });
+  document.getElementById('weibullBody').innerHTML = rows;
+}
+
+function resetRolling() {
+  document.getElementById('rollingResults').classList.add('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Journal Bearing Calculator
+// ─────────────────────────────────────────────────────────────────
+function calcJournal() {
+  const r_mm = parseFloat(document.getElementById('jb-r').value);
+  const c_mm = parseFloat(document.getElementById('jb-c').value);
+  const l_mm = parseFloat(document.getElementById('jb-l').value);
+  const W = parseFloat(document.getElementById('jb-w').value);
+  const Wst = parseFloat(document.getElementById('jb-wst').value);
+  const N = parseFloat(document.getElementById('jb-n').value);
+  const mu_mPas = parseFloat(document.getElementById('jb-mu').value);
+  const T1 = parseFloat(document.getElementById('jb-t1').value);
+
+  // Conversions to SI
+  const r = r_mm / 1000;
+  const c = c_mm / 1000;
+  const l = l_mm / 1000;
+  const d = 2 * r_mm; // diameter mm
+  const mu = mu_mPas / 1000; // Pa·s
+
+  // Projected bearing area pressure
+  const P = W / (2 * r * l); // Pa
+  const P_kPa = P / 1000;
+
+  // r/c ratio
+  const rc = r / c;
+
+  // μN/P (bearing characteristic number component)
+  const muNP = (mu * N) / P;
+
+  // Stability check: μN/P ≥ 1.7×10⁻⁶
+  const stable = muNP >= 1.7e-6;
+
+  // Sommerfeld number
+  const S = rc * rc * muNP;
+
+  // Petroff coefficient of friction
+  const f = 2 * Math.PI * Math.PI * muNP * rc;
+
+  // Friction torque
+  const T = f * W * r;
+
+  // Power loss
+  const P_loss = 2 * Math.PI * N * T;
+
+  // Temperature rise (simplified Petroff)
+  // ΔT ≈ f·P / (ρ·Cp·Q_flow) — approximate via heat balance
+  // Simple estimate: ΔT ≈ 8.3×f×P_kPa (empirical for oil)
+  const deltaT_approx = 8.3 * f * P_kPa / 100;
+  const T_avg = T1 + deltaT_approx / 2;
+  const T_max = T1 + deltaT_approx;
+
+  // Trumpler criteria
+  const h0_min_mm = 0.00508 + 0.00004 * d; // mm (d in mm)
+  // h0/c ratio from Sommerfeld (approximate for l/d=1):
+  // using simplified linear interpolation from chart data
+  let h0_c_ratio = 0;
+  if(S < 0.04) h0_c_ratio = S * 2;
+  else if(S < 0.1) h0_c_ratio = 0.08 + (S-0.04)*2.2;
+  else if(S < 0.3) h0_c_ratio = 0.21 + (S-0.1)*0.7;
+  else if(S < 1) h0_c_ratio = 0.35 + (S-0.3)*0.3;
+  else h0_c_ratio = Math.min(0.56 + (S-1)*0.1, 0.95);
+  const h0_mm = h0_c_ratio * c_mm;
+
+  // Starting load check
+  const Pst_kPa = (Wst / (2*r*l)) / 1000;
+
+  document.getElementById('journalResults').classList.remove('hidden');
+  document.getElementById('journalResultGrid').innerHTML = `
+    <div class="result-item highlight">
+      <div class="r-label">Sommerfeld No. S</div>
+      <div class="r-value">${S.toExponential(3)}</div>
+      <div class="r-unit">dimensionless</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">r/c ratio</div>
+      <div class="r-value">${rc.toFixed(0)}</div>
+      <div class="r-unit"></div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">μN/P</div>
+      <div class="r-value">${muNP.toExponential(3)}</div>
+      <div class="r-unit">bearing char. no.</div>
+    </div>
+    <div class="result-item ${stable ? 'good' : 'warn'}">
+      <div class="r-label">Stability (μN/P)</div>
+      <div class="r-value" style="font-size:14px;">${stable ? 'STABLE' : 'UNSTABLE'}</div>
+      <div class="r-unit">≥ 1.7×10⁻⁶ required</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Bearing Pressure P</div>
+      <div class="r-value">${P_kPa.toFixed(2)}</div>
+      <div class="r-unit">kPa</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Coeff. of Friction f</div>
+      <div class="r-value">${f.toFixed(4)}</div>
+      <div class="r-unit">Petroff's eq.</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Friction Torque T</div>
+      <div class="r-value">${(T*1000).toFixed(2)}</div>
+      <div class="r-unit">N·mm</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Power Loss</div>
+      <div class="r-value">${P_loss.toFixed(2)}</div>
+      <div class="r-unit">W</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Min. Film Thickness h₀</div>
+      <div class="r-value">${h0_mm.toFixed(4)}</div>
+      <div class="r-unit">mm (est. from S)</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">ΔT rise (est.)</div>
+      <div class="r-value">${deltaT_approx.toFixed(1)}</div>
+      <div class="r-unit">°C</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">T_avg lubricant</div>
+      <div class="r-value">${T_avg.toFixed(1)}</div>
+      <div class="r-unit">°C</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">h₀/c ratio</div>
+      <div class="r-value">${h0_c_ratio.toFixed(3)}</div>
+      <div class="r-unit">eccentricity ratio ε=${(1-h0_c_ratio).toFixed(3)}</div>
+    </div>
+  `;
+
+  // Trumpler criteria
+  const t1_ok = h0_mm >= h0_min_mm;
+  const t2_ok = T_max <= 121;
+  const t3_ok = Pst_kPa <= 2068;
+  const t4_ok = stable;
+
+  function pct(val, max) { return Math.min(100, (val/max)*100); }
+  function barClass(ok) { return ok ? 'bar-good' : 'bar-bad'; }
+
+  document.getElementById('trumplerChecks').innerHTML = `
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>Min. Film Thickness h₀ ≥ 0.00508 + 0.00004d mm</span>
+        <span style="color:${t1_ok?'var(--green)':'var(--red)'};">${h0_mm.toFixed(4)} mm ${t1_ok?'≥':'<'} ${h0_min_mm.toFixed(4)} mm required</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${barClass(t1_ok)}" style="width:${Math.min(100, (h0_mm/h0_min_mm)*50)}%;"></div></div>
+    </div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>Max Lubricant Temperature T ≤ 121°C</span>
+        <span style="color:${t2_ok?'var(--green)':'var(--red)'};">${T_max.toFixed(1)}°C ${t2_ok?'✓':'✗ EXCEEDS LIMIT'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${barClass(t2_ok)}" style="width:${pct(T_max,121)}%;"></div></div>
+    </div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>Starting Load W_st / ld ≤ 2068 kPa</span>
+        <span style="color:${t3_ok?'var(--green)':'var(--red)'};">${Pst_kPa.toFixed(1)} kPa ${t3_ok?'✓':'✗ TOO HIGH'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${barClass(t3_ok)}" style="width:${pct(Pst_kPa,2068)}%;"></div></div>
+    </div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>Stable Lubrication μN/P ≥ 1.7×10⁻⁶</span>
+        <span style="color:${t4_ok?'var(--green)':'var(--red)'};">${muNP.toExponential(2)} ${t4_ok?'✓ Stable thick film':'✗ Boundary / unstable'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${barClass(t4_ok)}" style="width:${t4_ok?80:20}%;"></div></div>
+    </div>
+  `;
+
+  const allOk = t1_ok && t2_ok && t3_ok && t4_ok;
+  const issues = [];
+  if(!t1_ok) issues.push('Film thickness too thin — increase clearance c or reduce load W');
+  if(!t2_ok) issues.push('Temperature too high — use higher viscosity oil or better cooling');
+  if(!t3_ok) issues.push('Starting load too high — increase projected area (2rl) or reduce load');
+  if(!t4_ok) issues.push('Unstable lubrication — increase speed N or viscosity μ to enter thick-film regime');
+
+  document.getElementById('journalVerdict').innerHTML = `
+    <div class="verdict-box ${allOk?'':'bad'}">
+      ${allOk
+        ? '✅ All Trumpler design criteria satisfied. Journal bearing design is acceptable.'
+        : '⚠️ Design criteria not fully met:<br>' + issues.map(i=>`• ${i}`).join('<br>')
+      }
+    </div>
+    <div class="verdict-box" style="margin-top:10px; border-color:var(--accent3); background:#e8f4fd;">
+      📐 Note: h₀ and eccentricity ratio are estimated from Sommerfeld correlations (l/d=1). 
+      For precise values, use Raimondi & Boyd charts with your S and l/d values.
+    </div>
+  `;
+}
+
+function resetJournal() {
+  document.getElementById('journalResults').classList.add('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Designation Builder
+// ─────────────────────────────────────────────────────────────────
+const boreMap = {
+  '00':'10','01':'12','02':'15','03':'17',
+  '04':'20','05':'25','06':'30','07':'35','08':'40','09':'45',
+  '10':'50','12':'60','14':'70','16':'80','18':'90','20':'100'
+};
+const typeNames = {
+  '6':'Deep groove ball','4':'Double row deep groove ball',
+  '7':'Angular contact ball','1':'Self-aligning ball',
+  '2':'Spherical roller','3':'Tapered roller','5':'Thrust ball',
+  'N':'Cylindrical roller','QJ':'Four-point contact ball',
+  'T':'Tapered roller (ISO 355)','C':'CARB toroidal','8':'Cylindrical roller thrust'
+};
+
+function updateDesig() {
+  const prefix = document.getElementById('d-prefix').value;
+  const type = document.getElementById('d-type').value;
+  const series = document.getElementById('d-series').value;
+  const bore = document.getElementById('d-bore').value;
+  const suffix = document.getElementById('d-suffix').value;
+
+  const desig = document.getElementById('desigDisplay');
+  let html = '';
+  if(prefix) html += `<span class="desig-seg seg-prefix">${prefix}</span>`;
+  html += `<span class="desig-seg seg-type">${type}</span>`;
+  html += `<span class="desig-seg seg-series">${series}</span>`;
+  html += `<span class="desig-seg seg-bore">${bore}</span>`;
+  if(suffix) html += `<span class="desig-seg seg-suffix">${suffix}</span>`;
+  desig.innerHTML = html;
+
+  // IS format
+  const boreD = boreMap[bore] || (parseInt(bore)*5)+'';
+  const isDisplay = document.getElementById('isDisplay');
+  isDisplay.innerHTML = `
+    <span class="desig-seg seg-prefix">IS</span>
+    <span style="color:var(--text-dim); font-family:var(--font-mono);">–</span>
+    <span class="desig-seg seg-bore">${boreD} mm</span>
+    <span style="color:var(--text-dim); font-family:var(--font-mono);">–</span>
+    <span class="desig-seg seg-type">${type}</span>
+    <span style="color:var(--text-dim); font-family:var(--font-mono);">–</span>
+    <span class="desig-seg seg-series">0${series}</span>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Designation Decoder
+// ─────────────────────────────────────────────────────────────────
+function decodeDesig() {
+  let inp = document.getElementById('d-decode-input').value.trim().toUpperCase();
+  const res = document.getElementById('decodeResult');
+  if(!inp) { res.innerHTML = 'Enter a designation above.'; return; }
+
+  // Strip common prefixes
+  let prefix = '';
+  if(inp.startsWith('SKF')) { prefix = 'SKF'; inp = inp.slice(3); }
+
+  // Extract suffix
+  let suffix = '';
+  const suffixMatch = inp.match(/-(.+)$/);
+  if(suffixMatch) { suffix = '-' + suffixMatch[1]; inp = inp.replace(/-.*$/, ''); }
+
+  // Type code
+  let typeCode = '';
+  const multiLetter = ['QJ','NU','NJ','NUP','NN','NNC','NNCF','HK','NA','WS','GS','AXK','AY'];
+  for(const ml of multiLetter) {
+    if(inp.startsWith(ml)) { typeCode = ml; inp = inp.slice(ml.length); break; }
+  }
+  if(!typeCode && inp.length > 0 && isNaN(inp[0])) {
+    typeCode = inp[0]; inp = inp.slice(1);
+  }
+
+  // Series (1 digit) + bore (2 digits)
+  let seriesCode = '', boreCode = '';
+  if(inp.length >= 3) {
+    seriesCode = inp[0];
+    boreCode = inp.slice(1, 3);
+  } else if(inp.length === 2) {
+    boreCode = inp;
+  }
+
+  const boreMM = boreCode && boreMap[boreCode] ? boreMap[boreCode]+'mm'
+    : boreCode ? (parseInt(boreCode)*5)+'mm' : '?';
+  const typeName = typeNames[typeCode] || typeCode;
+
+  res.innerHTML = `
+    <span style="color:var(--text-dim);">Prefix: </span><span style="color:var(--accent3);">${prefix||'—'}</span><br>
+    <span style="color:var(--text-dim);">Type code: </span><span style="color:var(--accent);">${typeCode||'?'}</span>
+    <span style="color:var(--text-dim); margin-left:8px; font-size:11px;">${typeName}</span><br>
+    <span style="color:var(--text-dim);">Diameter series: </span><span style="color:var(--accent2);">${seriesCode||'?'}</span><br>
+    <span style="color:var(--text-dim);">Bore code: </span><span style="color:var(--green);">${boreCode||'?'}</span>
+    <span style="color:var(--text-dim); margin-left:8px; font-size:11px;">≡ d = ${boreMM}</span><br>
+    <span style="color:var(--text-dim);">Suffix: </span><span style="color:#4a3d8f;">${suffix||'—'}</span>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────────
+renderBearings();
+updateDesig();
+</script>
+</body>
+</html>

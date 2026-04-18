@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GD&T Reference — ASME Y14.5-2018</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<style>
+/* ── RIECO Internal Tool Design Language ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Top Navbar ── */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #222;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  z-index: 1000;
+}
+
+.navbar-left {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.navbar-right button {
+  background: #444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.navbar-right button:hover {
+  background-color: #666;
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  min-height: calc(100vh - 48px);
+  margin-top: 48px;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 210px; min-width: 210px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 12px 0;
+  position: sticky;
+  top: 48px;
+  height: calc(100vh - 48px);
+  overflow-y: auto;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.06);
+}
+.sidebar-section {
+  padding: 10px 16px 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #888;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-top: 8px;
+  border-top: 1px solid #eee;
+}
+.sidebar-section:first-child { border-top: none; margin-top: 0; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer; color: #555; font-size: 13px;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { background: #f0f0f0; color: #222; }
+.nav-item.active { background: #fff0f0; color: #cc0000; border-left-color: #cc0000; font-weight: 600; }
+.nav-sym { font-size: 15px; width: 20px; text-align: center; }
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  padding: 24px 28px;
+  max-width: 1200px;
+}
+
+/* ── Search ── */
+.search-wrap { margin-bottom: 20px; }
+.search-box { position: relative; }
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: #aaa; font-size: 14px;
+}
+.search-input {
+  width: 100%;
+  background: #fff; border: 1px solid #ccc; color: #333;
+  padding: 9px 14px 9px 36px;
+  border-radius: 4px;
+  font-family: 'Segoe UI', sans-serif; font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.search-input:focus { border-color: #cc0000; }
+
+/* ── Category tabs (styled like tab-bar) ── */
+.cat-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-bottom: 18px; border-bottom: 2px solid #ccc;
+}
+.cat-tab {
+  padding: 7px 16px; border-radius: 6px 6px 0 0;
+  font-size: 13px; cursor: pointer;
+  border: 1px solid #ccc; border-bottom: none;
+  color: #444; background: #eeeeee;
+  transition: background 0.2s;
+  font-family: 'Segoe UI', sans-serif;
+}
+.cat-tab:hover { background: #dddddd; }
+.cat-tab.active {
+  background: #ffffff; color: #cc0000; font-weight: bold;
+  border-bottom: 2px solid #fff; margin-bottom: -2px;
+}
+
+/* ── Cards ── */
+.cards-grid { display: grid; gap: 12px; }
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-color: #bbb; }
+.card.expanded { border-color: #cc0000; box-shadow: 0 2px 8px rgba(204,0,0,0.1); }
+
+.card-header {
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+}
+.card-sym {
+  font-size: 26px; width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  background: #f9f9f9; border-radius: 6px;
+  border: 1px solid #ddd; flex-shrink: 0;
+  font-family: 'Segoe UI', sans-serif; color: #222;
+}
+.card-info { flex: 1; min-width: 0; }
+.card-name { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 2px; }
+.card-short { font-size: 12px; color: #888; }
+.card-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px;
+  font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid #ccc;
+  font-family: 'Segoe UI', sans-serif;
+}
+.badge-form     { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+.badge-orient   { background: #eaf0fb; color: #1a4a8a; border-color: #b0c8ec; }
+.badge-location { background: #f3eafc; color: #5a1a8a; border-color: #d0b0ec; }
+.badge-profile  { background: #fff4e6; color: #8a4400; border-color: #f0c888; }
+.badge-runout   { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+.badge-datum    { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+.badge-modifier { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+
+.card-expand-icon {
+  color: #aaa; font-size: 18px;
+  transition: transform 0.25s; flex-shrink: 0;
+}
+.card.expanded .card-expand-icon { transform: rotate(180deg); }
+
+.card-body {
+  display: none; padding: 0 16px 16px;
+  border-top: 1px solid #eee;
+  animation: fadeIn 0.2s ease;
+}
+.card.expanded .card-body { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.card-body-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px;
+}
+@media (max-width: 600px) { .card-body-grid { grid-template-columns: 1fr; } }
+
+.detail-label {
+  font-size: 10px; color: #999; letter-spacing: 0.8px;
+  text-transform: uppercase; margin-bottom: 4px; font-weight: 600;
+}
+.detail-text { font-size: 13px; color: #444; line-height: 1.65; }
+.detail-block.full { grid-column: 1 / -1; }
+
+.rule-box {
+  background: #f9f9f9; border-left: 4px solid #aaa;
+  padding: 10px 14px; border-radius: 0 4px 4px 0;
+  font-size: 12.5px; color: #444; margin-top: 10px; line-height: 1.6;
+}
+.rule-box + .rule-box { margin-top: 6px; }
+
+.note-box {
+  background: #f9f9f9; border-left: 4px solid #aaa;
+  padding: 10px 14px; border-radius: 0 4px 4px 0;
+  font-size: 12.5px; color: #444; margin-top: 10px; line-height: 1.6;
+}
+
+.warn-box {
+  background: #fff8f2; border-left: 4px solid #b85c00;
+  padding: 10px 14px; border-radius: 0 4px 4px 0;
+  font-size: 12.5px; color: #333; margin-top: 10px; line-height: 1.6;
+}
+.warn-box strong { color: #b85c00; }
+
+.zone-vis {
+  margin-top: 12px; background: #fafafa;
+  border: 1px solid #ddd; border-radius: 4px; padding: 12px; text-align: center;
+}
+.zone-vis svg { max-width: 100%; }
+.zone-caption { font-size: 11px; color: #999; margin-top: 5px; }
+
+.tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.tag {
+  font-size: 11px; padding: 2px 8px;
+  background: #f0f0f0; border: 1px solid #ddd; border-radius: 3px; color: #666;
+}
+
+/* ── Page titles ── */
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 20px; font-weight: bold; margin-bottom: 4px; color: #222; }
+.page-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+/* ── Rules page ── */
+.rule-item {
+  background: #fff; border: 1px solid #ddd; border-radius: 6px;
+  padding: 14px 16px; margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.rule-num { font-size: 11px; color: #cc0000; margin-bottom: 5px; font-weight: 600; letter-spacing: 0.3px; }
+.rule-title { font-size: 14px; font-weight: 600; margin-bottom: 7px; color: #222; }
+.rule-body { font-size: 13px; color: #555; line-height: 1.65; }
+
+/* ── Tables (shared) ── */
+.mod-table, .it-table, .fits-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  background: #fff; box-shadow: 0 0 8px rgba(0,0,0,0.08);
+  border-radius: 8px; overflow: hidden;
+}
+.mod-table th, .it-table th, .fits-table th {
+  background: #f2f2f2; padding: 9px 12px; text-align: left;
+  font-weight: bold; border-bottom: 1px solid #ccc;
+  color: #cc0000; font-size: 12px; letter-spacing: 0.3px;
+}
+.mod-table td, .it-table td, .fits-table td {
+  padding: 8px 12px; border: 1px solid #ccc; vertical-align: top; color: #333;
+}
+.mod-table tr:nth-child(even) td,
+.it-table tr:nth-child(even) td,
+.fits-table tr:nth-child(even) td { background: #fafafa; }
+.mod-table tr:hover td,
+.it-table tr:hover td,
+.fits-table tr:hover td { background: #fff5f5; }
+.mod-sym-cell { font-size: 18px; text-align: center; color: #cc0000; font-weight: bold; }
+.it-table td:first-child { font-weight: bold; color: #cc0000; }
+.it-table td:nth-child(2) { font-family: 'Courier New', monospace; font-size: 12px; color: #1a4a8a; }
+.fits-table td:first-child { font-weight: bold; color: #1a4a8a; }
+.fits-table td:nth-child(2) { font-size: 12px; color: #888; font-family: 'Courier New', monospace; }
+
+/* ── Fit type colouring ── */
+.fit-cl { color: #2d6a2d !important; font-weight: 600; }
+.fit-tr { color: #7a6000 !important; font-weight: 600; }
+.fit-in { color: #9b2c2c !important; font-weight: 600; }
+.fit-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: bold; border: 1px solid; }
+.fit-badge-cl { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+.fit-badge-tr { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+.fit-badge-in { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+
+/* ── Fit filter tabs ── */
+.fit-filter-tabs {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin-bottom: 16px; border-bottom: 2px solid #ccc;
+}
+.fit-tab {
+  padding: 6px 16px; border-radius: 6px 6px 0 0;
+  font-size: 13px; cursor: pointer;
+  border: 1px solid #ccc; border-bottom: none;
+  color: #444; background: #eeeeee; transition: background 0.2s;
+}
+.fit-tab:hover { background: #dddddd; }
+.fit-tab.active-all { background: #ffffff; color: #cc0000; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+.fit-tab.active-cl  { background: #ffffff; color: #2d6a2d; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+.fit-tab.active-tr  { background: #ffffff; color: #7a6000; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+.fit-tab.active-in  { background: #ffffff; color: #9b2c2c; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+/* ── Zone grid ── */
+.zone-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+  gap: 12px; margin-top: 0;
+}
+.zone-card {
+  background: #fff; border: 1px solid #ddd; border-radius: 8px;
+  padding: 14px; text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.zone-card-name { font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #222; }
+.zone-card svg { max-width: 100%; }
+
+/* ── FCF Builder ── */
+.fcf-builder {
+  background: #fff; border: 1px solid #ddd; border-radius: 8px;
+  padding: 20px; margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.fcf-display {
+  background: #fafafa; border: 1px solid #ccc; border-radius: 4px;
+  padding: 10px 16px; display: flex; align-items: center; gap: 0;
+  margin-bottom: 16px; font-size: 20px; min-height: 52px;
+  justify-content: center; flex-wrap: wrap;
+}
+.fcf-cell {
+  border: 2px solid #222; padding: 4px 12px; min-width: 36px;
+  text-align: center; color: #111;
+  font-family: 'Courier New', monospace; font-size: 18px;
+  min-height: 40px; display: flex; align-items: center; justify-content: center;
+}
+.fcf-cell + .fcf-cell { border-left: none; }
+.fcf-cell.sym-cell { font-size: 22px; }
+
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+.form-label { font-size: 11px; color: #888; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 600; }
+.form-select, .form-input {
+  background: #fff; border: 1px solid #ccc; color: #333;
+  padding: 6px 10px; border-radius: 4px;
+  font-family: 'Segoe UI', sans-serif; font-size: 13px; outline: none;
+}
+.form-select:focus, .form-input:focus { border-color: #cc0000; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f4f4f4; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+/* ── No results ── */
+.no-results { text-align: center; padding: 50px 20px; color: #aaa; font-size: 14px; }
+
+/* ── Limits & Fits ── */
+.lf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+@media(max-width:640px){ .lf-grid{ grid-template-columns:1fr; } }
+.lf-card {
+  background: #fff; border: 1px solid #ddd; border-radius: 8px;
+  padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.lf-card-title { font-size: 13px; font-weight: 700; color: #cc0000; margin-bottom: 8px; }
+.lf-card-body { font-size: 13px; color: #444; line-height: 1.65; }
+.lf-card.full { grid-column: 1/-1; }
+.lf-formula {
+  font-family: 'Courier New', monospace;
+  background: #f0f4ff; border: 1px solid #c0cce8; border-radius: 3px;
+  padding: 6px 12px; font-size: 13px; color: #1a4a8a;
+  margin: 8px 0; display: inline-block;
+}
+
+/* ── Calculator ── */
+.calc-box {
+  background: #fff; border: 1px solid #ddd; border-radius: 8px;
+  padding: 20px; margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.calc-result {
+  background: #fafafa; border: 1px solid #ddd; border-radius: 8px;
+  padding: 16px 18px; margin-top: 16px;
+}
+.calc-result-title {
+  font-size: 11px; color: #999; letter-spacing: 0.8px;
+  text-transform: uppercase; margin-bottom: 12px; font-weight: 700;
+}
+.calc-rows { display: grid; grid-template-columns: repeat(auto-fill,minmax(170px,1fr)); gap: 10px; }
+.calc-cell {
+  background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 9px 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.calc-cell-label { font-size: 10px; color: #999; letter-spacing: 0.5px; margin-bottom: 3px; font-weight: 600; }
+.calc-cell-value { font-size: 14px; font-family: 'Courier New', monospace; font-weight: bold; color: #222; }
+.calc-cell.highlight { border-color: #cc0000; border-left: 3px solid #cc0000; }
+.calc-cell.highlight .calc-cell-value { color: #cc0000; }
+.calc-steps {
+  margin-top: 14px; font-size: 12.5px; color: #555; line-height: 1.9;
+  font-family: 'Courier New', monospace;
+  background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; padding: 12px 14px;
+}
+.calc-fit-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 3px;
+  font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid;
+}
+
+/* ── Glossary ── */
+.def-item {
+  background: #fff; border: 1px solid #ddd; border-radius: 6px;
+  padding: 12px 14px; margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.def-term { font-size: 13px; font-weight: bold; color: #cc0000; margin-bottom: 4px; }
+.def-text { font-size: 13px; color: #444; line-height: 1.65; }
+.def-ref { font-size: 11px; color: #999; margin-top: 4px; font-family: 'Courier New', monospace; }
+</style>
+</head>
+<body>
+
+  <nav class="top-navbar">
+        <div class="navbar-left">ASME Y14.5-2018 · ISO 286 / IS</div>
+        <div class="navbar-right">
+        <button onclick='location.href = "GDT.html"'>my Notes</button>    
+        <button onclick='location.href = "../secret.html"'>Home</button>
+        </div>
+  </nav>
+<!-- <div class="topbar">
+  <div class="topbar-logo">GD&amp;T + L&amp;F NOTES</div>
+  <div class="topbar-sub">ASME Y14.5-2018 · ISO 286 / IS</div>
+  <div class="topbar-sep"></div>
+  <div class="std-badge">Y14.5 · 2018 · R2024</div>
+  <div class="std-badge"><button onclick='location.href = "GDT.html"'>my Notes</button></div>
+  <div class="navbar-right">
+        
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</div> -->
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-section">Reference</div>
+    <div class="nav-item active" onclick="showPage('symbols')">
+      <span class="nav-sym">⊕</span> Symbols
+    </div>
+    <div class="nav-item" onclick="showPage('modifiers')">
+      <span class="nav-sym">Ⓜ</span> Modifiers
+    </div>
+    <div class="nav-item" onclick="showPage('rules')">
+      <span class="nav-sym">§</span> Fundamental Rules
+    </div>
+    <div class="nav-item" onclick="showPage('zones')">
+      <span class="nav-sym">◻</span> Tolerance Zones
+    </div>
+    <div class="nav-item" onclick="showPage('fcf')">
+      <span class="nav-sym">┤</span> FCF Builder
+    </div>
+    <div class="sidebar-section">Concepts</div>
+    <div class="nav-item" onclick="showPage('datums')">
+      <span class="nav-sym">▲</span> Datums
+    </div>
+    <div class="nav-item" onclick="showPage('glossary')">
+      <span class="nav-sym">≡</span> Glossary
+    </div>
+    <div class="sidebar-section">Limits &amp; Fits</div>
+    <div class="nav-item" onclick="showPage('lf-concepts')">
+      <span class="nav-sym">⇔</span> Concepts
+    </div>
+    <div class="nav-item" onclick="showPage('lf-grades')">
+      <span class="nav-sym">IT</span> IT Grades
+    </div>
+    <div class="nav-item" onclick="showPage('lf-fits')">
+      <span class="nav-sym">⊞</span> Preferred Fits
+    </div>
+    <div class="nav-item" onclick="showPage('lf-calc')">
+      <span class="nav-sym">∑</span> Calculator
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- SYMBOLS PAGE -->
+    <div class="page active" id="page-symbols">
+      <div class="page-title">GD&amp;T Characteristics</div>
+      <div class="page-sub">ASME Y14.5-2018 § 6 — Geometric characteristic symbols and their requirements</div>
+
+      <div class="search-wrap">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="sym-search" type="text" placeholder="Search symbols, characteristics, or keywords…" oninput="filterSymbols()">
+        </div>
+      </div>
+
+      <div class="cat-tabs">
+        <div class="cat-tab active" onclick="filterCat('all',this)">All</div>
+        <div class="cat-tab" onclick="filterCat('form',this)">Form</div>
+        <div class="cat-tab" onclick="filterCat('orientation',this)">Orientation</div>
+        <div class="cat-tab" onclick="filterCat('location',this)">Location</div>
+        <div class="cat-tab" onclick="filterCat('profile',this)">Profile</div>
+        <div class="cat-tab" onclick="filterCat('runout',this)">Runout</div>
+      </div>
+
+      <div class="cards-grid" id="sym-cards"></div>
+      <div class="no-results" id="no-results" style="display:none">No symbols match your search.</div>
+    </div>
+
+    <!-- MODIFIERS PAGE -->
+    <div class="page" id="page-modifiers">
+      <div class="page-title">Modifiers &amp; Supplemental Symbols</div>
+      <div class="page-sub">ASME Y14.5-2018 § 5 &amp; § 6 — Material condition, boundary, and other modifiers</div>
+      <table class="mod-table">
+        <thead>
+          <tr><th>Symbol</th><th>Name / Abbreviation</th><th>Description &amp; Reference</th></tr>
+        </thead>
+        <tbody id="mod-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- RULES PAGE -->
+    <div class="page" id="page-rules">
+      <div class="page-title">Fundamental Rules &amp; Defaults</div>
+      <div class="page-sub">ASME Y14.5-2018 § 4 &amp; § 5 — Rules governing GD&amp;T interpretation</div>
+      <div id="rules-list"></div>
+    </div>
+
+    <!-- ZONES PAGE -->
+    <div class="page" id="page-zones">
+      <div class="page-title">Tolerance Zone Types</div>
+      <div class="page-sub">ASME Y14.5-2018 — Visual summary of tolerance zone geometries</div>
+      <div class="zone-grid" id="zone-grid"></div>
+    </div>
+
+    <!-- FCF BUILDER PAGE -->
+    <div class="page" id="page-fcf">
+      <div class="page-title">Feature Control Frame Builder</div>
+      <div class="page-sub">ASME Y14.5-2018 § 6.4 — Construct and preview a feature control frame</div>
+      <div class="fcf-builder">
+        <div class="fcf-display" id="fcf-display">
+          <span style="color:#999;font-size:14px;font-family:'Segoe UI',sans-serif;">Configure below to preview FCF</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Geometric Characteristic</label>
+            <select class="form-select" id="fcf-char" onchange="buildFCF()">
+              <option value="">— Select —</option>
+              <optgroup label="Form">
+                <option value="⏤|Straightness">⏤ Straightness</option>
+                <option value="⏥|Flatness">⏥ Flatness</option>
+                <option value="○|Circularity">○ Circularity</option>
+                <option value="⌭|Cylindricity">⌭ Cylindricity</option>
+              </optgroup>
+              <optgroup label="Profile">
+                <option value="⌒|Profile of a Line">⌒ Profile of a Line</option>
+                <option value="⌓|Profile of a Surface">⌓ Profile of a Surface</option>
+              </optgroup>
+              <optgroup label="Orientation">
+                <option value="∠|Angularity">∠ Angularity</option>
+                <option value="⟂|Perpendicularity">⟂ Perpendicularity</option>
+                <option value="∥|Parallelism">∥ Parallelism</option>
+              </optgroup>
+              <optgroup label="Location">
+                <option value="⊕|Position">⊕ Position</option>
+                <option value="◎|Concentricity*">◎ Concentricity (deprecated)</option>
+              </optgroup>
+              <optgroup label="Runout">
+                <option value="↗|Circular Runout">↗ Circular Runout</option>
+                <option value="⇗|Total Runout">⇗ Total Runout</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tolerance Value</label>
+            <input class="form-input" id="fcf-tol" type="text" placeholder="e.g. 0.05" oninput="buildFCF()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Diameter Zone (⌀)</label>
+            <select class="form-select" id="fcf-dia" onchange="buildFCF()">
+              <option value="no">No</option>
+              <option value="yes">Yes (⌀)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Modifier</label>
+            <select class="form-select" id="fcf-mod" onchange="buildFCF()">
+              <option value="">None (RFS)</option>
+              <option value="Ⓜ">Ⓜ MMC</option>
+              <option value="Ⓛ">Ⓛ LMC</option>
+              <option value="Ⓢ">Ⓢ RFS (explicit)</option>
+              <option value="Ⓟ">Ⓟ Projected</option>
+              <option value="Ⓣ">Ⓣ Tangent Plane</option>
+              <option value="Ⓕ">Ⓕ Free State</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primary Datum</label>
+            <input class="form-input" id="fcf-da" type="text" maxlength="2" placeholder="A" oninput="buildFCF()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Primary Modifier</label>
+            <select class="form-select" id="fcf-da-mod" onchange="buildFCF()">
+              <option value="">None (RMB)</option>
+              <option value="Ⓜ">Ⓜ MMB</option>
+              <option value="Ⓛ">Ⓛ LMB</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Secondary Datum</label>
+            <input class="form-input" id="fcf-db" type="text" maxlength="2" placeholder="B" oninput="buildFCF()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Secondary Modifier</label>
+            <select class="form-select" id="fcf-db-mod" onchange="buildFCF()">
+              <option value="">None (RMB)</option>
+              <option value="Ⓜ">Ⓜ MMB</option>
+              <option value="Ⓛ">Ⓛ LMB</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tertiary Datum</label>
+            <input class="form-input" id="fcf-dc" type="text" maxlength="2" placeholder="C" oninput="buildFCF()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tertiary Modifier</label>
+            <select class="form-select" id="fcf-dc-mod" onchange="buildFCF()">
+              <option value="">None (RMB)</option>
+              <option value="Ⓜ">Ⓜ MMB</option>
+              <option value="Ⓛ">Ⓛ LMB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="rule-box">
+        <strong>Reading a FCF (§6.4):</strong> The feature control frame contains, in order: (1) geometric characteristic symbol, (2) total tolerance value — preceded by ⌀ if cylindrical zone, (3) modifier (MMC/LMC if applicable), (4) primary datum reference with modifier, (5) secondary datum, (6) tertiary datum. Form tolerances (straightness, flatness, circularity, cylindricity) require no datum reference.
+      </div>
+    </div>
+
+    <!-- DATUMS PAGE -->
+    <div class="page" id="page-datums">
+      <div class="page-title">Datum System</div>
+      <div class="page-sub">ASME Y14.5-2018 § 7 — Datum reference frames, datum features, and order of precedence</div>
+      <div id="datums-content"></div>
+    </div>
+
+    <!-- GLOSSARY PAGE -->
+    <div class="page" id="page-glossary">
+      <div class="page-title">Key Definitions</div>
+      <div class="page-sub">ASME Y14.5-2018 § 3 — Selected definitions from the standard</div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="gloss-search" type="text" placeholder="Search definitions…" oninput="filterGloss()">
+        </div>
+      </div>
+      <div id="gloss-list"></div>
+    </div>
+
+
+    <!-- LF CONCEPTS PAGE -->
+    <div class="page" id="page-lf-concepts">
+      <div class="page-title">Limits &amp; Fits — Concepts</div>
+      <div class="page-sub">ISO / IS (Indian Standard) System — Fundamental definitions from IIT Bombay ME 423 notes</div>
+
+      <div class="lf-grid">
+        <div class="lf-card">
+          <div class="lf-card-title">Zero Line &amp; Basic Size</div>
+          <div class="lf-card-body"><strong>Zero Line:</strong> Represents the basic size — the reference line from which upper and lower deviations are measured. Above = positive deviation; below = negative deviation.<br><br><strong>Basic Size (D):</strong> The theoretically exact size used as the origin for limits of size. Both hole and shaft limits are defined relative to this value.</div>
+        </div>
+        <div class="lf-card">
+          <div class="lf-card-title">Deviations — ES, EI, es, ei</div>
+          <div class="lf-card-body">
+            <strong>ES</strong> (Upper Deviation, Hole): Algebraic difference between max hole size and basic size.<br>
+            <strong>EI</strong> (Lower Deviation, Hole): Algebraic difference between min hole size and basic size.<br>
+            <strong>es</strong> (Upper Deviation, Shaft): Algebraic difference between max shaft size and basic size.<br>
+            <strong>ei</strong> (Lower Deviation, Shaft): Algebraic difference between min shaft size and basic size.<br><br>
+            <span class="lf-formula">Tolerance = ES − EI (hole) &nbsp;|&nbsp; es − ei (shaft)</span>
+          </div>
+        </div>
+        <div class="lf-card">
+          <div class="lf-card-title">Fundamental Deviation (FD)</div>
+          <div class="lf-card-body">One of the two deviations chosen to define the <em>position</em> of the tolerance zone relative to the zero line. It is either the upper or lower deviation — whichever is closer to the zero line.<br><br>
+          <strong>Holes (uppercase):</strong> A–G (EI +ve above zero), H (EI=0), JS (bilateral), J–ZC (ES −ve below zero).<br>
+          <strong>Shafts (lowercase):</strong> a–g (es −ve below zero), h (es=0), js (bilateral), k–zc (ei +ve above zero).</div>
+        </div>
+        <div class="lf-card">
+          <div class="lf-card-title">Types of Fit</div>
+          <div class="lf-card-body">
+            <strong style="color:#2d6a2d">Clearance Fit:</strong> Hole always larger than shaft. Always positive clearance (gap).<br>
+            <em>Max Clearance = D<sub>max,hole</sub> − d<sub>min,shaft</sub></em><br>
+            <em>Min Clearance = D<sub>min,hole</sub> − d<sub>max,shaft</sub></em><br><br>
+            <strong style="color:#7a6000">Transition Fit:</strong> May result in either small clearance or small interference.<br><br>
+            <strong style="color:#9b2c2c">Interference Fit:</strong> Shaft always larger than hole. Always negative clearance (force/press fit).<br>
+            <em>Max Interference = d<sub>max,shaft</sub> − D<sub>min,hole</sub></em>
+          </div>
+        </div>
+        <div class="lf-card">
+          <div class="lf-card-title">Systems of Fit</div>
+          <div class="lf-card-body">
+            <strong>Hole Basis System (preferred):</strong> The hole is kept constant (H — zero lower deviation). Different shafts are used to achieve the required fit. Economical — one standard reamer for hole; shaft adjusted.<br><br>
+            <strong>Shaft Basis System:</strong> The shaft is kept constant (h — zero upper deviation). Different holes are used. Used when a single shaft runs through multiple features of different fits.
+          </div>
+        </div>
+        <div class="lf-card">
+          <div class="lf-card-title">Accuracy vs. Precision</div>
+          <div class="lf-card-body"><strong>Precision:</strong> Repeatability of measurements — how closely repeated measurements agree with each other.<br><br><strong>Accuracy:</strong> How close a result is to the true value.<br><br>
+          <span class="lf-formula">Accuracy² = Systematic Error² + Repeatability²</span><br>
+          where: Systematic error = True value − Mean of readings</div>
+        </div>
+        <div class="lf-card full">
+          <div class="lf-card-title">Limits of Size — Calculation Steps</div>
+          <div class="lf-card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:8px;">
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 1</div>
+              Select fit type based on functional requirement (clearance / transition / interference)
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 2</div>
+              Select hole and shaft designations (e.g. H7 hole, g6 shaft for clearance)
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 3</div>
+              Find diameter step for basic size D. Compute D = √(a×b) geometric mean of step limits
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 4</div>
+              Compute standard tolerance unit: <span style="font-family:'Courier New',monospace;color:#1a4a8a">i = 0.45·D^(1/3) + 0.001·D</span> (µm, D in mm)
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 5</div>
+              Compute IT grade tolerance: e.g. IT6 = 10i, IT7 = 16i, IT8 = 25i (round to nearest µm)
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 6</div>
+              Compute fundamental deviation using formula (e.g. shaft g: es = −2.5D^0.34 µm). Round per rounding rules.
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 7</div>
+              Evaluate limits: <br>Hole: D_max = Basic + ES; D_min = Basic + EI<br>Shaft: d_max = Basic + es; d_min = Basic + ei
+            </div>
+            <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:4px;padding:10px 12px;">
+              <div style="font-size:10px;color:#999;font-weight:600;margin-bottom:4px;">STEP 8</div>
+              Determine fit type and compute Max/Min clearance or Max/Min interference
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LF GRADES PAGE -->
+    <div class="page" id="page-lf-grades">
+      <div class="page-title">IT Grades of Tolerance</div>
+      <div class="page-sub">ISO 286 / IS standard — 18 grades from IT01 to IT16. Tolerance unit i = 0.45·D^(1/3) + 0.001·D (µm)</div>
+
+      <div class="lf-card" style="margin-bottom:16px;">
+        <div class="lf-card-title">Standard Tolerance Unit Formula</div>
+        <div class="lf-card-body">
+          <span class="lf-formula">i (µm) = 0.45 × ∛D + 0.001 × D</span>
+          where D (mm) = geometric mean of lower and upper limits of the diameter step = √(a × b)<br><br>
+          <strong>Diameter Steps (ISI):</strong> 1–3, 3–6, 6–10, 10–18, 18–30, 30–50, 50–80, 80–120, 120–180, 180–250, 250–315, 315–400, 400–500 mm
+        </div>
+      </div>
+
+      <table class="it-table">
+        <thead>
+          <tr><th>Grade</th><th>Tolerance Formula</th><th>Typical Application</th></tr>
+        </thead>
+        <tbody id="it-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- LF PREFERRED FITS PAGE -->
+    <div class="page" id="page-lf-fits">
+      <div class="page-title">Preferred Fits — ISO / IS System</div>
+      <div class="page-sub">Hole Basis (H__/x__) and Shaft Basis (X__/h__) — ANSI B4.2 / IS standard</div>
+
+      <div class="fit-filter-tabs">
+        <div class="fit-tab active-all" id="fit-tab-all"  onclick="filterFit('all')">All</div>
+        <div class="fit-tab" id="fit-tab-cl"   onclick="filterFit('clearance')">Clearance</div>
+        <div class="fit-tab" id="fit-tab-tr"   onclick="filterFit('transition')">Transition</div>
+        <div class="fit-tab" id="fit-tab-in"   onclick="filterFit('interference')">Interference</div>
+      </div>
+      <table class="fits-table">
+        <thead>
+          <tr><th>Hole Basis</th><th>Shaft Basis</th><th>Type</th><th>Description &amp; Application</th></tr>
+        </thead>
+        <tbody id="fits-table-body"></tbody>
+      </table>
+    </div>
+
+    <!-- LF CALCULATOR PAGE -->
+    <div class="page" id="page-lf-calc">
+      <div class="page-title">Limits &amp; Fits Calculator</div>
+      <div class="page-sub">Compute hole/shaft limits, deviations, and fit type from basic size and designation</div>
+
+      <div class="calc-box">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Basic Size (mm)</label>
+            <input class="form-input" id="calc-size" type="number" placeholder="e.g. 25" min="1" max="500" step="0.001" oninput="runCalc()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hole Designation</label>
+            <select class="form-select" id="calc-hole-fd" onchange="runCalc()">
+              <option value="H">H (Basic Hole — EI = 0)</option>
+              <option value="G">G (small +EI)</option>
+              <option value="F">F (medium +EI)</option>
+              <option value="E">E (large +EI)</option>
+              <option value="D">D (very large +EI)</option>
+              <option value="C">C (extra large +EI)</option>
+              <option value="K">K (small −EI, transition)</option>
+              <option value="M">M (medium −EI, transition)</option>
+              <option value="N">N (larger −EI, transition)</option>
+              <option value="P">P (interference)</option>
+              <option value="S">S (medium interference)</option>
+              <option value="U">U (heavy interference)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hole IT Grade</label>
+            <select class="form-select" id="calc-hole-grade" onchange="runCalc()">
+              <option value="6">IT6</option>
+              <option value="7" selected>IT7</option>
+              <option value="8">IT8</option>
+              <option value="9">IT9</option>
+              <option value="10">IT10</option>
+              <option value="11">IT11</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shaft Designation</label>
+            <select class="form-select" id="calc-shaft-fd" onchange="runCalc()">
+              <option value="h">h (Basic Shaft — es = 0)</option>
+              <option value="g">g (small clearance)</option>
+              <option value="f">f (normal running)</option>
+              <option value="e">e (loose clearance)</option>
+              <option value="d">d (loose running)</option>
+              <option value="c">c (very loose)</option>
+              <option value="k">k (transition, slight +ve)</option>
+              <option value="m">m (transition, interference avg)</option>
+              <option value="n">n (transition, slight interference)</option>
+              <option value="p">p (interference — press fit)</option>
+              <option value="s">s (medium interference)</option>
+              <option value="u">u (heavy interference)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shaft IT Grade</label>
+            <select class="form-select" id="calc-shaft-grade" onchange="runCalc()">
+              <option value="5">IT5</option>
+              <option value="6" selected>IT6</option>
+              <option value="7">IT7</option>
+              <option value="8">IT8</option>
+              <option value="9">IT9</option>
+              <option value="10">IT10</option>
+            </select>
+          </div>
+        </div>
+        <div id="calc-result-area"></div>
+      </div>
+
+      <div class="lf-card">
+        <div class="lf-card-title">Worked Example 1 — ⌀6 H7/g6 (from notes)</div>
+        <div class="lf-card-body">
+          D step: 3–6 → D = √(3×6) = 4.243 mm &nbsp;|&nbsp; i = 0.45×∛4.243 + 0.001×4.243 = 0.733 µm<br>
+          <strong>H7 hole:</strong> IT7 = 16i = 11.7 → <strong>12 µm</strong>. EI = 0 (H). ES = +12 µm → Hole: ⌀6.000 / ⌀6.012<br>
+          <strong>g6 shaft:</strong> IT6 = 10i = 7.3 → <strong>8 µm</strong>. es = −2.5×4.243^0.34 = −4.085 → <strong>−4 µm</strong>. ei = es−IT6 = −12 µm → Shaft: ⌀5.996 / ⌀5.988<br>
+          <strong>Fit:</strong> Min clearance = 6.000−5.996 = <strong>+4 µm</strong> &nbsp;|&nbsp; Max clearance = 6.012−5.988 = <strong>+24 µm</strong> → <span style="color:#2d6a2d;font-family:'Courier New',monospace;font-weight:bold;">CLEARANCE FIT</span>
+        </div>
+      </div>
+      <div class="lf-card" style="margin-top:14px;">
+        <div class="lf-card-title">Worked Example 2 — ⌀20 P7/h6 (from notes)</div>
+        <div class="lf-card-body">
+          D step: 18–24 → D = √(18×24) = 20.78 mm &nbsp;|&nbsp; i = 0.45×∛20.78 + 0.001×20.78 = 1.258 µm<br>
+          <strong>h6 shaft:</strong> IT6 = 10i = 12.58 → <strong>13 µm</strong>. es = 0 (h). ei = −13 µm → Shaft: ⌀20.000 / ⌀19.987<br>
+          <strong>P7 hole:</strong> IT7 = 16i = 20.13 → <strong>21 µm</strong>. FD (P) = IT6+5 = 10i+5 = 17.58 → <strong>18 µm</strong>. ES = −(18−21) wait — ES = −18+21? No: EI = −(IT6+5) = −18 µm. ES = EI+IT7 = −18+21 = −18+21 →
+          ES = −18+21 = +3? Re-check per notes: ES = −18+21... actually EI = −18, ES = EI+IT7 = −18+21 = +3... but notes show 19.982/19.961. EI = −(IT6+0to5) from P hole rule. With IT6+5 = 18 → EI = −18, but notes show 19.982, so ES = basic+ES_val → 20+(−18) = 19.982? No. From notes: ES (P hole) = −18+IT7 = −18+21 = +3? That gives 20.003 max hole. But notes show 19.982 max. Checking: Notes show FD=18, IT7=21. EI = −(18+21−21) = ? Actually: for P hole: EI = −FD = −18, ES = EI+IT7 = −18+21 = +3. But notes say 19.982. Let me read more carefully: notes say "FD = IT6+5 = 10i+5 = 17.58 = 18µm" and ES = −(18) + IT7? Hmm. Actually reading the notes: it says fundamental deviation for P7 hole is IT6+0to5. So ES = 0 and EI is what's calculated. For P holes (interference), ES is the fundamental deviation (negative), EI = ES−IT. So ES = −18µm → max hole = 20+(−18/1000) = 19.982. EI = ES−IT7 = −18−21 = −39µm → min hole = 20−0.039 = 19.961. ✓ matches notes exactly.<br>
+          <strong>Fit:</strong> Max hole(19.982) − Min shaft(19.987) = −0.005 mm (<strong>5µm interference</strong>) &nbsp;|&nbsp; Min hole(19.961) − Max shaft(20.000) = −0.039 mm (<strong>39µm interference</strong>) → <span style="color:#9b2c2c;font-family:'Courier New',monospace;">INTERFERENCE FIT</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const SYMBOLS = [
+  {
+    id: 'straightness', sym: '⏤', name: 'Straightness', cat: 'form',
+    short: 'Controls line elements or derived median line of a feature',
+    section: '§8.4.1',
+    definition: 'A straightness tolerance specifies a tolerance zone within which the considered element of a surface or derived median line shall lie. Applied in the view where elements are represented as straight lines.',
+    zone: 'Two parallel lines (surface) or cylinder (derived median line at MMC/LMC)',
+    datumReq: 'No datum required',
+    modifiers: 'RFS (default), MMC, LMC (only for derived median line)',
+    rule1: 'Straightness tolerance shall be less than size tolerance for surface line elements (exceptions: free state, independency symbol, or derived median line application)',
+    note: 'When FCF is placed at size dimension: controls derived median line. When attached to surface: controls surface line elements.',
+    tags: ['no-datum', 'surface-or-axis', 'unit-basis-ok'],
+    zoneType: 'two-parallel-lines'
+  },
+  {
+    id: 'flatness', sym: '⏥', name: 'Flatness', cat: 'form',
+    short: 'Controls all surface elements in one plane',
+    section: '§8.4.2',
+    definition: 'A flatness tolerance specifies a tolerance zone defined by two parallel planes within which the entire surface shall lie. Flatness is the condition of a surface having all elements in one plane.',
+    zone: 'Two parallel planes',
+    datumReq: 'No datum required',
+    modifiers: 'RFS (surface), RFS/MMC/LMC (width feature of size)',
+    rule1: 'Flatness tolerance shall be less than the size tolerance (Rule #1). When applied to a feature of size, perfect form at MMC requirement is removed.',
+    note: 'May be applied on unit basis (e.g. 0.01/25×25). When orientation tolerance is applied to a planar surface, it also controls flatness to the extent of that tolerance.',
+    tags: ['no-datum', 'surface', 'unit-basis-ok', 'refines-orientation'],
+    zoneType: 'two-parallel-planes'
+  },
+  {
+    id: 'circularity', sym: '○', name: 'Circularity (Roundness)', cat: 'form',
+    short: 'Controls each cross-section of a cylindrical or spherical surface',
+    section: '§8.4.3',
+    definition: 'A circularity tolerance specifies a tolerance zone bounded by two concentric circles within which each circular cross-section of the surface shall lie. Applies independently at any cross-sectional plane.',
+    zone: 'Two concentric circles (annular zone)',
+    datumReq: 'No datum required',
+    modifiers: 'RFS only — cannot be modified to MMC or LMC',
+    rule1: 'Circularity tolerance shall be less than size tolerance (Rule #1). Callout shall be applied to surface, not to size dimension.',
+    note: 'Applies independently at each cross-section. For sphere: any plane through center. Cannot control axis or location — only the shape of individual circular elements.',
+    tags: ['no-datum', 'surface', 'rfs-only', 'independent'],
+    zoneType: 'two-concentric-circles'
+  },
+  {
+    id: 'cylindricity', sym: '⌭', name: 'Cylindricity', cat: 'form',
+    short: 'Controls all surface elements of a cylinder simultaneously',
+    section: '§8.4.4',
+    definition: 'A cylindricity tolerance specifies a tolerance zone bounded by two coaxial cylinders within which all points of the surface shall lie. It is a compound control of circularity, straightness, and taper simultaneously.',
+    zone: 'Two coaxial cylinders',
+    datumReq: 'No datum required',
+    modifiers: 'RFS only — cannot be modified to MMC or LMC',
+    rule1: 'Controls the entire surface simultaneously — all circular and longitudinal elements. More restrictive than combining circularity + straightness separately.',
+    note: 'Composite control: circularity + straightness + taper all in one tolerance. Expensive to measure; use only when functionally required.',
+    tags: ['no-datum', 'surface', 'rfs-only', 'composite'],
+    zoneType: 'two-coaxial-cylinders'
+  },
+  {
+    id: 'angularity', sym: '∠', name: 'Angularity', cat: 'orientation',
+    short: 'Controls a surface, axis, or center plane at a basic angle from datums',
+    section: '§9.3 / §3.1',
+    definition: 'The condition of a line element, surface, feature center plane, or axis at an implied or specified basic angle of any value (other than 0° or 90°) from one or more datum planes or datum axes.',
+    zone: 'Two parallel planes or cylinder at the specified basic angle to datums',
+    datumReq: 'At least one datum required',
+    modifiers: 'RFS (default), MMC, LMC',
+    rule1: 'Orientation tolerances only constrain rotational degrees of freedom — not translational. Angularity symbol may also be used for 0° (parallel) and 90° (perpendicular) as alternative practice (§9.5).',
+    note: 'Basic angle must be specified. When applied to a plane surface, also controls flatness to the extent of the orientation tolerance unless tangent plane symbol is added.',
+    tags: ['datum-required', 'rotational-dof', 'basic-angle'],
+    zoneType: 'two-parallel-planes'
+  },
+  {
+    id: 'perpendicularity', sym: '⟂', name: 'Perpendicularity', cat: 'orientation',
+    short: 'Controls a surface, axis, or center plane at exactly 90° to a datum',
+    section: '§9.3',
+    definition: 'The condition of a surface, feature center plane, or axis at exactly 90° (implied basic angle) from one or more datum planes or datum axes.',
+    zone: 'Two parallel planes or cylinder at 90° to datum',
+    datumReq: 'At least one datum required',
+    modifiers: 'RFS (default), MMC, LMC',
+    rule1: 'For threaded holes or inserts, projected tolerance zone symbol (Ⓟ) with projected height should be considered. Zero tolerance at MMC is permitted.',
+    note: 'When applied with projected tolerance zone Ⓟ: the cylindrical tolerance zone extends above the surface at the projected height, controlling perpendicularity of a fastener installed in the hole.',
+    tags: ['datum-required', 'implied-90deg', 'rotational-dof'],
+    zoneType: 'two-parallel-planes'
+  },
+  {
+    id: 'parallelism', sym: '∥', name: 'Parallelism', cat: 'orientation',
+    short: 'Controls a surface, axis, or center plane at 0° (parallel) to a datum',
+    section: '§9.3',
+    definition: 'The condition of a surface, feature axis, or center plane equidistant at all points from a datum plane or axis (implied 0° basic angle).',
+    zone: 'Two parallel planes or cylinder parallel to datum',
+    datumReq: 'At least one datum required',
+    modifiers: 'RFS (default), MMC, LMC',
+    rule1: 'When applied to a plane surface, also controls flatness to the extent of the parallelism tolerance. Tangent plane symbol may be added to limit control to high points only.',
+    note: 'Parallelism with a tangent plane symbol (⊺) controls the tangent plane of the surface, allowing some points to lie outside the zone. Surface form is not controlled in that case.',
+    tags: ['datum-required', 'implied-0deg', 'rotational-dof'],
+    zoneType: 'two-parallel-planes'
+  },
+  {
+    id: 'position', sym: '⊕', name: 'Position', cat: 'location',
+    short: 'Controls the location and/or orientation of features of size from datums',
+    section: '§10',
+    definition: 'A positional tolerance establishes: (a) a zone within which the axis, center point, or center plane of a feature of size shall be contained, or (b) (at MMC/LMC) a boundary within which no surface element shall violate.',
+    zone: 'Cylinder (⌀ prefix), two parallel planes, sphere — at true position from datums',
+    datumReq: 'Datum references required (exceptions: coaxial, composite tolerancing)',
+    modifiers: 'RFS (default), MMC, LMC',
+    rule1: 'True position dimensions (locating the center of the zone) are BASIC dimensions — boxed values. Position controls both location AND orientation relative to referenced datums. Zero positional tolerance at MMC may be used.',
+    note: 'The most widely used GD&T characteristic. At MMC: bonus tolerance available = |actual size − MMC size|. At RFS: no bonus tolerance. Composite position frames control pattern location (upper) vs. feature-to-feature within pattern (lower).',
+    tags: ['datum-required', 'basic-dims', 'bonus-tolerance', 'mmc-lmc'],
+    zoneType: 'cylinder'
+  },
+  {
+    id: 'profile-line', sym: '⌒', name: 'Profile of a Line', cat: 'profile',
+    short: 'Controls cross-sectional profile of a surface along any line element',
+    section: '§11',
+    definition: 'A profile of a line tolerance specifies a tolerance zone within which each line element of the surface, in any cross-section, shall lie. It is a 2D control — applies at each individual cross-section independently.',
+    zone: 'Two parallel curves (offset from true profile) in a cross-sectional plane',
+    datumReq: 'With or without datums (unilateral, bilateral, or unequally disposed)',
+    modifiers: 'RFS only for surface controls; may not be modified to MMC or LMC',
+    rule1: 'Where no datums are referenced: controls only shape (form). Where datums are referenced: controls shape, orientation, and location simultaneously. Unilateral zone shown with Ⓤ symbol and value.',
+    note: 'Less common than profile of a surface. Used for 2D cross-section control, e.g., airfoil sections, cam profiles.',
+    tags: ['datum-optional', 'bilateral-or-unilateral', '2d-control'],
+    zoneType: 'two-parallel-curves'
+  },
+  {
+    id: 'profile-surface', sym: '⌓', name: 'Profile of a Surface', cat: 'profile',
+    short: 'Controls the entire surface — the preferred location tolerance in Y14.5-2018',
+    section: '§11',
+    definition: 'A profile of a surface tolerance specifies a tolerance zone within which the entire surface shall lie. It simultaneously controls size, form, orientation, and location — the most comprehensive single tolerance.',
+    zone: 'Two surfaces offset from true profile (bilateral, unilateral, or unequal)',
+    datumReq: 'With or without datums',
+    modifiers: 'RFS only — cannot be modified to MMC or LMC',
+    rule1: 'ASME Y14.5-2018 emphasizes profile of a surface as the preferred method for surface location. Plus/minus tolerances for surface location have been moved to Appendix (likely to be removed in next revision).',
+    note: 'Unilateral zone: all tolerance on one side of true profile. Unequally disposed (Ⓤ): numeric split shows how tolerance is distributed inside/outside. Without datums: controls form only.',
+    tags: ['datum-optional', 'preferred-method', 'all-in-one', 'bilateral-or-unilateral'],
+    zoneType: 'two-parallel-surfaces'
+  },
+  {
+    id: 'circular-runout', sym: '↗', name: 'Circular Runout', cat: 'runout',
+    short: 'Controls variation at any single cross-section as part rotates about datum axis',
+    section: '§12',
+    definition: 'Circular runout provides composite control of variations at each circular cross-section. During full rotation about datum axis, each circular element shall fall within the specified tolerance. Applies independently at each cross-sectional plane.',
+    zone: 'Annular zone (radial width) at each cross-section independently',
+    datumReq: 'Datum axis required (cylindrical or coaxial datum feature)',
+    modifiers: 'RFS only — cannot be modified to MMC or LMC',
+    rule1: 'Circular runout is a combined control of form (circularity) and coaxiality at each individual cross-section, measured independently. It does NOT control the relationship between cross-sections.',
+    note: 'Measured with part rotating on datum axis. Indicator placed at surface; FIM (Full Indicator Movement) = runout value at that cross-section. Less restrictive than total runout.',
+    tags: ['datum-required', 'rfs-only', 'per-cross-section', 'combined-control'],
+    zoneType: 'annular-per-section'
+  },
+  {
+    id: 'total-runout', sym: '⇗', name: 'Total Runout', cat: 'runout',
+    short: 'Controls variation across entire surface simultaneously as part rotates',
+    section: '§12',
+    definition: 'Total runout provides composite control of all variations of surface elements across the entire surface simultaneously. All surface elements, across all cross-sections and along the full length, shall fall within the tolerance zone during full rotation about datum axis.',
+    zone: 'Two coaxial cylinders (for cylindrical features) or two parallel planes (for planar features perpendicular to axis)',
+    datumReq: 'Datum axis required',
+    modifiers: 'RFS only — cannot be modified to MMC or LMC',
+    rule1: 'Total runout simultaneously controls: circularity, cylindricity, coaxiality, taper, and angularity (for cylindrical surfaces), OR flatness and perpendicularity (for planar surfaces to datum axis). More restrictive than circular runout.',
+    note: 'Indicator traverses full length while part rotates — measuring the combined effect of all deviations. Use when the complete surface must be controlled simultaneously relative to the datum axis.',
+    tags: ['datum-required', 'rfs-only', 'entire-surface', 'combined-control'],
+    zoneType: 'two-coaxial-cylinders'
+  },
+];
+
+const MODIFIERS = [
+  { sym: 'Ⓜ', name: 'Maximum Material Condition (MMC)', desc: 'Feature of size contains the maximum amount of material. Hole: minimum size. Pin: maximum size. Enables bonus tolerance as feature departs from MMC. (§5.9)' },
+  { sym: 'Ⓛ', name: 'Least Material Condition (LMC)', desc: 'Feature of size contains the least amount of material. Hole: maximum size. Pin: minimum size. Enables bonus tolerance as feature departs from LMC. (§5.9)' },
+  { sym: 'Ⓢ', name: 'Regardless of Feature Size (RFS)', desc: 'Default condition (Rule #2). Geometric tolerance applies regardless of actual feature size — no bonus tolerance available. Explicit symbol rarely used since it is the default. (§5.9.1)' },
+  { sym: 'Ⓜ', name: 'Maximum Material Boundary (MMB)', desc: 'Applied to datum feature references. The boundary generated at MMC of datum feature, including applicable geometric tolerances. Allows datum shift. (§3.4)' },
+  { sym: 'Ⓛ', name: 'Least Material Boundary (LMB)', desc: 'Applied to datum feature references. Boundary at LMC of datum feature including applicable geometric tolerances. (§3.3)' },
+  { sym: 'RMB', name: 'Regardless of Material Boundary (RMB)', desc: 'Default for datum feature references. Datum feature simulator expands/contracts to make maximum possible contact with datum feature. (§5.9.1)' },
+  { sym: 'Ⓟ', name: 'Projected Tolerance Zone', desc: 'Extends tolerance zone above the surface at a specified height. Used for threaded holes/inserts to control perpendicularity of installed fastener. (§10.5.2)' },
+  { sym: '⊺', name: 'Tangent Plane', desc: 'Tolerance zone applies to the tangent plane (high points) of a surface. Some surface points may lie outside zone. Form of the feature is not controlled. (§9.4)' },
+  { sym: 'Ⓕ', name: 'Free State', desc: 'Measurements made with part in free, unrestrained state. Used for non-rigid parts that may deform under restraint. Rule #1 does not apply. (§5.8.2)' },
+  { sym: 'Ⓤ', name: 'Unequally Disposed Profile', desc: 'For profile tolerances: specifies how the tolerance is distributed. Ⓤ followed by the tolerance on the inside of true profile. E.g., 0.6 Ⓤ 0.4 = 0.4 inside, 0.2 outside. (§11.3)' },
+  { sym: '①', name: 'Statistical Tolerance', desc: 'Indicates the tolerance is based on statistical tolerancing principles and is intended to be used in statistical process control. (§Appendix B)' },
+  { sym: 'CF', name: 'Continuous Feature', desc: 'Two or more interrupted features to be treated as one single feature or feature of size. (§3.10/§3.11)' },
+  { sym: 'BSC', name: 'Basic (Datum at BSC)', desc: 'Datum feature is referenced at its basic location — no shift is permitted relative to the datum reference frame. Used with complex features. (§7.11.4d)' },
+  { sym: '( )', name: 'Reference Dimension', desc: 'Auxiliary information only — not governing production or inspection. A repeat of another dimension or derived from other values. (§3.28)' },
+  { sym: '□', name: 'Basic Dimension Symbol', desc: 'A theoretically exact dimension. Establishes the true position, profile, or orientation of a feature. Tolerances for basic dims are provided by feature control frames. (§3.26)' },
+  { sym: 'TYP / N×', name: 'Number of Times / Typical', desc: '"N×" (e.g., 4×) indicates a quantity of identical features. Replaces the older "TYP" usage. Applied before the tolerance or dimension it qualifies. (§4.4)' },
+];
+
+const RULES = [
+  {
+    num: 'Rule #1 — §5.8.1',
+    title: 'Envelope Principle (Perfect Form at MMC)',
+    body: 'The surface(s) of an individual regular feature of size shall not extend beyond an envelope of perfect form at MMC. This means: at its MMC limit of size, a feature must be perfectly formed (straight, round, flat). As actual local size departs from MMC toward LMC, a variation in form is allowed equal to the amount of departure. Exceptions: stock material, free-state modifier, straightness/flatness applied to a feature of size, and the independency symbol (⊙).'
+  },
+  {
+    num: 'Rule #2 — §5.9.1',
+    title: 'RFS and RMB Default',
+    body: 'RFS (Regardless of Feature Size) is the default condition for geometric tolerance values on features of size. RMB (Regardless of Material Boundary) is the default condition for datum feature references in a feature control frame. These defaults may be overridden by explicitly specifying the MMC/LMC or MMB/LMB modifier symbols.'
+  },
+  {
+    num: 'Fundamental Rule — §4.1(a)',
+    title: 'Each dimension must have a tolerance',
+    body: 'Each dimension shall have a tolerance, except for those dimensions specifically identified as reference, maximum, minimum, or stock (commercial stock sizes). The tolerance may be applied directly to the dimension or indicated by a general note.'
+  },
+  {
+    num: 'Fundamental Rule — §4.1(b)',
+    title: 'Dimensioning and tolerancing shall be complete',
+    body: 'Dimensioning and tolerancing shall be complete so there is full understanding of the characteristics of each feature. Neither scaling of a drawing nor assumption of a distance or size is permitted.'
+  },
+  {
+    num: 'Fundamental Rule — §4.1(d)',
+    title: 'Dimensions shall describe the part without reference to process',
+    body: 'Dimensions shall describe the design requirement. It is permissible to add process information as a note where the designer determines that manufacturing method is essential. Dimensions must reflect what is required, not how it is made.'
+  },
+  {
+    num: 'Fundamental Rule — §4.1(j)',
+    title: 'Implied 90° angles',
+    body: 'Where center lines and surfaces of features are shown at right angles on a drawing and no angle is specified, a 90° basic angle is implied. The applicable tolerance is determined by general angular tolerances or a feature control frame referencing angularity, perpendicularity, or profile.'
+  },
+  {
+    num: 'Fundamental Rule — §4.1(k)/(l)',
+    title: 'Implied basic 90° and 0° angles',
+    body: 'Where centerlines of features or surfaces are shown perpendicular (90°) or parallel (0°) and a geometric tolerance controls their orientation or location, these angles are implied basic dimensions. No angular basic dimension needs to be stated.'
+  },
+  {
+    num: 'Positional Tolerancing Method — §5.1.1.1',
+    title: 'Location of features of size requires positional tolerancing',
+    body: 'Tolerances on dimensions that locate features of size shall be specified by the positional tolerancing method (§10). For irregular-shaped features, profile tolerancing (§11) should be used. Direct plus/minus tolerances on location dimensions are not permitted for features of size per Y14.5-2018 preferred practice.'
+  },
+  {
+    num: 'Limits of Size — §5.4',
+    title: 'All dimensional limit values are absolute',
+    body: 'Dimensional limit values are absolute — regardless of the number of decimal places shown, they are used as if continued with zeros. A limit of 12.5 means 12.5000… (no further rounding). An untoleranced digit after the last stated digit is not assumed to be a tolerance.'
+  },
+  {
+    num: 'Profile Preferred — Foreword / §5.6',
+    title: 'Profile of a surface is the preferred location tolerance (Y14.5-2018)',
+    body: 'The 2018 revision emphasizes use of profile of a surface for location tolerances applied to surfaces. The use of plus/minus tolerances for locating surfaces has been moved to a Nonmandatory Appendix and is likely to be removed in the next revision. Profile simultaneously controls size, form, orientation, and location.'
+  },
+  {
+    num: 'No Concentricity or Symmetry — Foreword',
+    title: 'Concentricity and symmetry symbols eliminated in Y14.5-2018',
+    body: 'Concentricity and symmetry symbols are no longer supported in Y14.5-2018. They were eliminated because other characteristics (position, profile, runout, circular runout) provide more direct and well-defined control of coaxial and symmetrical features without the measurement ambiguities associated with concentricity and symmetry.'
+  },
+];
+
+const GLOSSARY = [
+  { term: 'AME (Actual Mating Envelope)', def: 'A similar perfect feature counterpart of smallest size that can be contracted about an external feature(s) or largest size that can be expanded within an internal feature(s) to coincide with the surface at the high points. Two types: related AME (constrained to datums) and unrelated AME (free-floating).', ref: '§3.29' },
+  { term: 'Basic Dimension', def: 'A theoretically exact dimension. Establishes the true position, profile, orientation, or other characteristic of a feature. Has no tolerance directly associated with it; tolerance is provided by feature control frames. Indicated by a rectangular box around the value.', ref: '§3.26' },
+  { term: 'Bonus Tolerance', def: 'Additional tolerance available when a geometric tolerance is applied at MMC or LMC and the feature departs from that material condition. Bonus = |actual feature size − MMC (or LMC) size|. Available for position, orientation, and profile in certain cases.', ref: '§5.9 / §10.3' },
+  { term: 'Datum', def: 'A theoretically exact point, axis, line, plane, or combination thereof derived from the true geometric counterpart (physical simulator). It is used as the origin from which the location or geometric characteristics of features are established.', ref: '§3.14' },
+  { term: 'Datum Feature', def: 'A physical feature on the part (surface, cylinder, slot, etc.) that is identified with a datum feature symbol or datum target symbol. The datum is derived from the datum feature via a simulator.', ref: '§3.17' },
+  { term: 'Datum Reference Frame (DRF)', def: 'Three mutually perpendicular datum planes and three mutually perpendicular axes at their intersections. Provides the origin from which dimensions and tolerances are interpreted. Primary, secondary, and tertiary datum features are referenced to establish the DRF.', ref: '§3.19 / §7' },
+  { term: 'Feature Control Frame (FCF)', def: 'A rectangular frame divided into compartments containing the geometric characteristic symbol, tolerance value and modifiers, and datum references. The prescribed means of specifying geometric tolerances on a drawing per ASME Y14.5.', ref: '§6.4' },
+  { term: 'Feature of Size (FOS)', def: 'A feature that has a size dimension — either a regular feature of size (cylinder, sphere, width, cone, line element) or an irregular feature of size. Features of size are the only features to which MMC, LMC, and Rule #1 apply.', ref: '§3.32 (approx)' },
+  { term: 'Inner Boundary (IB)', def: 'A worst-case boundary generated by the collective effects of the smallest feature of size (MMC for internal, LMC for external) and the applicable geometric tolerance. Used to check clearance or interference.', ref: '§3.2' },
+  { term: 'Outer Boundary (OB)', def: 'A worst-case boundary generated by the collective effects of the largest feature of size (LMC for internal, MMC for external) and the applicable geometric tolerance.', ref: '§3.5' },
+  { term: 'LMB (Least Material Boundary)', def: 'Applied to datum feature references. The worst-case boundary existing on or inside the material, defined by combined effects of size and geometric tolerances at LMC.', ref: '§3.3' },
+  { term: 'LMC (Least Material Condition)', def: 'The condition in which a feature of size contains the least amount of material — minimum size for an external feature (pin), maximum size for an internal feature (hole).', ref: '§3.39 (approx)' },
+  { term: 'MMB (Maximum Material Boundary)', def: 'Applied to datum feature references. The worst-case boundary existing on or outside the material, defined by combined effects of size and geometric tolerances at MMC. Datum shift is permitted when datum feature departs from MMB.', ref: '§3.4' },
+  { term: 'MMC (Maximum Material Condition)', def: 'The condition in which a feature of size contains the maximum amount of material — maximum size for an external feature (pin), minimum size for an internal feature (hole).', ref: '§3.41 (approx)' },
+  { term: 'Profile Tolerance', def: 'A tolerance that specifies a uniform boundary (zone) along the true profile of a line or surface, within which the element or surface shall lie. May be bilateral (symmetric), unilateral (one side), or unequally disposed. Controls form, orientation, and location depending on datum references specified.', ref: '§11' },
+  { term: 'RFS (Regardless of Feature Size)', def: 'The default condition (Rule #2) where the stated geometric tolerance applies at whatever size the feature is produced — no bonus tolerance. The tolerance zone is fixed in size regardless of actual mating size.', ref: '§5.9.1' },
+  { term: 'RMB (Regardless of Material Boundary)', def: 'Default condition for datum feature references. The true geometric counterpart expands/contracts from MMB to make maximum possible contact with the datum feature. Datum shift is not permitted at RMB.', ref: '§5.9.1' },
+  { term: 'True Position', def: 'The theoretically exact location of a feature of size as established by basic dimensions from datums. The positional tolerance zone is centered at true position.', ref: '§10.2' },
+  { term: 'True Geometric Counterpart', def: 'A theoretically exact boundary used to establish a datum or assess a datum feature. Replaces the former term "theoretical datum feature simulator" in Y14.5-2018. It is the shape against which the datum feature is measured or held during manufacturing/inspection.', ref: '§3.14 / Foreword' },
+  { term: 'Virtual Condition (VC)', def: 'A constant worst-case boundary generated by the collective effects of the MMC or LMC size and the applicable geometric tolerance. Used to determine clearance/interference for mating features. VC at MMC = MMC size + geometric tolerance (external); MMC size − geometric tolerance (internal).', ref: '§5.12 (approx)' },
+  { term: 'Datum Shift', def: 'Additional freedom of movement (translation and/or rotation) that exists between a part and its datum reference frame when a datum feature of size is referenced at MMB or LMB and the feature departs from that boundary. Equal to the difference between the datum feature\'s actual mating size and its referenced material boundary.', ref: '§7.11.5' },
+  { term: 'Derived Median Line', def: 'An imperfect (abstract) line formed by the center points of all cross-sections of a feature, where cross-sections are perpendicular to the axis of the unrelated AME. Straightness at derived median line controls axis bend.', ref: '§3.22' },
+  { term: 'Coaxiality', def: 'The condition in which the axis of the unrelated AME of one or more surfaces of revolution is coincident with a datum axis or another feature axis. Controlled by position (preferred), profile, or runout.', ref: '§3.7' },
+  { term: 'True Geometric Counterpart (Planar)', def: 'For a planar datum feature: a plane contacting the high points of the surface. For primary datum: contacts ≥3 points. Secondary: ≥2 points. Tertiary: ≥1 point. Establishes the simulated datum plane.', ref: '§7.11.1' },
+];
+
+const DATUMS_CONTENT = `
+<div class="rule-item">
+  <div class="rule-num">§3.14 — Datum Definition</div>
+  <div class="rule-title">What is a Datum?</div>
+  <div class="rule-body">A datum is a theoretically exact point, axis, line, plane, or combination thereof derived from the <em>true geometric counterpart</em> (physical simulator). It provides the mathematically perfect reference from which dimensions and tolerances are interpreted. The datum itself is perfect — the datum feature (physical surface) is imperfect.</div>
+</div>
+<div class="rule-item">
+  <div class="rule-num">§7.10 — Order of Precedence</div>
+  <div class="rule-title">Primary / Secondary / Tertiary</div>
+  <div class="rule-body">Datum features are listed left-to-right in the FCF in order of precedence. Primary datum feature constrains the most degrees of freedom (DOF). A planar primary constrains 3 DOF (1 translational + 2 rotational). Secondary constrains 2 additional DOF. Tertiary constrains the final remaining DOF. Six DOF total are constrained to fully locate a part: 3 translational (x, y, z) + 3 rotational (u, v, w).</div>
+</div>
+<div class="rule-item">
+  <div class="rule-num">§7.11 — Datum Feature Simulators</div>
+  <div class="rule-title">Physical Embodiment</div>
+  <div class="rule-body">Datum feature simulators are physical gauges, fixtures, or machine tables that represent the true geometric counterpart during manufacturing and inspection. For a planar datum feature: a surface plate. For a cylindrical datum feature (RMB): a chuck or precision bore that expands to contact the surface. At MMB: a fixed-size boundary.</div>
+</div>
+<div class="rule-item">
+  <div class="rule-num">§7.11.3 — Material Boundaries</div>
+  <div class="rule-title">RMB vs. MMB vs. LMB on Datum References</div>
+  <div class="rule-body"><strong>RMB (default):</strong> Simulator expands/contracts to make maximum possible contact — no datum shift.<br><br><strong>MMB:</strong> Fixed boundary at collective effects of MMC + geometric tolerance. As the datum feature departs from MMB, <em>datum shift</em> (freedom of movement) is available equal to that departure. This translational/rotational freedom may be used as additional tolerance.<br><br><strong>LMB:</strong> Same concept as MMB but referenced at the least material boundary.</div>
+</div>
+<div class="rule-item">
+  <div class="rule-num">§7.8 — Selection Criteria</div>
+  <div class="rule-title">Choosing Datum Features</div>
+  <div class="rule-body">Select datum features based on: (1) functional relationship to toleranced feature, (2) accessibility — feature must be usable for setup, (3) sufficient size to provide stable contact, (4) features that correspond to the part's mating interfaces. Where a pattern of features serves as a datum, all features in the pattern collectively establish the datum.</div>
+</div>
+<div class="note-box">§7.6 — Datum Target Symbols: Used when full surface contact is impractical (castings, forgings, warped surfaces). Datum targets specify exact points, lines, or areas where the simulator contacts the part, providing repeatable datums regardless of surface irregularities. Designated with a circle divided horizontally: lower half = datum letter + target number (e.g., A1, A2, A3).</div>
+`;
+
+// ─── ZONE SVGs ───────────────────────────────────────────────────────────────
+
+const ZONE_SVGS = {
+  'two-parallel-lines': {
+    name: 'Two Parallel Lines',
+    chars: ['Straightness (surface)', 'Angularity', 'Parallelism', 'Perpendicularity'],
+    svg: `<svg viewBox="0 0 160 80" width="160" height="80">
+      <line x1="20" y1="25" x2="140" y2="25" stroke="#2d6a2d" stroke-width="2" stroke-dasharray="4,2"/>
+      <line x1="20" y1="55" x2="140" y2="55" stroke="#2d6a2d" stroke-width="2" stroke-dasharray="4,2"/>
+      <path d="M30,35 C50,30 70,40 90,33 C110,26 130,38 140,32" stroke="#1a4a8a" stroke-width="1.5" fill="none"/>
+      <text x="80" y="70" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">tol zone width = t</text>
+      <line x1="145" y1="25" x2="145" y2="55" stroke="#cc0000" stroke-width="1" marker-start="url(#arr)" marker-end="url(#arr)"/>
+      <text x="152" y="43" fill="#cc0000" font-size="9" font-family="Segoe UI">t</text>
+      <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#cc0000"/></marker></defs>
+    </svg>`
+  },
+  'two-parallel-planes': {
+    name: 'Two Parallel Planes',
+    chars: ['Flatness', 'Angularity', 'Parallelism', 'Perpendicularity', 'Profile'],
+    svg: `<svg viewBox="0 0 160 90" width="160" height="90">
+      <rect x="20" y="15" width="120" height="3" fill="#2d6a2d" opacity="0.8"/>
+      <rect x="20" y="65" width="120" height="3" fill="#2d6a2d" opacity="0.8"/>
+      <rect x="20" y="18" width="120" height="47" fill="#2d6a2d" opacity="0.08"/>
+      <path d="M25,18 C45,25 65,20 85,28 C105,36 125,22 135,30" stroke="#1a4a8a" stroke-width="1.5" fill="none"/>
+      <text x="80" y="85" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">zone between 2 planes</text>
+      <line x1="145" y1="15" x2="145" y2="68" stroke="#cc0000" stroke-width="1"/>
+      <text x="150" y="45" fill="#cc0000" font-size="9" font-family="Segoe UI">t</text>
+    </svg>`
+  },
+  'two-concentric-circles': {
+    name: 'Two Concentric Circles',
+    chars: ['Circularity (Roundness)', 'Circular Runout'],
+    svg: `<svg viewBox="0 0 160 100" width="160" height="100">
+      <circle cx="80" cy="48" r="30" stroke="#2d6a2d" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+      <circle cx="80" cy="48" r="20" stroke="#2d6a2d" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+      <circle cx="80" cy="48" r="25" stroke="#1a4a8a" stroke-width="1.5" fill="none" stroke-dasharray="2,1"/>
+      <text x="80" y="90" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">annular zone width = t</text>
+      <line x1="80" y1="18" x2="110" y2="18" stroke="#cc0000" stroke-width="1"/>
+      <line x1="80" y1="28" x2="110" y2="28" stroke="#cc0000" stroke-width="1"/>
+      <text x="112" y="24" fill="#cc0000" font-size="9" font-family="Segoe UI">t</text>
+    </svg>`
+  },
+  'two-coaxial-cylinders': {
+    name: 'Two Coaxial Cylinders',
+    chars: ['Cylindricity', 'Total Runout'],
+    svg: `<svg viewBox="0 0 160 100" width="160" height="100">
+      <ellipse cx="80" cy="20" rx="35" ry="10" stroke="#2d6a2d" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="20" rx="25" ry="7" stroke="#2d6a2d" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <line x1="45" y1="20" x2="45" y2="72" stroke="#2d6a2d" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="115" y1="20" x2="115" y2="72" stroke="#2d6a2d" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="55" y1="20" x2="55" y2="72" stroke="#2d6a2d" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="105" y1="20" x2="105" y2="72" stroke="#2d6a2d" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="72" rx="35" ry="10" stroke="#2d6a2d" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="72" rx="25" ry="7" stroke="#2d6a2d" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <text x="80" y="92" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">zone between 2 coaxial cylinders</text>
+    </svg>`
+  },
+  'cylinder': {
+    name: 'Cylindrical Zone (⌀ prefix)',
+    chars: ['Position (axis)', 'Perpendicularity (axis)', 'Angularity (axis)'],
+    svg: `<svg viewBox="0 0 160 100" width="160" height="100">
+      <ellipse cx="80" cy="20" rx="22" ry="7" stroke="#5a1a8a" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <line x1="58" y1="20" x2="58" y2="72" stroke="#5a1a8a" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <line x1="102" y1="20" x2="102" y2="72" stroke="#5a1a8a" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="72" rx="22" ry="7" stroke="#5a1a8a" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="72" rx="22" ry="7" stroke="#5a1a8a" stroke-width="1" fill="#5a1a8a" fill-opacity="0.06"/>
+      <line x1="80" y1="14" x2="80" y2="79" stroke="#cc0000" stroke-width="1" stroke-dasharray="3,2"/>
+      <circle cx="80" cy="46" r="2" fill="#cc0000"/>
+      <text x="104" y="47" fill="#cc0000" font-size="9" font-family="Segoe UI">⌀t</text>
+      <text x="80" y="95" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">cylindrical zone dia = t</text>
+    </svg>`
+  },
+  'two-parallel-curves': {
+    name: 'Two Parallel Curves (2D)',
+    chars: ['Profile of a Line'],
+    svg: `<svg viewBox="0 0 160 90" width="160" height="90">
+      <path d="M20,30 C50,20 80,45 120,28 C130,24 140,26 145,30" stroke="#8a4400" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <path d="M20,50 C50,40 80,65 120,48 C130,44 140,46 145,50" stroke="#8a4400" stroke-width="1.5" fill="none" stroke-dasharray="4,2"/>
+      <path d="M20,40 C50,30 80,55 120,38 C130,34 140,36 145,40" stroke="#1a4a8a" stroke-width="1.5" fill="none"/>
+      <text x="80" y="80" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">zone follows true profile</text>
+      <text x="80" y="90" text-anchor="middle" fill="#999" font-size="8" font-family="Segoe UI">(at each cross-section)</text>
+    </svg>`
+  },
+  'two-parallel-surfaces': {
+    name: 'Two Offset Surfaces (3D)',
+    chars: ['Profile of a Surface'],
+    svg: `<svg viewBox="0 0 160 90" width="160" height="90">
+      <path d="M15,28 C40,18 75,38 115,22 C130,16 145,20 150,25" stroke="#8a4400" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+      <path d="M15,52 C40,42 75,62 115,46 C130,40 145,44 150,49" stroke="#8a4400" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
+      <path d="M15,40 C40,30 75,50 115,34 C130,28 145,32 150,37" stroke="#1a4a8a" stroke-width="2" fill="none"/>
+      <text x="80" y="15" text-anchor="middle" fill="#8a4400" font-size="9" font-family="Segoe UI">outer offset surface</text>
+      <text x="80" y="72" text-anchor="middle" fill="#8a4400" font-size="9" font-family="Segoe UI">inner offset surface</text>
+      <text x="80" y="85" text-anchor="middle" fill="#999" font-size="8" font-family="Segoe UI">true profile (blue) — bilateral zone</text>
+    </svg>`
+  },
+  'annular-per-section': {
+    name: 'Annular Zone (Per Cross-Section)',
+    chars: ['Circular Runout'],
+    svg: `<svg viewBox="0 0 160 100" width="160" height="100">
+      <line x1="80" y1="10" x2="80" y2="85" stroke="#cc0000" stroke-width="1" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="50" rx="32" ry="9" stroke="#9b2c2c" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="50" rx="22" ry="6" stroke="#9b2c2c" stroke-width="2" fill="none" stroke-dasharray="4,2"/>
+      <ellipse cx="80" cy="50" rx="27" ry="7.5" stroke="#1a4a8a" stroke-width="1" fill="none" stroke-dasharray="2,1"/>
+      <text x="80" y="92" text-anchor="middle" fill="#999" font-size="9" font-family="Segoe UI">FIM = runout at this section</text>
+      <line x1="112" y1="41" x2="112" y2="59" stroke="#cc0000" stroke-width="1"/>
+      <text x="115" y="52" fill="#cc0000" font-size="9" font-family="Segoe UI">t</text>
+    </svg>`
+  },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let activeCat = 'all';
+let activeSearch = '';
+
+// ─── RENDER FUNCTIONS ────────────────────────────────────────────────────────
+
+function getBadge(cat) {
+  const map = { form: 'badge-form', orientation: 'badge-orient', location: 'badge-location', profile: 'badge-profile', runout: 'badge-runout' };
+  const labels = { form: 'FORM', orientation: 'ORIENT', location: 'LOCATION', profile: 'PROFILE', runout: 'RUNOUT' };
+  return `<span class="badge ${map[cat]}">${labels[cat]}</span>`;
+}
+
+function renderSymbols() {
+  const container = document.getElementById('sym-cards');
+  const noResults = document.getElementById('no-results');
+  const q = activeSearch.toLowerCase();
+  const filtered = SYMBOLS.filter(s => {
+    const matchCat = activeCat === 'all' || s.cat === activeCat;
+    const matchSearch = !q || [s.name, s.definition, s.note, s.section, s.datumReq, s.modifiers, ...s.tags].join(' ').toLowerCase().includes(q);
+    return matchCat && matchSearch;
+  });
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+  container.innerHTML = filtered.map(s => `
+    <div class="card" id="card-${s.id}" onclick="toggleCard('${s.id}')">
+      <div class="card-header">
+        <div class="card-sym">${s.sym}</div>
+        <div class="card-info">
+          <div class="card-name">${s.name}</div>
+          <div class="card-short">${s.short}</div>
+        </div>
+        <div class="card-badges">
+          ${getBadge(s.cat)}
+          <span class="badge" style="background:#f2f2f2;color:#888;border:1px solid #ccc;font-size:9px;">${s.section}</span>
+        </div>
+        <div class="card-expand-icon">⌄</div>
+      </div>
+      <div class="card-body">
+        <div class="card-body-grid">
+          <div class="detail-block full">
+            <div class="detail-label">Definition</div>
+            <div class="detail-text">${s.definition}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Tolerance Zone</div>
+            <div class="detail-text">${s.zone}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Datum Requirement</div>
+            <div class="detail-text">${s.datumReq}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Applicable Modifiers</div>
+            <div class="detail-text">${s.modifiers}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-label">Key Rule / Requirement</div>
+            <div class="detail-text">${s.rule1}</div>
+          </div>
+        </div>
+        ${s.note ? `<div class="note-box">📌 ${s.note}</div>` : ''}
+        <div class="tags-row">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.toggle('expanded');
+}
+
+function filterCat(cat, el) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderSymbols();
+}
+
+function filterSymbols() {
+  activeSearch = document.getElementById('sym-search').value;
+  renderSymbols();
+}
+
+function filterGloss() {
+  const q = document.getElementById('gloss-search').value.toLowerCase();
+  document.querySelectorAll('.def-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = (!q || text.includes(q)) ? 'block' : 'none';
+  });
+}
+
+function renderModifiers() {
+  document.getElementById('mod-table-body').innerHTML = MODIFIERS.map(m => `
+    <tr>
+      <td class="mod-sym-cell">${m.sym}</td>
+      <td>${m.name}</td>
+      <td>${m.desc}</td>
+    </tr>
+  `).join('');
+}
+
+function renderRules() {
+  document.getElementById('rules-list').innerHTML = RULES.map(r => `
+    <div class="rule-item">
+      <div class="rule-num">${r.num}</div>
+      <div class="rule-title">${r.title}</div>
+      <div class="rule-body">${r.body}</div>
+    </div>
+  `).join('');
+}
+
+function renderZones() {
+  document.getElementById('zone-grid').innerHTML = Object.entries(ZONE_SVGS).map(([key, z]) => `
+    <div class="zone-card">
+      <div class="zone-card-name">${z.name}</div>
+      ${z.svg}
+      <div style="margin-top:8px;">${z.chars.map(c=>`<div style="font-size:10px;color:#999;font-family:'Segoe UI',sans-serif;margin-top:2px;">${c}</div>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function renderGlossary() {
+  document.getElementById('gloss-list').innerHTML = GLOSSARY.map(g => `
+    <div class="def-item">
+      <div class="def-term">${g.term}</div>
+      <div class="def-text">${g.def}</div>
+      <div class="def-ref">${g.ref}</div>
+    </div>
+  `).join('');
+}
+
+function renderDatums() {
+  document.getElementById('datums-content').innerHTML = DATUMS_CONTENT;
+}
+
+function buildFCF() {
+  const charRaw = document.getElementById('fcf-char').value;
+  const tol = document.getElementById('fcf-tol').value.trim();
+  const dia = document.getElementById('fcf-dia').value;
+  const mod = document.getElementById('fcf-mod').value;
+  const da = document.getElementById('fcf-da').value.trim().toUpperCase();
+  const daMod = document.getElementById('fcf-da-mod').value;
+  const db = document.getElementById('fcf-db').value.trim().toUpperCase();
+  const dbMod = document.getElementById('fcf-db-mod').value;
+  const dc = document.getElementById('fcf-dc').value.trim().toUpperCase();
+  const dcMod = document.getElementById('fcf-dc-mod').value;
+
+  const display = document.getElementById('fcf-display');
+  if (!charRaw && !tol) {
+    display.innerHTML = '<span style="color:#999;font-size:14px;font-family:\'Segoe UI\',sans-serif;">Configure below to preview FCF</span>';
+    return;
+  }
+  const sym = charRaw ? charRaw.split('|')[0] : '?';
+  let cells = [];
+  cells.push(`<div class="fcf-cell sym-cell">${sym}</div>`);
+  let tolCell = '';
+  if (dia === 'yes') tolCell += '⌀';
+  tolCell += tol || '?';
+  if (mod) tolCell += mod;
+  cells.push(`<div class="fcf-cell">${tolCell}</div>`);
+  if (da) cells.push(`<div class="fcf-cell">${da}${daMod}</div>`);
+  if (db) cells.push(`<div class="fcf-cell">${db}${dbMod}</div>`);
+  if (dc) cells.push(`<div class="fcf-cell">${dc}${dcMod}</div>`);
+  display.innerHTML = cells.join('');
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const items = document.querySelectorAll('.nav-item');
+  const map = { symbols:0, modifiers:1, rules:2, zones:3, fcf:4, datums:5, glossary:6, 'lf-concepts':7, 'lf-grades':8, 'lf-fits':9, 'lf-calc':10 };
+  if (map[id] !== undefined) items[map[id]].classList.add('active');
+}
+
+// ─── IT GRADES DATA ───────────────────────────────────────────────────────────
+const IT_GRADES = [
+  { grade:'IT01', formula:'0.3 + 0.008D', multiplier:null, note:'Highest precision — master gauges, reference instruments' },
+  { grade:'IT0',  formula:'0.5 + 0.012D', multiplier:null, note:'High precision gauges' },
+  { grade:'IT1',  formula:'0.8 + 0.020D', multiplier:null, note:'Precision plug/ring gauges, measuring instruments' },
+  { grade:'IT2',  formula:'Geometric interpolation IT1–IT5', multiplier:null, note:'Precision gauges' },
+  { grade:'IT3',  formula:'Geometric interpolation IT1–IT5', multiplier:null, note:'Precision gauges' },
+  { grade:'IT4',  formula:'Geometric interpolation IT1–IT5', multiplier:null, note:'Gauges, precision instruments' },
+  { grade:'IT5',  formula:'7i', multiplier:7,   note:'Precision engineering — fits requiring fine accuracy' },
+  { grade:'IT6',  formula:'10i', multiplier:10,  note:'Precision engineering — standard precision fits' },
+  { grade:'IT7',  formula:'16i', multiplier:16,  note:'Precision engineering — general precision fits (most common)' },
+  { grade:'IT8',  formula:'25i', multiplier:25,  note:'General engineering — normal manufacturing quality' },
+  { grade:'IT9',  formula:'40i', multiplier:40,  note:'General engineering' },
+  { grade:'IT10', formula:'64i', multiplier:64,  note:'General engineering — lower accuracy' },
+  { grade:'IT11', formula:'100i', multiplier:100, note:'General engineering — loose fits' },
+  { grade:'IT12', formula:'160i', multiplier:160, note:'Sheet metal / press working' },
+  { grade:'IT13', formula:'250i', multiplier:250, note:'Sheet metal / press working' },
+  { grade:'IT14', formula:'400i', multiplier:400, note:'Sheet metal / press working — rough' },
+  { grade:'IT15', formula:'640i', multiplier:640, note:'Casting, general cutting work' },
+  { grade:'IT16', formula:'1000i', multiplier:1000, note:'Casting, forging, rough processes' },
+];
+
+function renderITTable() {
+  document.getElementById('it-table-body').innerHTML = IT_GRADES.map(r => `
+    <tr>
+      <td>${r.grade}</td>
+      <td>${r.formula}</td>
+      <td>${r.note}</td>
+    </tr>
+  `).join('');
+}
+
+// ─── PREFERRED FITS DATA ──────────────────────────────────────────────────────
+const PREFERRED_FITS = [
+  { hb:'H11/c11', sb:'C11/h11', type:'clearance', desc:'Loose running fit for wide commercial tolerances or allowances on external members.', app:'Loose pulleys, very loose joints' },
+  { hb:'H9/d9',   sb:'D9/h9',   type:'clearance', desc:'Free running fit — not for use where accuracy is essential, but good for large temperature variations, high speeds, or heavy journal pressures.', app:'Shaft running in plain bearings, large motors' },
+  { hb:'H8/f7',   sb:'F8/h7',   type:'clearance', desc:'Close running fit for running on accurate machines and for accurate location at moderate speeds and journal pressures.', app:'Lubricated bearings, pumps, smaller motors, gear boxes' },
+  { hb:'H7/g6',   sb:'G7/h6',   type:'clearance', desc:'Sliding fit — not intended to run freely, but to move and turn freely and locate accurately.', app:'Lightly loaded shafts, sliding spools, guide fit, accurate bearings' },
+  { hb:'H7/h6',   sb:'H7/h6',   type:'clearance', desc:'Locational clearance fit — provides snug fit for locating stationary parts; can be freely assembled and disassembled.', app:'Sockets, spigots, non-running location joints' },
+  { hb:'H7/k6',   sb:'K7/h6',   type:'transition', desc:'Locational transition fit — accurate location, compromise between clearance and interference.', app:'Precision couplings, spigots, gears, accurate location' },
+  { hb:'H7/n6',   sb:'N7/h6',   type:'transition', desc:'Locational transition fit for more accurate location where greater interference is permissible.', app:'Semi-permanent fits, tight assemblies, precision joints subject to vibration' },
+  { hb:'H7/p6',   sb:'P7/h6',   type:'interference', desc:'Locational interference fit — rigidity and alignment with prime accuracy, without special bore pressure requirements.', app:'Fixing bushes, standard press fit, bush bearings in housing' },
+  { hb:'H7/s6',   sb:'S7/h6',   type:'interference', desc:'Medium drive fit — ordinary steel parts or shrink fits on light sections; tightest fit usable with cast iron.', app:'Valve seating, collars on shafts, semi-permanent/permanent fit' },
+  { hb:'H7/u6',   sb:'U7/h6',   type:'interference', desc:'Force fit — suitable for parts which can be highly stressed or for shrink fits where heavy pressing forces required are impractical.', app:'Permanent assemblies, high degree of interference, shrink fits' },
+];
+
+let activeFitFilter = 'all';
+
+function renderFitsTable() {
+  const filtered = PREFERRED_FITS.filter(f => activeFitFilter === 'all' || f.type === activeFitFilter);
+  document.getElementById('fits-table-body').innerHTML = filtered.map(f => {
+    const cls = f.type==='clearance' ? 'fit-cl' : f.type==='transition' ? 'fit-tr' : 'fit-in';
+    const badgeCls = f.type==='clearance' ? 'fit-badge-cl' : f.type==='transition' ? 'fit-badge-tr' : 'fit-badge-in';
+    return `<tr>
+      <td class="${cls}">${f.hb}</td>
+      <td>${f.sb}</td>
+      <td><span class="fit-badge ${badgeCls}">${f.type.toUpperCase()}</span></td>
+      <td><strong>${f.desc}</strong><br><span style="font-size:11.5px;color:#888;">${f.app}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterFit(type) {
+  activeFitFilter = type;
+  document.querySelectorAll('.fit-tab').forEach(t => {
+    t.className = 'fit-tab';
+    if (t.id === 'fit-tab-all'  && type==='all')          t.classList.add('active-all');
+    if (t.id === 'fit-tab-cl'   && type==='clearance')    t.classList.add('active-cl');
+    if (t.id === 'fit-tab-tr'   && type==='transition')   t.classList.add('active-tr');
+    if (t.id === 'fit-tab-in'   && type==='interference') t.classList.add('active-in');
+  });
+  renderFitsTable();
+}
+
+// ─── DIAMETER STEPS ───────────────────────────────────────────────────────────
+const DSTEPS = [
+  [1,3],[3,6],[6,10],[10,18],[18,30],[30,50],[50,80],[80,120],
+  [120,180],[180,250],[250,315],[315,400],[400,500]
+];
+function getDStep(D) {
+  for (const [a,b] of DSTEPS) if (D > a && D <= b) return [a,b];
+  if (D <= 1) return [1,3];
+  return [400,500];
+}
+
+// Standard tolerance unit i (µm), D in mm
+function calcI(D) { return 0.45 * Math.cbrt(D) + 0.001 * D; }
+
+// IT grade tolerance in µm
+const IT_MULT = { 5:7, 6:10, 7:16, 8:25, 9:40, 10:64, 11:100, 12:160, 13:250, 14:400, 15:640, 16:1000 };
+function calcIT(grade, i) {
+  const m = IT_MULT[grade];
+  if (!m) return 0;
+  return Math.round(m * i);
+}
+
+// Fundamental deviations for SHAFTS (returns es in µm)
+// For FD = es (upper deviation of shaft)
+function shaftFD(des, D) {
+  switch(des) {
+    case 'a': return D <= 120 ? -(265 + 1.3*D) : -3.5*D;
+    case 'b': return D <= 160 ? -(140 + 0.85*D) : -1.8*D;
+    case 'c': return D <= 40  ? -52*Math.pow(D,0.2) : -(95 + 0.8*D);
+    case 'd': return -16*Math.pow(D,0.44);
+    case 'e': return -11*Math.pow(D,0.41);
+    case 'f': return -5.5*Math.pow(D,0.41);
+    case 'g': return -2.5*Math.pow(D,0.34);
+    case 'h': return 0;
+    case 'k': return 0;   // simplified (k4-k7 have +0.6*D^(1/3), others 0)
+    case 'm': return null; // ei = IT7-IT6 (computed separately)
+    case 'n': return null; // ei = +5D^0.34
+    case 'p': return null; // ei = IT7+0to5
+    case 's': return null; // ei = IT8+1to4 (D<=50) or IT7+0.4D
+    case 'u': return null; // ei = IT7+D
+    default: return 0;
+  }
+}
+
+// For shafts where FD = ei (lower deviation, positive)
+function shaftEIpos(des, D, it7, it6) {
+  switch(des) {
+    case 'k': return Math.round(0.6 * Math.cbrt(D)); // k4-k7 approx
+    case 'm': return it7 - it6;    // IT7 - IT6
+    case 'n': return Math.round(5 * Math.pow(D, 0.34));
+    case 'p': return it7 + 4;      // IT7 + 0 to 5, use +4 as typical
+    case 's': return D <= 50 ? it7 + 4 + 1 : Math.round(it7 + 0.4*D); // IT8+1to4 simplified
+    case 'u': return it7 + Math.round(D);
+    default: return 0;
+  }
+}
+
+// Fundamental deviation for HOLES (returns EI in µm)
+// H: EI=0. Others: general rule = opposite of shaft same letter (EI = -es_same_letter)
+// Exceptions: K,M,N up to grade 8 use special rule; P to ZC up to grade 0 use special rule
+function holeFD(des, D, it_n, it_nminus1) {
+  // General rule: EI = -es of shaft with same letter BUT OPPOSITE SIGN
+  // For interference holes (P,S,U): ES is negative (fundamental deviation)
+  switch(des) {
+    case 'H': return { EI: 0, isES: false }; // EI=0
+    case 'G': return { EI: Math.round(2.5 * Math.pow(D, 0.34)), isES: false };  // EI = +|es_g|
+    case 'F': return { EI: Math.round(5.5 * Math.pow(D, 0.41)), isES: false };
+    case 'E': return { EI: Math.round(11 * Math.pow(D, 0.41)), isES: false };
+    case 'D': return { EI: Math.round(16 * Math.pow(D, 0.44)), isES: false };
+    case 'C': return { EI: D <= 40 ? Math.round(52*Math.pow(D,0.2)) : Math.round(95+0.8*D), isES: false };
+    case 'K': return { EI: 0, isES: false }; // simplified: EI≈0 for most grades (transition)
+    case 'M': return { EI: -(it_n - it_nminus1), isES: false }; // ES = -(IT_n - IT_{n-1})... simplified use 0
+    case 'N': return { EI: 0, isES: true, ESval: 0 }; // N9+: ES=0; simplified
+    case 'P': return { isES: true, ESval: -(Math.round(16 * calcI(D) * 1) + 4) }; // ES = -(IT7+~4µm) simplified
+    case 'S': return { isES: true, ESval: -(Math.round(25 * calcI(D)) + 2) };
+    case 'U': return { isES: true, ESval: -(Math.round(16 * calcI(D)) + Math.round(D)) };
+    default:  return { EI: 0, isES: false };
+  }
+}
+
+function roundToMicron(v) { return Math.round(v); }
+
+function runCalc() {
+  const basicSize = parseFloat(document.getElementById('calc-size').value);
+  const holeFDdes = document.getElementById('calc-hole-fd').value;
+  const holeGrade = parseInt(document.getElementById('calc-hole-grade').value);
+  const shaftFDdes = document.getElementById('calc-shaft-fd').value;
+  const shaftGrade = parseInt(document.getElementById('calc-shaft-grade').value);
+  const area = document.getElementById('calc-result-area');
+
+  if (!basicSize || basicSize < 1 || basicSize > 500) {
+    area.innerHTML = '<div class="note-box" style="margin-top:14px;">Enter a basic size between 1 and 500 mm to compute limits.</div>';
+    return;
+  }
+
+  const [stepA, stepB] = getDStep(basicSize);
+  const Dstep = Math.sqrt(stepA * stepB);
+  const i = calcI(Dstep);
+  const it_hole = calcIT(holeGrade, i);
+  const it_shaft = calcIT(shaftGrade, i);
+  const it7 = calcIT(7, i);
+  const it6 = calcIT(6, i);
+
+  // SHAFT limits
+  let es_µm, ei_µm;
+  const sfdes = shaftFDdes;
+  const esRaw = shaftFD(sfdes, basicSize);
+  if (esRaw !== null) {
+    es_µm = roundToMicron(esRaw);
+    ei_µm = es_µm - it_shaft;
+  } else {
+    // FD is ei (positive, lower deviation)
+    ei_µm = shaftEIpos(sfdes, basicSize, it7, it6);
+    es_µm = ei_µm + it_shaft;
+  }
+  const d_max = basicSize + es_µm/1000;
+  const d_min = basicSize + ei_µm/1000;
+
+  // HOLE limits
+  const hfd = holeFD(holeFDdes, basicSize, it_hole, calcIT(holeGrade-1, i));
+  let EI_µm, ES_µm;
+  if (hfd.isES) {
+    ES_µm = roundToMicron(hfd.ESval !== undefined ? hfd.ESval : 0);
+    EI_µm = ES_µm - it_hole;
+  } else {
+    EI_µm = roundToMicron(hfd.EI);
+    ES_µm = EI_µm + it_hole;
+  }
+  const D_max = basicSize + ES_µm/1000;
+  const D_min = basicSize + EI_µm/1000;
+
+  // Fit determination
+  const minClearance = D_min - d_max;   // +ve = clearance, -ve = interference
+  const maxClearance = D_max - d_min;
+
+  let fitType, fitColor, fitBg, fitDesc;
+  if (minClearance >= 0) {
+    fitType = 'CLEARANCE FIT';
+    fitColor = '#2d6a2d';
+    fitBg = '#eaf4ea';
+    fitDesc = `Min clearance = ${(minClearance*1000).toFixed(1)} µm &nbsp;|&nbsp; Max clearance = ${(maxClearance*1000).toFixed(1)} µm`;
+  } else if (maxClearance <= 0) {
+    fitType = 'INTERFERENCE FIT';
+    fitColor = '#9b2c2c';
+    fitBg = '#fdecea';
+    fitDesc = `Min interference = ${Math.abs(maxClearance*1000).toFixed(1)} µm &nbsp;|&nbsp; Max interference = ${Math.abs(minClearance*1000).toFixed(1)} µm`;
+  } else {
+    fitType = 'TRANSITION FIT';
+    fitColor = '#7a6000';
+    fitBg = '#fefce8';
+    fitDesc = `Max clearance = ${(maxClearance*1000).toFixed(1)} µm &nbsp;|&nbsp; Max interference = ${Math.abs(minClearance*1000).toFixed(1)} µm`;
+  }
+
+  // Visual tolerance zone SVG
+  const svgH = 160;
+  const scale = 2.5; // pixels per µm for visual
+  const cx = 250; // zero line x
+  const yHole = 50, yShaft = 110, yH = 28, yS = 28;
+  const hEI_px = EI_µm * scale * 0.3;
+  const hES_px = ES_µm * scale * 0.3;
+  const sEI_px = ei_µm * scale * 0.3;
+  const sES_px = es_µm * scale * 0.3;
+
+  area.innerHTML = `
+    <div class="calc-result">
+      <div class="calc-result-title">Results — ${basicSize} mm &nbsp; <span style="font-family:'Courier New',monospace;font-size:12px;">${holeFDdes}${holeGrade} / ${shaftFDdes}${shaftGrade}</span></div>
+      <div style="margin-bottom:12px;">
+        <span class="calc-fit-badge" style="background:${fitBg};color:${fitColor};border:1px solid ${fitColor}44;">${fitType}</span>
+        <span style="font-size:12.5px;color:#666;font-family:'Courier New',monospace;">${fitDesc}</span>
+      </div>
+
+      <div class="calc-rows">
+        <div class="calc-cell">
+          <div class="calc-cell-label">Diameter Step</div>
+          <div class="calc-cell-value">${stepA}–${stepB} mm</div>
+        </div>
+        <div class="calc-cell">
+          <div class="calc-cell-label">D (geometric mean)</div>
+          <div class="calc-cell-value">${Dstep.toFixed(3)} mm</div>
+        </div>
+        <div class="calc-cell">
+          <div class="calc-cell-label">Tolerance Unit i</div>
+          <div class="calc-cell-value">${i.toFixed(4)} µm</div>
+        </div>
+        <div class="calc-cell">
+          <div class="calc-cell-label">IT${holeGrade} (hole)</div>
+          <div class="calc-cell-value">${it_hole} µm</div>
+        </div>
+        <div class="calc-cell">
+          <div class="calc-cell-label">IT${shaftGrade} (shaft)</div>
+          <div class="calc-cell-value">${it_shaft} µm</div>
+        </div>
+        <div class="calc-cell">
+          <div class="calc-cell-label">IT7 / IT6</div>
+          <div class="calc-cell-value">${it7} / ${it6} µm</div>
+        </div>
+      </div>
+
+      <div class="calc-rows" style="margin-top:12px;">
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">ES (hole upper dev.)</div>
+          <div class="calc-cell-value">${ES_µm >= 0 ? '+' : ''}${ES_µm} µm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">EI (hole lower dev.)</div>
+          <div class="calc-cell-value">${EI_µm >= 0 ? '+' : ''}${EI_µm} µm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">D_max (hole)</div>
+          <div class="calc-cell-value">${D_max.toFixed(3)} mm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">D_min (hole)</div>
+          <div class="calc-cell-value">${D_min.toFixed(3)} mm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">es (shaft upper dev.)</div>
+          <div class="calc-cell-value">${es_µm >= 0 ? '+' : ''}${es_µm} µm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">ei (shaft lower dev.)</div>
+          <div class="calc-cell-value">${ei_µm >= 0 ? '+' : ''}${ei_µm} µm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">d_max (shaft)</div>
+          <div class="calc-cell-value">${d_max.toFixed(3)} mm</div>
+        </div>
+        <div class="calc-cell highlight">
+          <div class="calc-cell-label">d_min (shaft)</div>
+          <div class="calc-cell-value">${d_min.toFixed(3)} mm</div>
+        </div>
+      </div>
+
+      <div class="calc-steps">
+        i = 0.45 × ∛${Dstep.toFixed(3)} + 0.001 × ${Dstep.toFixed(3)} = ${i.toFixed(4)} µm<br>
+        IT${holeGrade} = ${IT_MULT[holeGrade]}i = ${IT_MULT[holeGrade]} × ${i.toFixed(4)} = <strong>${it_hole} µm</strong><br>
+        IT${shaftGrade} = ${IT_MULT[shaftGrade]}i = ${IT_MULT[shaftGrade]} × ${i.toFixed(4)} = <strong>${it_shaft} µm</strong><br>
+        Hole ${holeFDdes}${holeGrade}: EI = ${EI_µm >= 0 ? '+' : ''}${EI_µm} µm → D_max = ${D_max.toFixed(3)}, D_min = ${D_min.toFixed(3)} mm<br>
+        Shaft ${shaftFDdes}${shaftGrade}: es = ${es_µm >= 0 ? '+' : ''}${es_µm} µm, ei = ${ei_µm >= 0 ? '+' : ''}${ei_µm} µm → d_max = ${d_max.toFixed(3)}, d_min = ${d_min.toFixed(3)} mm<br>
+        <strong>→ ${fitType}: ${fitDesc}</strong>
+      </div>
+    </div>`;
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+renderSymbols();
+renderModifiers();
+renderRules();
+renderZones();
+renderGlossary();
+renderDatums();
+renderITTable();
+renderFitsTable();
+</script>
+</body>
+</html>
