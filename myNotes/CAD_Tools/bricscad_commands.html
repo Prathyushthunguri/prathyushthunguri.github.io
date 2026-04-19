@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<title>CAD Command Reference</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f4f4f4; --panel:#ffffff; --panel2:#f9f9f9; --border:#cccccc;
+  --accent:#cc0000; --accent2:#b85c00; --accent3:#1a6496;
+  --text:#333333; --text-dim:#666666;
+  --green:#2d6a2d; --green-bg:#eaf4ea; --red:#cc0000; --red-bg:#fdecea; --warn-bg:#fff8f2;
+  --font-body:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --font-mono:'Courier New',Courier,monospace;
+  --brics:#1a5fa8;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+
+.top-navbar {
+  position:fixed; top:0; width:100%; background:#222; color:#fff;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 20px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.navbar-left { font-size:18px; font-weight:bold; display:flex; align-items:center; gap:10px; }
+.navbar-left .bc-badge {
+  background:#1a5fa8; color:#fff; font-size:11px; font-weight:700;
+  padding:3px 8px; border-radius:3px; letter-spacing:1px;
+}
+.navbar-right button {
+  background:#444; color:#fff; border:none; padding:7px 14px;
+  cursor:pointer; font-size:13px; border-radius:3px;
+}
+.navbar-right button:hover { background:#1a5fa8; }
+
+.container {
+  max-width:1280px; margin:72px auto 40px; padding:20px;
+  background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.1); border-radius:12px;
+}
+@media(max-width:768px){.container{margin:80px 10px 20px;padding:15px;}}
+
+.tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:20px; border-bottom:2px solid #ccc; padding:0; }
+.tab-btn {
+  background:#eee; color:#444; border:1px solid #ccc; border-bottom:none;
+  padding:8px 14px; cursor:pointer; font-size:13px; border-radius:6px 6px 0 0;
+  font-family:var(--font-body); transition:background .2s;
+}
+.tab-btn:hover:not(.active){background:#ddd;color:#222;}
+.tab-btn.active{background:#fff;color:#222;font-weight:bold;border-bottom:2px solid #fff;margin-bottom:-2px;}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+.card-title{
+  font-size:13px;font-weight:bold;color:#222;margin-bottom:16px;padding-bottom:10px;
+  border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:8px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+
+.section-label{
+  font-size:12px;font-weight:bold;color:#444;text-transform:uppercase;letter-spacing:1px;
+  margin:20px 0 12px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid #ddd;padding-bottom:6px;
+}
+
+/* Search */
+.search-bar { display:flex; gap:10px; margin-bottom:16px; }
+.search-bar input {
+  flex:1; padding:10px 14px; border:1px solid #ccc; border-radius:4px;
+  font-size:14px; font-family:var(--font-body); outline:none;
+}
+.search-bar input:focus { border-color:var(--brics); box-shadow:0 0 0 2px rgba(26,95,168,0.1); }
+
+/* Filter bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.filter-btn{
+  padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;
+  border:1px solid #ccc;background:#fff;cursor:pointer;transition:all .2s;
+  text-transform:uppercase;letter-spacing:.3px;
+}
+.filter-btn:hover{border-color:#999;}
+.filter-btn.active-f{background:#222;color:#fff;border-color:#222;}
+
+/* Command cards grid */
+.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.cmd-card{
+  background:#fafafa;border:1px solid var(--border);border-radius:6px;
+  padding:16px;cursor:pointer;transition:all .2s;position:relative;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.cmd-card:hover{border-color:#999;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.12);}
+.cmd-card.selected{border-color:var(--brics);background:#f0f6ff;border-left:4px solid var(--brics);}
+.cmd-card .cc-cmd{
+  font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--brics);
+  margin-bottom:4px;letter-spacing:.5px;
+}
+.cmd-card .cc-alias{font-size:11px;color:var(--text-dim);font-family:var(--font-mono);margin-bottom:6px;}
+.cmd-card .cc-desc{font-size:12px;color:var(--text-dim);line-height:1.5;}
+.cmd-card .cc-cat{
+  display:inline-block;margin-top:8px;font-size:10px;font-weight:bold;
+  text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid #ccc;
+}
+.cmd-card .cc-check{
+  position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;
+  background:var(--brics);display:none;place-items:center;font-size:11px;color:#fff;
+}
+.cmd-card.selected .cc-check{display:grid;}
+
+/* Category colors */
+.cat-draw{background:#e8f4fd;color:#1a6496;border-color:#b8d8ee;}
+.cat-modify{background:#fdecea;color:#9b2c2c;border-color:#f0b8b8;}
+.cat-dim{background:#fefce8;color:#7a6000;border-color:#ddd09a;}
+.cat-layer{background:var(--green-bg);color:var(--green);border-color:#b0d4b0;}
+.cat-block{background:#f3f0ff;color:#4a3d8f;border-color:#c8c0f0;}
+.cat-view{background:#fff0f6;color:#862e6e;border-color:#e8b4d4;}
+.cat-3d{background:#fff8f2;color:#7a3500;border-color:#f0c8a0;}
+.cat-inquiry{background:#f0fff4;color:#1a4d2e;border-color:#a0d4b4;}
+.cat-settings{background:#f5f5f5;color:#555;border-color:#bbb;}
+.cat-lisp{background:#1a5fa8;color:#fff;border-color:#1a5fa8;}
+
+/* Detail panel */
+#cmdDetail{margin-top:20px;display:none;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr;}}
+
+/* Prompt sequence */
+.prompt-seq{margin-top:14px;}
+.prompt-step{
+  display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;
+  padding:10px 14px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:6px;
+  border-left:3px solid var(--brics);
+}
+.step-num{
+  min-width:24px;height:24px;border-radius:50%;background:var(--brics);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.step-content{flex:1;}
+.step-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:3px;}
+.step-text{font-size:13px;color:var(--text);}
+.step-input{
+  display:inline-block;background:#fff;border:1px solid #ccc;border-radius:3px;
+  padding:2px 8px;font-family:var(--font-mono);font-size:13px;color:var(--brics);
+  font-weight:700;margin-top:2px;
+}
+.step-tip{font-size:11px;color:var(--text-dim);margin-top:4px;font-style:italic;}
+
+/* Option pills */
+.option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.opt-pill{
+  padding:3px 10px;border-radius:3px;font-size:11px;font-weight:700;
+  background:#e8f4fd;color:#1a6496;border:1px solid #b8d8ee;
+  font-family:var(--font-mono);cursor:default;
+}
+.opt-pill.key{background:#222;color:#fff;border-color:#222;}
+
+/* Sysvar table */
+.sysvar-table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px;}
+.sysvar-table th{background:#f2f2f2;font-weight:bold;color:var(--accent);padding:7px 10px;border:1px solid #ccc;text-align:left;}
+.sysvar-table td{border:1px solid #ccc;padding:6px 10px;}
+.sysvar-table tr:nth-child(even){background:#fafafa;}
+.sysvar-table .sv-name{font-family:var(--font-mono);color:var(--brics);font-weight:700;}
+.sysvar-table .sv-val{font-family:var(--font-mono);color:var(--accent2);}
+
+/* Quick ref table */
+.qref-table{border-collapse:collapse;width:100%;font-size:13px;}
+.qref-table th{background:#222;color:#fff;padding:8px 12px;border:1px solid #444;text-align:left;font-size:12px;}
+.qref-table td{border:1px solid #ddd;padding:7px 12px;}
+.qref-table tr:nth-child(even){background:#fafafa;}
+.qref-table .cmd-mono{font-family:var(--font-mono);color:var(--brics);font-weight:700;font-size:14px;}
+.qref-table .alias-mono{font-family:var(--font-mono);color:var(--accent2);font-size:12px;}
+
+/* Workflow steps (tutorial tab) */
+.wf-step{
+  padding:16px 18px;border-radius:6px;border:1px solid var(--border);
+  background:#fafafa;margin-bottom:12px;border-left:4px solid var(--brics);
+}
+.wf-step .wf-num{font-size:11px;font-weight:700;color:var(--brics);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.wf-step .wf-title{font-size:14px;font-weight:700;color:#222;margin-bottom:6px;}
+.wf-step .wf-body{font-size:13px;color:var(--text-dim);line-height:1.7;}
+.wf-step .wf-cmd{
+  display:inline-block;background:#222;color:#0f0;border-radius:3px;
+  padding:2px 10px;font-family:var(--font-mono);font-size:13px;margin:2px 0;
+}
+
+/* Formula / tip box */
+.tip-box{
+  background:#f2f2f2;border:1px solid #ddd;border-left:4px solid var(--brics);
+  border-radius:0 4px 4px 0;padding:10px 14px;font-size:13px;
+  color:var(--brics);margin-bottom:12px;font-family:var(--font-mono);line-height:1.8;
+}
+
+.field{margin-bottom:14px;}
+.field label{display:block;margin-bottom:5px;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.field select,.field input{
+  width:100%;background:#fff;border:1px solid #ccc;color:var(--text);
+  font-family:var(--font-mono);font-size:14px;padding:8px 10px;border-radius:4px;outline:none;
+}
+.field select:focus,.field input:focus{border-color:var(--brics);}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;font-family:var(--font-body);font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:4px;transition:all .2s;}
+.btn-primary{background:var(--brics);color:#fff;}
+.btn-primary:hover{background:#155090;}
+.btn-secondary{background:#eee;color:#444;border:1px solid #ccc;}
+.btn-secondary:hover{background:#ddd;}
+
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#f0f0f0;}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    <span class="bc-badge">BricsCAD</span>
+    Command Reference & Workflow Guide
+  </div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('library')">① Command Library</button>
+    <button class="tab-btn" onclick="switchTab('quickref')">② Quick Reference</button>
+    <button class="tab-btn" onclick="switchTab('workflows')">③ Workflows</button>
+    <button class="tab-btn" onclick="switchTab('sysvars')">④ System Variables</button>
+    <button class="tab-btn" onclick="switchTab('shortcuts')">⑤ Shortcuts & Aliases</button>
+    <button class="tab-btn" onclick="switchTab('tips')">⑥ Tips & Best Practices</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 1 — COMMAND LIBRARY
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-library">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="🔍  Search command name, alias, or description…" oninput="filterCommands()">
+    </div>
+    <div class="filter-bar" id="catFilterBar"></div>
+    <div class="cmd-grid" id="cmdGrid"></div>
+    <div class="card" id="cmdDetail" style="margin-top:20px;display:none;">
+      <div class="card-title" id="cmdDetailTitle">Command Detail</div>
+      <div id="cmdDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 2 — QUICK REFERENCE TABLE
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-quickref">
+    <div class="search-bar">
+      <input type="text" id="qrefSearch" placeholder="🔍  Filter table…" oninput="filterQref()">
+    </div>
+    <div class="filter-bar" id="qrefFilterBar"></div>
+    <div style="overflow-x:auto;">
+      <table class="qref-table" id="qrefTable">
+        <thead>
+          <tr>
+            <th>Command</th>
+            <th>Alias / Shortcut</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Key Prompts</th>
+          </tr>
+        </thead>
+        <tbody id="qrefBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 3 — WORKFLOWS
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-workflows">
+    <div class="section-label">Common BricsCAD Workflows — Step by Step</div>
+    <div class="field" style="max-width:400px;margin-bottom:20px;">
+      <label>Select Workflow</label>
+      <select id="wfSelect" onchange="renderWorkflow()">
+        <option value="draw_2d">Draw a 2D Part from Scratch</option>
+        <option value="block_create">Create and Insert a Block</option>
+        <option value="xref">Attach and Manage an XRef</option>
+        <option value="hatch">Apply Hatch to a Region</option>
+        <option value="dim_style">Set Up a Dimension Style</option>
+        <option value="layout_print">Layout & Print to Scale</option>
+        <option value="3d_solid">Model a 3D Solid Part</option>
+        <option value="array">Create a Rectangular / Polar Array</option>
+        <option value="offset_fillet">Offset and Fillet a Profile</option>
+        <option value="lisp_load">Load and Run an AutoLISP Routine</option>
+        <option value="title_block">Fill a Title Block via Attributes</option>
+        <option value="layer_manage">Set Up and Manage Layers</option>
+      </select>
+    </div>
+    <div id="workflowContent"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 4 — SYSTEM VARIABLES
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-sysvars">
+    <div class="tip-box">SETVAR → type variable name → Enter new value &nbsp;|&nbsp; Or just type variable name directly at command prompt</div>
+    <div class="search-bar">
+      <input type="text" id="sysvarSearch" placeholder="🔍  Search system variables…" oninput="filterSysvars()">
+    </div>
+    <div class="filter-bar" id="sysvarFilterBar"></div>
+    <div style="overflow-x:auto;margin-top:4px;">
+      <table class="sysvar-table" id="sysvarTable">
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>Default</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Description & Values</th>
+          </tr>
+        </thead>
+        <tbody id="sysvarBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 5 — SHORTCUTS & ALIASES
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-shortcuts">
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">⌨️ Keyboard Shortcuts (Function Keys)</div>
+        <table class="sysvar-table">
+          <tr><th>Key</th><th>Action</th></tr>
+          <tr><td class="sv-name">F1</td><td>BricsCAD Help</td></tr>
+          <tr><td class="sv-name">F2</td><td>Toggle Command History window</td></tr>
+          <tr><td class="sv-name">F3</td><td>Toggle OSNAP on/off</td></tr>
+          <tr><td class="sv-name">F4</td><td>Toggle 3D OSNAP</td></tr>
+          <tr><td class="sv-name">F5</td><td>Cycle Isoplane (Left / Top / Right)</td></tr>
+          <tr><td class="sv-name">F6</td><td>Toggle Dynamic UCS</td></tr>
+          <tr><td class="sv-name">F7</td><td>Toggle Grid display</td></tr>
+          <tr><td class="sv-name">F8</td><td>Toggle ORTHO mode</td></tr>
+          <tr><td class="sv-name">F9</td><td>Toggle SNAP mode</td></tr>
+          <tr><td class="sv-name">F10</td><td>Toggle Polar tracking</td></tr>
+          <tr><td class="sv-name">F11</td><td>Toggle Object Snap Tracking</td></tr>
+          <tr><td class="sv-name">F12</td><td>Toggle Dynamic Input (DYN)</td></tr>
+          <tr><td class="sv-name">Esc</td><td>Cancel current command</td></tr>
+          <tr><td class="sv-name">Enter / Space</td><td>Confirm / Repeat last command</td></tr>
+          <tr><td class="sv-name">Ctrl+Z</td><td>Undo</td></tr>
+          <tr><td class="sv-name">Ctrl+Y</td><td>Redo</td></tr>
+          <tr><td class="sv-name">Ctrl+S</td><td>Save</td></tr>
+          <tr><td class="sv-name">Ctrl+C</td><td>Copy to clipboard</td></tr>
+          <tr><td class="sv-name">Ctrl+V</td><td>Paste from clipboard</td></tr>
+          <tr><td class="sv-name">Ctrl+Shift+C</td><td>Copy with base point</td></tr>
+          <tr><td class="sv-name">Ctrl+Shift+V</td><td>Paste as block</td></tr>
+          <tr><td class="sv-name">Delete</td><td>Erase selected</td></tr>
+          <tr><td class="sv-name">Ctrl+A</td><td>Select All</td></tr>
+          <tr><td class="sv-name">Ctrl+1</td><td>Toggle Properties panel</td></tr>
+          <tr><td class="sv-name">Ctrl+4</td><td>Toggle Sheet Set manager</td></tr>
+          <tr><td class="sv-name">Ctrl+9</td><td>Toggle Command Bar</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">🖱️ Mouse & Pointer Shortcuts</div>
+        <table class="sysvar-table">
+          <tr><th>Action</th><th>Result</th></tr>
+          <tr><td>Scroll wheel up/down</td><td>Zoom in / out at cursor</td></tr>
+          <tr><td>Middle-click + drag</td><td>Pan</td></tr>
+          <tr><td>Double-click scroll wheel</td><td>Zoom extents</td></tr>
+          <tr><td>Left-click drag (L→R)</td><td>Window selection (fully inside)</td></tr>
+          <tr><td>Left-click drag (R→L)</td><td>Crossing selection (intersecting)</td></tr>
+          <tr><td>Right-click (no selection)</td><td>Repeat last command</td></tr>
+          <tr><td>Right-click (with selection)</td><td>Context menu</td></tr>
+          <tr><td>Shift + click</td><td>Toggle entity in/out of selection</td></tr>
+          <tr><td>Ctrl+click on entity</td><td>Select subentity (face/edge)</td></tr>
+          <tr><td>Double-click block</td><td>Edit block in-place (REFEDIT)</td></tr>
+          <tr><td>Double-click text</td><td>DDEDIT / TEXTEDIT</td></tr>
+          <tr><td>Double-click hatch</td><td>Edit hatch pattern</td></tr>
+          <tr><td>Double-click dim</td><td>Edit dimension text</td></tr>
+        </table>
+
+        <div class="card-title" style="margin-top:20px;">📌 OSNAP Override (Tap while running)</div>
+        <table class="sysvar-table">
+          <tr><th>Type</th><th>Snaps to</th></tr>
+          <tr><td class="sv-name">END</td><td>Endpoint</td></tr>
+          <tr><td class="sv-name">MID</td><td>Midpoint</td></tr>
+          <tr><td class="sv-name">CEN</td><td>Centre</td></tr>
+          <tr><td class="sv-name">NOD</td><td>Node (point)</td></tr>
+          <tr><td class="sv-name">QUA</td><td>Quadrant</td></tr>
+          <tr><td class="sv-name">INT</td><td>Intersection</td></tr>
+          <tr><td class="sv-name">INS</td><td>Insertion point</td></tr>
+          <tr><td class="sv-name">PER</td><td>Perpendicular</td></tr>
+          <tr><td class="sv-name">TAN</td><td>Tangent</td></tr>
+          <tr><td class="sv-name">NEA</td><td>Nearest</td></tr>
+          <tr><td class="sv-name">APP</td><td>Apparent intersection</td></tr>
+          <tr><td class="sv-name">PAR</td><td>Parallel</td></tr>
+          <tr><td class="sv-name">NONE</td><td>Suppress all snaps temporarily</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 Command Aliases (PGP File — most common)</div>
+      <div class="tip-box">Edit aliases: Tools → Customize → Command aliases (PGP) &nbsp;|&nbsp; File: default.pgp in BricsCAD support folder</div>
+      <div style="overflow-x:auto;">
+        <table class="qref-table">
+          <thead><tr><th>Alias</th><th>Full Command</th><th>Alias</th><th>Full Command</th><th>Alias</th><th>Full Command</th></tr></thead>
+          <tbody id="aliasBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TAB 6 — TIPS & BEST PRACTICES
+  ════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-tips">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">⚡ Productivity Tips</div>
+          <div id="tipsContent"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📐 Drawing Setup Checklist</div>
+          <table class="sysvar-table">
+            <tr><th>Setting</th><th>Command / Action</th><th>Recommended</th></tr>
+            <tr><td>Units</td><td class="sv-name">UNITS</td><td>Decimal, Precision 0.00, mm</td></tr>
+            <tr><td>Limits</td><td class="sv-name">LIMITS</td><td>Match paper size × scale</td></tr>
+            <tr><td>Grid</td><td class="sv-name">GRID / F7</td><td>Adaptive, match snap spacing</td></tr>
+            <tr><td>Snap</td><td class="sv-name">SNAP / F9</td><td>1 mm or 5 mm typical</td></tr>
+            <tr><td>Linetype scale</td><td class="sv-name">LTSCALE</td><td>= plot scale (e.g. 50 for 1:50)</td></tr>
+            <tr><td>Text style</td><td class="sv-name">STYLE</td><td>ISO standard font, height 0</td></tr>
+            <tr><td>Dim style</td><td class="sv-name">DIMSTYLE</td><td>ISO-25 based, DIMSCALE=plot scale</td></tr>
+            <tr><td>Layer 0</td><td class="sv-name">LAYER</td><td>Never draw on layer 0 (blocks only)</td></tr>
+            <tr><td>Lineweight</td><td class="sv-name">LWDISPLAY</td><td>ON for layout check</td></tr>
+            <tr><td>Plot style</td><td class="sv-name">PSTYLEMODE</td><td>CTB (colour-dependent) recommended</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">🏗️ Layer Best Practices</div>
+          <table class="sysvar-table">
+            <tr><th>Layer Name</th><th>Colour</th><th>Use</th></tr>
+            <tr><td class="sv-name">0</td><td>White/7</td><td>Block geometry only — never general drawing</td></tr>
+            <tr><td class="sv-name">VISIBLE</td><td>White/7</td><td>Main visible outlines</td></tr>
+            <tr><td class="sv-name">HIDDEN</td><td>Yellow/2</td><td>Hidden lines (dashed)</td></tr>
+            <tr><td class="sv-name">CENTRE</td><td>Red/1</td><td>Centrelines (chain)</td></tr>
+            <tr><td class="sv-name">DIM</td><td>Cyan/4</td><td>Dimensions</td></tr>
+            <tr><td class="sv-name">TEXT</td><td>Green/3</td><td>Notes and labels</td></tr>
+            <tr><td class="sv-name">HATCH</td><td>Magenta/6</td><td>Section hatch patterns</td></tr>
+            <tr><td class="sv-name">BORDER</td><td>White/7</td><td>Title block and border (thick)</td></tr>
+            <tr><td class="sv-name">VIEWPORT</td><td>9 (grey)</td><td>Layout viewports — no-plot</td></tr>
+            <tr><td class="sv-name">CONSTRUCTION</td><td>9 (grey)</td><td>Construction geometry — no-plot</td></tr>
+            <tr><td class="sv-name">XREF</td><td>253</td><td>Received XRef — do not modify</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 Common Mistakes & Fixes</div>
+          <div id="mistakesContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+  authDomain: "personal-workspace-d39d0.firebaseapp.com",
+  projectId: "personal-workspace-d39d0",
+  appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, (user) => {
+  if (!user) {
+      window.location.href = "../login.html"; // Redirect if not logged in
+  }
+  });
+</script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA — COMMANDS
+// ══════════════════════════════════════════════════════════════
+const commands = [
+
+// ── DRAW ─────────────────────────────────────────────────────
+{ id:'line', cmd:'LINE', alias:'L', cat:'draw', catLabel:'DRAW',
+  desc:'Draw straight line segments between picked points.',
+  fullDesc:'Draws one or more connected line segments. Each segment is an independent entity. Press Enter or Close to end.',
+  steps:[
+    {label:'Activate',input:'L',action:'Type L + Enter, or click Draw → Line'},
+    {label:'First point',input:'click / coords',action:'Click start point OR type X,Y coordinates (e.g. 0,0) and Enter'},
+    {label:'Next point',input:'click / @dx,dy',action:'Click next point OR type relative coords @100,0 for 100 mm horizontal'},
+    {label:'Continue',input:'click repeatedly',action:'Keep clicking for more segments — all connected'},
+    {label:'Close / End',input:'C or Enter',action:'Type C + Enter to close polygon back to start, or just Enter to end open'},
+  ],
+  options:[{key:'C',desc:'Close — connects last point back to first'},{key:'U',desc:'Undo last segment without exiting'},{key:'Enter',desc:'End command'}],
+  tips:['ORTHO (F8) forces perfectly horizontal/vertical lines','Polar tracking (F10) snaps to set angles','@distance<angle syntax: @100<45 draws 100 mm at 45°','Use PEDIT or JOIN to convert connected lines to polyline'],
+  related:['PLINE','XLINE','RAY','MLINE']
+},
+
+{ id:'pline', cmd:'PLINE', alias:'PL', cat:'draw', catLabel:'DRAW',
+  desc:'Draw 2D polyline — connected segments with optional width and arcs.',
+  fullDesc:'Creates a 2D polyline: a single entity made of connected line and arc segments. Can have a width. PEDIT can modify it later.',
+  steps:[
+    {label:'Activate',input:'PL',action:'Type PL + Enter'},
+    {label:'Start point',input:'click / coords',action:'Pick or type start point'},
+    {label:'Specify next point',input:'click / @dx,dy',action:'Pick endpoint of first segment OR use relative coords'},
+    {label:'Arc mode',input:'A',action:'Type A + Enter to switch to Arc segment mode within the polyline'},
+    {label:'Line mode',input:'L',action:'Type L + Enter to switch back to Line segment mode'},
+    {label:'Set width',input:'W',action:'Type W + Enter → specify start width → end width (taper possible)'},
+    {label:'Close / End',input:'C or Enter',action:'C to close back to start, Enter to end'},
+  ],
+  options:[{key:'A',desc:'Switch to Arc segment'},{key:'L',desc:'Switch to Line segment'},{key:'W',desc:'Set segment width'},{key:'H',desc:'Set halfwidth'},{key:'C',desc:'Close polyline'},{key:'U',desc:'Undo last segment'}],
+  tips:['Hatching works best on closed polylines','BOUNDARY command auto-creates closed plines from enclosed areas','EXPLODE breaks pline into individual lines/arcs','OFFSET works on full polyline in one operation'],
+  related:['PEDIT','EXPLODE','JOIN','BOUNDARY','SPLINE']
+},
+
+{ id:'circle', cmd:'CIRCLE', alias:'C', cat:'draw', catLabel:'DRAW',
+  desc:'Draw a circle by centre-radius, 2P, 3P, or TTR.',
+  fullDesc:'Creates a full circle. Default method is centre + radius. Alternative methods allow construction from tangent geometry.',
+  steps:[
+    {label:'Activate',input:'C',action:'Type C + Enter'},
+    {label:'Centre point',input:'click / coords',action:'Pick centre point. OR type 2P for 2-point diameter, 3P for 3-point, TTR for tangent-tangent-radius'},
+    {label:'Radius',input:'number or click',action:'Type radius value (e.g. 25) + Enter, OR click a point at desired radius'},
+    {label:'Diameter',input:'D then number',action:'Type D + Enter to switch to diameter input instead of radius'},
+  ],
+  options:[{key:'2P',desc:'Define by 2 endpoints of diameter'},{key:'3P',desc:'Define by 3 points on circumference'},{key:'TTR',desc:'Tangent-Tangent-Radius (tangent to 2 existing entities)'},{key:'TTTAN',desc:'Tangent-Tangent-Tangent'}],
+  tips:['CEN OSNAP is essential for picking circle centres accurately','For concentric circles: draw first, then OFFSET','To convert to arc: use TRIM','CIRCLE can snap tangent to lines/arcs with TTR'],
+  related:['ARC','ELLIPSE','DONUT','OFFSET']
+},
+
+{ id:'arc', cmd:'ARC', alias:'A', cat:'draw', catLabel:'DRAW',
+  desc:'Draw an arc by various 3-point combinations.',
+  fullDesc:'Creates a circular arc. Many construction methods available. Default is 3-point (start, on-arc, end). Arcs drawn counterclockwise by default.',
+  steps:[
+    {label:'Activate',input:'A',action:'Type A + Enter'},
+    {label:'Start point',input:'click',action:'Pick start point of arc'},
+    {label:'Second point (3P default)',input:'click',action:'Pick a point the arc passes through (on the arc)'},
+    {label:'End point',input:'click',action:'Pick end point — arc drawn through all 3 points'},
+    {label:'OR use options',input:'C / E / R',action:'After start: C = specify Centre, E = specify End before centre, R = Radius method'},
+  ],
+  options:[{key:'C',desc:'Specify Centre point after start'},{key:'E',desc:'Specify End point'},{key:'R',desc:'Specify Radius'},{key:'A',desc:'Specify included Angle'},{key:'L',desc:'Chord Length'}],
+  tips:['Press Enter at start prompt to start arc tangent from last line/arc endpoint','ARC direction is always CCW — if wrong, use MIRROR or reverse by Chord/Angle method','For fillets: FILLET command is faster than drawing arcs manually','PEDIT can convert arcs in polylines'],
+  related:['CIRCLE','FILLET','ELLIPSE','PLINE']
+},
+
+{ id:'rectangle', cmd:'RECTANG', alias:'REC', cat:'draw', catLabel:'DRAW',
+  desc:'Draw a rectangle — closed polyline — by two corners or dimensions.',
+  fullDesc:'Creates a rectangular closed polyline. Options allow chamfer, fillet, elevation, and thickness. Single entity.',
+  steps:[
+    {label:'Activate',input:'REC',action:'Type REC + Enter'},
+    {label:'First corner',input:'click / coords',action:'Pick first corner point OR type D for dimensions method'},
+    {label:'Second corner',input:'click / @w,h',action:'Pick opposite corner OR type relative @width,height (e.g. @100,60)'},
+    {label:'Dimension method',input:'D',action:'Type D → enter width → enter height → pick insertion point'},
+  ],
+  options:[{key:'C',desc:'Chamfer — set chamfer distances before drawing'},{key:'F',desc:'Fillet — set fillet radius before drawing'},{key:'E',desc:'Elevation (3D)'},{key:'T',desc:'Thickness (3D extrusion)'},{key:'W',desc:'Linewidth of the rectangle'}],
+  tips:['Result is a closed polyline — use EXPLODE for individual segments','@w,h works from any starting corner — use negative values for other quadrants','CHAMFER and FILLET options apply to all 4 corners uniformly'],
+  related:['PLINE','POLYGON','EXPLODE']
+},
+
+{ id:'polygon', cmd:'POLYGON', alias:'POL', cat:'draw', catLabel:'DRAW',
+  desc:'Draw a regular polygon (3–1024 sides).',
+  fullDesc:'Creates a regular closed polyline with equal sides. Defined by centre + circumscribed/inscribed circle, or by edge.',
+  steps:[
+    {label:'Activate',input:'POL',action:'Type POL + Enter'},
+    {label:'Number of sides',input:'number',action:'Type number of sides (e.g. 6 for hexagon) + Enter'},
+    {label:'Centre / Edge',input:'click or E',action:'Pick centre point, OR type E to define by edge length'},
+    {label:'Inscribed or Circumscribed',input:'I or C',action:'I = inscribed in circle (vertex on circle), C = circumscribed about circle (midpoint of side on circle)'},
+    {label:'Radius',input:'number or click',action:'Type radius of reference circle + Enter'},
+  ],
+  options:[{key:'I',desc:'Inscribed in circle — vertices touch the circle'},{key:'C',desc:'Circumscribed about circle — flat sides touch the circle'},{key:'E',desc:'Define by edge — pick two endpoints of one side'}],
+  tips:['Hexagon for bolt heads: C (circumscribed) with radius = spanner size / 2 (across flats)','Polygon is a closed polyline — EXPLODE for individual sides','For irregular polygons: use PLINE'],
+  related:['RECTANG','PLINE','CIRCLE']
+},
+
+{ id:'spline', cmd:'SPLINE', alias:'SPL', cat:'draw', catLabel:'DRAW',
+  desc:'Draw a smooth NURBS spline curve through or near control points.',
+  fullDesc:'Creates a NURBS (Non-Uniform Rational B-Spline) curve. Fit points pass through points; Control Frame pulls the curve.',
+  steps:[
+    {label:'Activate',input:'SPL',action:'Type SPL + Enter'},
+    {label:'Method',input:'M',action:'Type M → choose Fit (through points) or CV (control vertices)'},
+    {label:'Pick points',input:'click repeatedly',action:'Click all the spline points — preview shows live curve'},
+    {label:'Tangent at start',input:'T or Enter',action:'End points: type T to specify tangent direction, or Enter to accept default'},
+    {label:'Close / End',input:'C or Enter',action:'C to close, Enter to end'},
+  ],
+  options:[{key:'M',desc:'Method — Fit or CV (control vertices)'},{key:'K',desc:'Knot type — Chord, Square root, Uniform'},{key:'T',desc:'Start/End tangent direction'},{key:'C',desc:'Close spline'}],
+  tips:['SPLINEDIT to modify after creation','PEDIT on a polyline converts it to spline-fit pline (different from true SPLINE)','Use sparingly for manufactured parts — hard to dimension','Export to polyline with SPLINEDIT → Convert to pline for downstream tools'],
+  related:['PEDIT','SPLINEDIT','PLINE']
+},
+
+{ id:'hatch', cmd:'HATCH', alias:'H', cat:'draw', catLabel:'DRAW',
+  desc:'Fill an enclosed area with a hatch pattern or solid fill.',
+  fullDesc:'Applies crosshatch, angled lines, or solid fill to a closed boundary. Associative hatching updates when boundary moves.',
+  steps:[
+    {label:'Activate',input:'H',action:'Type H + Enter — Hatch Editor opens on ribbon/panel'},
+    {label:'Pick pattern',input:'dropdown',action:'Select pattern from list (ANSI31 = general metal hatching at 45°; ANSI32 = cast iron; STEEL; BRASS etc.)'},
+    {label:'Set scale and angle',input:'panel',action:'Set Hatch Scale (larger = more spaced) and Angle (default 0 = 45° for ANSI31)'},
+    {label:'Pick internal point',input:'click inside',action:'Click inside the closed boundary — BricsCAD detects the boundary automatically'},
+    {label:'OR select boundary',input:'S',action:'Type S → click entities forming the boundary explicitly'},
+    {label:'Confirm',input:'Enter or Close',action:'Press Enter or close Hatch Editor to apply'},
+  ],
+  options:[{key:'Pick points',desc:'Auto-detect closed boundary from click inside'},{key:'Select',desc:'Manually select boundary entities'},{key:'Remove',desc:'Remove island boundaries from selection'},{key:'Separate',desc:'Create separate hatch objects'}],
+  tips:['ANSI31 standard for steel in section at 45°; change angle to 135° for adjacent parts','Scale = drawing scale factor (e.g. 50 for 1:50 drawings)','Associative hatch: enabled by default — moves with boundary','Use SOLID pattern for solid fills, GRASS/EARTH for soil etc.','HATCHEDIT to modify existing hatch — double-click also works'],
+  related:['HATCHEDIT','BOUNDARY','SOLID']
+},
+
+{ id:'text', cmd:'TEXT', alias:'T', cat:'draw', catLabel:'DRAW',
+  desc:'Place single-line text (DTEXT) or multiline paragraph text (MTEXT).',
+  fullDesc:'TEXT (or DT) places single-line text entities. MTEXT (MT) creates a multi-line paragraph text in a defined box.',
+  steps:[
+    {label:'Single-line — Activate',input:'DT',action:'Type DT + Enter for single-line text'},
+    {label:'Text style',input:'S',action:'Type S + Enter to select a text style (set up with STYLE first)'},
+    {label:'Start point',input:'click',action:'Pick insertion point (bottom-left by default)'},
+    {label:'Height',input:'number',action:'Type text height in drawing units (e.g. 3.5 for 3.5 mm ISO standard)'},
+    {label:'Rotation',input:'number',action:'Type rotation angle (0 = horizontal)'},
+    {label:'Type text',input:'keyboard',action:'Type text content, Enter to start new line, Enter twice to end'},
+    {label:'Multi-line — Activate',input:'MT',action:'Type MT + Enter → drag text box corners → type in MTEXT editor'},
+  ],
+  options:[{key:'J',desc:'Justify — sets alignment (TL/TC/TR/ML/MC/MR/BL/BC/BR/Left/Center/Right/Fit/Align)'},{key:'S',desc:'Style — select text style'},{key:'A',desc:'Angle — rotation angle'}],
+  tips:['Always use defined TEXT STYLE — never type font name directly','Standard ISO text height: 2.5, 3.5, 5, 7, 10 mm','QTEXT on: replaces text with bounding box for fast regens','FIND: search and replace text throughout drawing','SPELL: spell check selected text'],
+  related:['STYLE','MTEXT','DDEDIT','QTEXT','FIND']
+},
+
+{ id:'point', cmd:'POINT', alias:'PO', cat:'draw', catLabel:'DRAW',
+  desc:'Place a point entity. Use PDMODE to control appearance.',
+  fullDesc:'Creates a point entity at the specified location. Point display is controlled by PDMODE and PDSIZE system variables.',
+  steps:[
+    {label:'Activate',input:'PO',action:'Type PO + Enter'},
+    {label:'Pick location',input:'click / coords',action:'Click location or type coordinates'},
+    {label:'Point style',input:'PDMODE',action:'Type PDMODE + Enter to change point display: 0=dot, 3=X, 34=X in circle, 35=circle etc.'},
+  ],
+  options:[{key:'PDMODE',desc:'0=dot, 2=+, 3=×, 4=vertical, add 32=circle, 64=square'},{key:'PDSIZE',desc:'Positive=absolute size, Negative=% of viewport, 0=pixel'}],
+  tips:['NODE OSNAP snaps to point entities','DIVIDE and MEASURE commands place points at equal intervals','Points are tiny — set PDMODE before placing for visibility'],
+  related:['DIVIDE','MEASURE','DDPTYPE']
+},
+
+{ id:'ellipse', cmd:'ELLIPSE', alias:'EL', cat:'draw', catLabel:'DRAW',
+  desc:'Draw an ellipse by axis endpoints or centre.',
+  fullDesc:'Creates a true ellipse. Options include full ellipse or elliptical arc. Defined by major axis and minor axis ratio.',
+  steps:[
+    {label:'Activate',input:'EL',action:'Type EL + Enter'},
+    {label:'Axis endpoint 1',input:'click',action:'Pick first endpoint of major axis'},
+    {label:'Axis endpoint 2',input:'click',action:'Pick second endpoint of major axis'},
+    {label:'Minor axis',input:'click or number',action:'Pick point to define minor axis half-length, or type distance'},
+    {label:'OR centre method',input:'C',action:'Type C → pick centre → endpoint of axis 1 → endpoint of axis 2'},
+  ],
+  options:[{key:'C',desc:'Define by Centre instead of axis endpoints'},{key:'A',desc:'Elliptical Arc — specify start and end angle'}],
+  tips:['ISOCIRCLE option appears when SNAP Isometric is active — for isometric drawings','Ellipses cannot be offset — convert to pline with EXPLODE first (becomes approximation)'],
+  related:['CIRCLE','PLINE','SNAP']
+},
+
+{ id:'xline', cmd:'XLINE', alias:'XL', cat:'draw', catLabel:'DRAW',
+  desc:'Draw an infinite construction line through a point.',
+  fullDesc:'Creates a line that extends infinitely in both directions. Used for construction geometry. Usually on a non-plot layer.',
+  steps:[
+    {label:'Activate',input:'XL',action:'Type XL + Enter'},
+    {label:'Through point',input:'click',action:'Pick the root point the xline passes through'},
+    {label:'Direction',input:'click or option',action:'Pick a second point to define direction OR use H/V/A/B options'},
+  ],
+  options:[{key:'H',desc:'Horizontal — infinite horizontal line'},{key:'V',desc:'Vertical — infinite vertical line'},{key:'A',desc:'Angle — specify angle'},{key:'B',desc:'Bisect — bisects angle between two picked lines'},{key:'O',desc:'Offset — parallel to existing line at distance'}],
+  tips:['Put all xlines on a CONSTRUCTION layer (set no-plot)','TRIM works on xlines — cuts them to finite length','RAY is semi-infinite (one direction only)'],
+  related:['RAY','LINE','TRIM','LAYER']
+},
+
+// ── MODIFY ───────────────────────────────────────────────────
+{ id:'move', cmd:'MOVE', alias:'M', cat:'modify', catLabel:'MODIFY',
+  desc:'Move selected entities from one location to another.',
+  fullDesc:'Relocates selected entities by specifying a base point and destination point. Original is removed.',
+  steps:[
+    {label:'Activate',input:'M',action:'Type M + Enter'},
+    {label:'Select objects',input:'click / window',action:'Click entities or drag selection window, then Enter to confirm selection'},
+    {label:'Base point',input:'click',action:'Click the reference point FROM which you are moving (e.g. a corner or centre)'},
+    {label:'Destination',input:'click / @dx,dy',action:'Click where the base point should go, OR type relative offset @dx,dy (e.g. @50,0 moves 50mm right)'},
+  ],
+  options:[{key:'@dx,dy',desc:'Relative displacement from base point'},{key:'@dist<angle',desc:'Polar displacement'}],
+  tips:['Use OSNAP to pick precise base points','@0,0 as destination opens displacement input — type just the delta','GRIPS: select entity, click blue grip, move cursor — same as MOVE','With ORTHO (F8) on: constrained to horizontal/vertical'],
+  related:['COPY','ROTATE','SCALE','STRETCH']
+},
+
+{ id:'copy', cmd:'COPY', alias:'CO', cat:'modify', catLabel:'MODIFY',
+  desc:'Copy selected entities — single or multiple copies.',
+  fullDesc:'Creates one or more copies of selected entities. After picking destination you can keep picking more destinations for multiple copies.',
+  steps:[
+    {label:'Activate',input:'CO',action:'Type CO + Enter (or CP)'},
+    {label:'Select objects',input:'click / window',action:'Select entities + Enter'},
+    {label:'Base point',input:'click',action:'Click reference base point'},
+    {label:'Destination(s)',input:'click repeatedly',action:'Click each destination — each click creates a copy. Press Enter to end'},
+    {label:'Array copy',input:'A',action:'Type A → number of items → fit length OR spacing for equally spaced copies'},
+  ],
+  options:[{key:'Multiple',desc:'Default — keeps copying until you press Enter'},{key:'A',desc:'Array — set count and spacing/total distance'}],
+  tips:['COPY + PASTE (Ctrl+C / Ctrl+V) copies between drawings','COPYBASE (Ctrl+Shift+C) sets explicit base point for cross-drawing copy','Ctrl+C then Ctrl+V pastes at original coordinates if you use Ctrl+Shift+V → Paste in place'],
+  related:['MOVE','MIRROR','ARRAY','OFFSET']
+},
+
+{ id:'rotate', cmd:'ROTATE', alias:'RO', cat:'modify', catLabel:'MODIFY',
+  desc:'Rotate entities around a base point by a specified angle.',
+  fullDesc:'Rotates selected entities about a pivot point. Positive angle = counterclockwise (standard math convention). Use Reference option to rotate to match an existing angle.',
+  steps:[
+    {label:'Activate',input:'RO',action:'Type RO + Enter'},
+    {label:'Select objects',input:'click / window',action:'Select entities + Enter'},
+    {label:'Base point',input:'click',action:'Pick the centre of rotation'},
+    {label:'Rotation angle',input:'number',action:'Type angle in degrees (positive = CCW) + Enter. E.g. 90 rotates 90° CCW'},
+    {label:'Reference method',input:'R',action:'Type R → pick reference angle on existing geometry → pick/type new angle — rotates to match'},
+  ],
+  options:[{key:'R',desc:'Reference — rotate from existing angle to new angle (align to geometry)'},{key:'C',desc:'Copy — rotate and keep original'}],
+  tips:['ANGDIR controls direction (0=CCW default, 1=CW)','Reference method: great for aligning a block to an angled line','Grip rotation: select, click grip, type angle directly','For 180°: type 180 or -180 (same result)'],
+  related:['MOVE','SCALE','MIRROR','ALIGN']
+},
+
+{ id:'scale', cmd:'SCALE', alias:'SC', cat:'modify', catLabel:'MODIFY',
+  desc:'Scale entities uniformly from a base point.',
+  fullDesc:'Scales selected entities relative to a base point. Factor >1 enlarges, <1 shrinks. Reference option scales to match a known length.',
+  steps:[
+    {label:'Activate',input:'SC',action:'Type SC + Enter'},
+    {label:'Select objects',input:'click',action:'Select + Enter'},
+    {label:'Base point',input:'click',action:'Pick the fixed point (stays in place during scaling)'},
+    {label:'Scale factor',input:'number',action:'Type factor (e.g. 2 = double size, 0.5 = half, 25.4 = mm to inch)'},
+    {label:'Reference method',input:'R',action:'Type R → pick start of reference length → pick end → type desired length — scales to fit'},
+  ],
+  options:[{key:'R',desc:'Reference — scale so that a picked distance matches a target value'},{key:'C',desc:'Copy — scale and keep original'}],
+  tips:['Reference method: scan a PDF, PSCALE to desired unit length','Scale block symbols: change INSERT scale at time of insertion instead','DIMSCALE sets dimension scale separately — do not use SCALE on dims'],
+  related:['ROTATE','MOVE','STRETCH','ALIGN']
+},
+
+{ id:'mirror', cmd:'MIRROR', alias:'MI', cat:'modify', catLabel:'MODIFY',
+  desc:'Mirror entities about a defined axis line.',
+  fullDesc:'Creates a mirrored copy of selected entities. You define the mirror axis by picking two points. Option to delete or keep original.',
+  steps:[
+    {label:'Activate',input:'MI',action:'Type MI + Enter'},
+    {label:'Select objects',input:'click',action:'Select + Enter'},
+    {label:'Mirror axis point 1',input:'click',action:'Pick first point of mirror axis line'},
+    {label:'Mirror axis point 2',input:'click',action:'Pick second point — any two points define the line (use ORTHO for H/V axis)'},
+    {label:'Delete original?',input:'Y or N',action:'Y = delete original (move effect), N = keep original (copy effect)'},
+  ],
+  options:[{key:'MIRRTEXT',desc:'Sysvar — 0=text NOT mirrored (readable), 1=text mirrored. Usually keep at 0'}],
+  tips:['MIRRTEXT = 0 (default): text remains readable after mirror — usually what you want','Horizontal axis: use ORTHO, snap to point, move cursor horizontally','For symmetrical parts: draw one half, MIRROR, then JOIN or leave as is'],
+  related:['COPY','ROTATE','ALIGN']
+},
+
+{ id:'offset', cmd:'OFFSET', alias:'O', cat:'modify', catLabel:'MODIFY',
+  desc:'Create a parallel copy of a line, arc, circle, or polyline at a set distance.',
+  fullDesc:'Creates an entity parallel to the original at a specified offset distance. Works on lines, arcs, circles, ellipses, polylines, splines.',
+  steps:[
+    {label:'Activate',input:'O',action:'Type O + Enter'},
+    {label:'Offset distance',input:'number',action:'Type offset distance (e.g. 10 for 10 mm) + Enter. OR type T for Through point method'},
+    {label:'Select entity',input:'click',action:'Click the entity to offset'},
+    {label:'Pick side',input:'click',action:'Click on the side you want the offset to appear — inside or outside'},
+    {label:'Continue',input:'click more',action:'Click more entities to offset at same distance. Enter to end'},
+  ],
+  options:[{key:'T',desc:'Through — pick a point the offset will pass through instead of typing distance'},{key:'E',desc:'Erase source — delete original after offsetting'},{key:'L',desc:'Layer — place offset on current layer or source layer'}],
+  tips:['Fastest wall/pocket tool: draw outline, OFFSET inward for wall thickness','OFFSET on a closed polyline = concentric profile','Circle offset = concentric circles','Cannot offset splines directly in some modes'],
+  related:['COPY','PARALLEL','MOVE']
+},
+
+{ id:'trim', cmd:'TRIM', alias:'TR', cat:'modify', catLabel:'MODIFY',
+  desc:'Trim entities at a cutting edge.',
+  fullDesc:'Removes portions of entities that extend past a cutting boundary. In BricsCAD 2022+: press Enter at cutting edge prompt to trim to any intersecting entity.',
+  steps:[
+    {label:'Activate',input:'TR',action:'Type TR + Enter'},
+    {label:'Cutting edges',input:'Enter (quick) or select',action:'Press Enter immediately to use ALL entities as potential cutting edges (recommended). OR click specific cutting edges then Enter'},
+    {label:'Trim entities',input:'click on segment to remove',action:'Click the portion of each line/arc/circle you want to REMOVE (the side to trim away)'},
+    {label:'End',input:'Enter',action:'Press Enter or Esc when done'},
+  ],
+  options:[{key:'Shift+click',desc:'While in TRIM: holding Shift converts to EXTEND mode temporarily'},{key:'F',desc:'Fence — draw a fence line across multiple entities to trim all at once'},{key:'C',desc:'Crossing — select by crossing window'},{key:'P',desc:'Project — trim mode for 3D (None/UCS/View)'}],
+  tips:['Press Enter at cutting edge prompt = trim against everything — fastest workflow','Shift+click in TRIM = extend instead — one command does both','EDGEMODE sysvar: 1=imaginary extension trimming (trim to where lines would meet even if not touching)','Double-click the trim location — BricsCAD smart trim selects nearby entities'],
+  related:['EXTEND','BREAK','CHAMFER','FILLET']
+},
+
+{ id:'extend', cmd:'EXTEND', alias:'EX', cat:'modify', catLabel:'MODIFY',
+  desc:'Extend entities to meet a boundary edge.',
+  fullDesc:'Extends lines, arcs, open polylines to a selected boundary. Press Enter at boundary prompt to extend to any entity.',
+  steps:[
+    {label:'Activate',input:'EX',action:'Type EX + Enter'},
+    {label:'Boundary edges',input:'Enter or select',action:'Press Enter to use ALL entities as boundaries. OR click specific boundaries then Enter'},
+    {label:'Select to extend',input:'click near end',action:'Click near the END of the entity you want to extend — it extends toward the boundary'},
+    {label:'End',input:'Enter',action:'Press Enter when done'},
+  ],
+  options:[{key:'Shift+click',desc:'While in EXTEND: converts to TRIM mode'},{key:'F',desc:'Fence selection'},{key:'EDGEMODE',desc:'1=extend to imaginary extension of boundary'}],
+  tips:['Click near the END of the entity — clicking the middle may trim instead','EDGEMODE=1: extend to where the boundary WOULD be even if they do not physically meet','Shift trick: Trim and Extend are almost the same command with Shift toggling'],
+  related:['TRIM','LENGTHEN','STRETCH']
+},
+
+{ id:'fillet', cmd:'FILLET', alias:'F', cat:'modify', catLabel:'MODIFY',
+  desc:'Fillet two lines/arcs with a tangent arc, or set radius to 0 for sharp corner join.',
+  fullDesc:'Adds a tangent arc (fillet) between two entities. Radius 0 = sharp corner trim/extend to intersection.',
+  steps:[
+    {label:'Activate',input:'F',action:'Type F + Enter'},
+    {label:'Set radius',input:'R',action:'Type R + Enter → type radius value + Enter (e.g. 5 for R5 fillet). This persists until changed'},
+    {label:'Pick first entity',input:'click',action:'Click first line/arc/polyline segment'},
+    {label:'Pick second entity',input:'click',action:'Click second entity — fillet arc is placed at intersection'},
+    {label:'Polyline fillet all',input:'P',action:'Type P → click polyline → fillets ALL corners of the polyline at once'},
+  ],
+  options:[{key:'R',desc:'Set radius (0 = sharp corner join)'},{key:'P',desc:'Polyline — fillet all vertices of a polyline at once'},{key:'T',desc:'Trim mode — T=trim (default), N=no trim (keeps original lines)'},{key:'M',desc:'Multiple — repeat fillet without restarting command'}],
+  tips:['Radius 0 is a fast clean-corner tool for two lines that miss or overshoot','FILLET works on 3D solids too — creates a 3D blend','Multiple mode (M): fillet several pairs without restarting','CHAMFER is similar but with straight angled cut'],
+  related:['CHAMFER','TRIM','EXTEND']
+},
+
+{ id:'chamfer', cmd:'CHAMFER', alias:'CHA', cat:'modify', catLabel:'MODIFY',
+  desc:'Chamfer (bevel) two lines at a set distance or angle.',
+  fullDesc:'Cuts a diagonal between two lines. Can specify by two distances (D1×D2) or by one distance and an angle.',
+  steps:[
+    {label:'Activate',input:'CHA',action:'Type CHA + Enter'},
+    {label:'Set distance',input:'D',action:'Type D + Enter → enter first chamfer distance + Enter → second distance + Enter'},
+    {label:'Pick first line',input:'click',action:'Click first line'},
+    {label:'Pick second line',input:'click',action:'Click second line — chamfer is applied'},
+  ],
+  options:[{key:'D',desc:'Distance method — two distances from corner'},{key:'A',desc:'Angle method — one distance + angle'},{key:'P',desc:'Polyline — chamfer all corners at once'},{key:'T',desc:'Trim mode — trim or keep original lines'},{key:'M',desc:'Multiple'}],
+  tips:['Equal distances = 45° chamfer at distance d','Standard engineering chamfer: 2×45° = CHAMFER with both distances = 2','FILLET with radius 0 does same as CHAMFER with 0,0 — sharp corner join'],
+  related:['FILLET','TRIM']
+},
+
+{ id:'stretch', cmd:'STRETCH', alias:'S', cat:'modify', catLabel:'MODIFY',
+  desc:'Stretch entities by moving endpoints within a crossing window.',
+  fullDesc:'Moves the parts of entities that are inside a crossing selection window, while keeping connections to outside entities intact.',
+  steps:[
+    {label:'Activate',input:'S',action:'Type S + Enter'},
+    {label:'Crossing window',input:'drag R→L',action:'MUST use crossing window (right to left drag) — entities fully inside move, entities crossing the window stretch'},
+    {label:'Confirm selection',input:'Enter',action:'Press Enter'},
+    {label:'Base point',input:'click',action:'Pick the base point of stretch'},
+    {label:'New point',input:'click / @dx,dy',action:'Pick destination or type relative offset'},
+  ],
+  options:[],
+  tips:['ALWAYS use crossing (R→L) window — normal window does not work for stretching','Entities fully inside = MOVE; entities crossing window boundary = STRETCH','Useful for lengthening a wall or moving a hole while keeping connections','GRIPS: select, shift-click multiple grips to stretch from several points simultaneously'],
+  related:['MOVE','SCALE','LENGTHEN']
+},
+
+{ id:'array', cmd:'ARRAY', alias:'AR', cat:'modify', catLabel:'MODIFY',
+  desc:'Create rectangular, polar, or path array of selected entities.',
+  fullDesc:'Duplicates entities in a pattern: grid (rectangular), circular (polar), or along a path. BricsCAD has both classic and associative array.',
+  steps:[
+    {label:'Activate',input:'AR',action:'Type AR + Enter'},
+    {label:'Select objects',input:'click',action:'Select entities + Enter'},
+    {label:'Array type',input:'R / P / PA',action:'R = Rectangular, P = Polar, PA = Path'},
+    {label:'Rectangular: rows/cols',input:'numbers',action:'Enter number of rows → row spacing → number of columns → column spacing'},
+    {label:'Polar: centre + count',input:'click + numbers',action:'Pick centre of rotation → total number of items → fill angle (360 for full circle)'},
+    {label:'Path: select path',input:'click',action:'Click the path entity → set item count or spacing → set alignment'},
+  ],
+  options:[{key:'R',desc:'Rectangular grid array — rows and columns'},{key:'P',desc:'Polar — circular pattern around a centre'},{key:'PA',desc:'Path — along a line, arc, or polyline'},{key:'ASsociative',desc:'Creates editable array object — grips to modify count/spacing live'}],
+  tips:['Associative arrays: click array to see grips and change rows/cols dynamically','EXPLODE an array to get individual entities','Negative spacing = array in negative direction','Polar: rotating items themselves? Use Rotate items option = Yes'],
+  related:['COPY','MIRROR','OFFSET']
+},
+
+{ id:'explode', cmd:'EXPLODE', alias:'X', cat:'modify', catLabel:'MODIFY',
+  desc:'Explode a block, polyline, array, or dimension into component entities.',
+  fullDesc:'Breaks a compound entity into its constituent parts. Block → individual entities. Polyline → individual line/arc segments. Dimension → lines, text, arrows.',
+  steps:[
+    {label:'Activate',input:'X',action:'Type X + Enter'},
+    {label:'Select objects',input:'click',action:'Click the block/pline/array/dim to explode + Enter'},
+  ],
+  options:[],
+  tips:['Cannot explode an entity with non-uniform scale (use FLATTEN or WBLOCK workaround)','Nested blocks: each EXPLODE removes one nesting level','Exploded dims lose associativity — do not explode dims if drawing may change','XPLODE: extended version with options for colour, layer, linetype of exploded parts'],
+  related:['PEDIT','BLOCK','JOIN']
+},
+
+{ id:'join', cmd:'JOIN', alias:'J', cat:'modify', catLabel:'MODIFY',
+  desc:'Join collinear or end-to-end entities into a single polyline or spline.',
+  fullDesc:'Combines separate lines, arcs, polylines, and splines into a single entity. Entities must share endpoints (gap tolerance adjustable).',
+  steps:[
+    {label:'Activate',input:'J',action:'Type J + Enter'},
+    {label:'Select source',input:'click',action:'Select the first entity'},
+    {label:'Select to join',input:'click or window',action:'Select all other entities to join to it + Enter'},
+  ],
+  options:[{key:'gap tolerance',desc:'JOINTYPE sysvar: 0=must touch, 1=remove kinks, 2=close gap up to tolerance'}],
+  tips:['Lines must be collinear (same angle) to join','Arcs must be coplanar and on same circle to join','Result type depends on source: joining lines → polyline; joining arcs → polyline of arcs','Use PEDIT if JOIN does not work — it has its own join with gap tolerance'],
+  related:['PEDIT','EXPLODE','PLINE']
+},
+
+{ id:'break', cmd:'BREAK', alias:'BR', cat:'modify', catLabel:'MODIFY',
+  desc:'Break an entity into two at one point or between two points.',
+  fullDesc:'Splits a line, arc, circle, or polyline at one or two points. BREAK AT POINT creates a split without removing material.',
+  steps:[
+    {label:'Activate',input:'BR',action:'Type BR + Enter'},
+    {label:'Select entity',input:'click',action:'Click the entity — click location becomes first break point by default'},
+    {label:'Second break point',input:'click',action:'Click second point — segment between the two points is removed'},
+    {label:'First point override',input:'F',action:'Type F to re-pick the first break point if the click was not accurate'},
+    {label:'Break at single point',input:'@ after F',action:'For split at one point: F → pick precise point → type @ + Enter (second = same as first)'},
+  ],
+  options:[{key:'F',desc:'First point — re-specify first break point more precisely'},{key:'@',desc:'Second point = first point (break at single point, no gap)'}],
+  tips:['Circle breaks counterclockwise from point 1 to point 2 — order matters','BREAKATPOINT (one-click split) is on the Modify toolbar','For splitting a line exactly: use @ at second point, then reconnect as needed'],
+  related:['TRIM','SPLIT','DIVIDE']
+},
+
+{ id:'lengthen', cmd:'LENGTHEN', alias:'LEN', cat:'modify', catLabel:'MODIFY',
+  desc:'Lengthen or shorten an open entity by various methods.',
+  fullDesc:'Changes the length of a line, arc, or open polyline. Multiple methods: Delta, Percent, Total, Dynamic.',
+  steps:[
+    {label:'Activate',input:'LEN',action:'Type LEN + Enter'},
+    {label:'Method',input:'DE / P / T / DY',action:'DE=Delta (add amount), P=Percent, T=Total length, DY=Dynamic (drag)'},
+    {label:'Value',input:'number',action:'Enter the value for chosen method'},
+    {label:'Select to change',input:'click near end',action:'Click near the end of entity you want to change — that end is modified'},
+  ],
+  options:[{key:'DE',desc:'Delta — add positive or negative length to entity'},{key:'P',desc:'Percent — change to % of current length'},{key:'T',desc:'Total — set exact total length'},{key:'DY',desc:'Dynamic — drag endpoint to desired position'}],
+  tips:['Click near the end to lengthen/shorten — which end matters','Negative delta shortens the entity','Total = fastest for setting exact line length'],
+  related:['EXTEND','TRIM','STRETCH']
+},
+
+{ id:'pedit', cmd:'PEDIT', alias:'PE', cat:'modify', catLabel:'MODIFY',
+  desc:'Edit polylines — join, fit spline, change width, edit vertices.',
+  fullDesc:'Comprehensive polyline editor. Can join lines/arcs into polyline, fit curves, change width, edit individual vertices.',
+  steps:[
+    {label:'Activate',input:'PE',action:'Type PE + Enter'},
+    {label:'Select polyline',input:'click',action:'Click a polyline (or line/arc — PEDIT asks to convert to pline)'},
+    {label:'Choose operation',input:'letter',action:'J=Join, W=Width, E=Edit vertex, F=Fit, S=Spline, D=Decurve, O=Open/Close, L=Linetype gen'},
+    {label:'Join',input:'J',action:'After J: select all lines/arcs to join to the polyline + Enter'},
+    {label:'Width',input:'W then number',action:'W → type new uniform width for the entire polyline'},
+    {label:'End',input:'X',action:'Type X + Enter to exit PEDIT'},
+  ],
+  options:[{key:'J',desc:'Join — merge adjacent lines/arcs into polyline'},{key:'W',desc:'Width — set uniform width'},{key:'E',desc:'Edit vertex — move, insert, delete vertices'},{key:'F',desc:'Fit — fit smooth arc curves through vertices'},{key:'S',desc:'Spline — fit NURBS-like curve (spline pline)'},{key:'D',desc:'Decurve — remove fitting, restore straight segments'},{key:'L',desc:'Ltype gen — linetype generated across full length'}],
+  tips:['PEDIT M: multi-select polylines for batch width change','Spline option creates pline approximation of spline — not a true SPLINE entity','Join gap tolerance: set PEDIT join gap to connect nearly-touching entities'],
+  related:['PLINE','JOIN','EXPLODE','SPLINE']
+},
+
+// ── DIMENSION ────────────────────────────────────────────────
+{ id:'dimlin', cmd:'DIMLINEAR', alias:'DLI', cat:'dim', catLabel:'DIMENSION',
+  desc:'Place a horizontal or vertical linear dimension.',
+  fullDesc:'Creates a horizontal or vertical dimension line. After picking the two points, move cursor to determine H or V.',
+  steps:[
+    {label:'Activate',input:'DLI',action:'Type DLI + Enter'},
+    {label:'First extension line origin',input:'click',action:'Click the first point to measure FROM (use OSNAP — endpoint, intersection)'},
+    {label:'Second extension line origin',input:'click',action:'Click the second point to measure TO'},
+    {label:'Dimension line location',input:'click',action:'Move cursor: horizontal = measure H, vertical = measure V. Click to place dimension line'},
+    {label:'Text override',input:'T',action:'Type T to override the auto-measured text'},
+  ],
+  options:[{key:'T',desc:'Text — override dimension text'},{key:'A',desc:'Angle — rotate dimension text'},{key:'H',desc:'Force Horizontal'},{key:'V',desc:'Force Vertical'},{key:'R',desc:'Force Rotated at an angle'}],
+  tips:['Use DIM command (BricsCAD 2019+) — auto-detects type from what you pick','DIMAUTO or smart dimensioning: hover over geometry to preview dimension type','Snap to exact geometry endpoints for accurate dimensions — never estimate'],
+  related:['DIMALIGNED','DIMBASELINE','DIMCONTINUE','DIMSTYLE']
+},
+
+{ id:'dimalign', cmd:'DIMALIGNED', alias:'DAL', cat:'dim', catLabel:'DIMENSION',
+  desc:'Place an aligned dimension parallel to the line between two points.',
+  fullDesc:'Dimension line is parallel to the line between the two extension origins. Used for angled lines.',
+  steps:[
+    {label:'Activate',input:'DAL',action:'Type DAL + Enter'},
+    {label:'First point',input:'click',action:'Click start point (OSNAP on)'},
+    {label:'Second point',input:'click',action:'Click end point'},
+    {label:'Place dimension',input:'click',action:'Click to place the dimension line — it is parallel to the measured line'},
+  ],
+  options:[{key:'T',desc:'Text override'},{key:'A',desc:'Text angle'}],
+  tips:['For perfectly H or V lines: use DIMLINEAR — same result, clearer intent','For angled lines: DIMALIGNED is the correct choice'],
+  related:['DIMLINEAR','DIMANGULAR']
+},
+
+{ id:'dimrad', cmd:'DIMRADIUS', alias:'DRA', cat:'dim', catLabel:'DIMENSION',
+  desc:'Dimension the radius of a circle or arc.',
+  fullDesc:'Places a radius dimension with R prefix and leader line from centre to the arc/circle.',
+  steps:[
+    {label:'Activate',input:'DRA',action:'Type DRA + Enter'},
+    {label:'Select arc/circle',input:'click',action:'Click the arc or circle'},
+    {label:'Place leader',input:'click',action:'Click to position the dimension text and leader'},
+  ],
+  options:[{key:'T',desc:'Override text'},{key:'A',desc:'Text angle'}],
+  tips:['DIMDIAMETER (DDI) for diameter (Ø prefix)','DIMJOGGED for large-radius arcs with a jog line','Leader placement: inside circle for small dims, outside for large'],
+  related:['DIMDIAMETER','DIMJOGGED','DIMCENTER']
+},
+
+{ id:'dimang', cmd:'DIMANGULAR', alias:'DAN', cat:'dim', catLabel:'DIMENSION',
+  desc:'Dimension the angle between two lines or an arc.',
+  fullDesc:'Measures and annotates the angle. Pick two non-parallel lines or an arc.',
+  steps:[
+    {label:'Activate',input:'DAN',action:'Type DAN + Enter'},
+    {label:'Select first line',input:'click',action:'Click first line (or arc for arc angle)'},
+    {label:'Select second line',input:'click',action:'Click second line'},
+    {label:'Place dimension',input:'click',action:'Click arc position — dimension arc appears between the lines'},
+  ],
+  options:[{key:'Q',desc:'Quadrant — for arcs, select which angle quadrant'}],
+  tips:['For reflex angles (>180°): place dimension on the larger side','Text inside or outside depends on cursor placement','DIMARC: arc length dimension (different from angular)'],
+  related:['DIMLINEAR','DIMDIAMETER']
+},
+
+{ id:'dimbase', cmd:'DIMBASELINE', alias:'DBA', cat:'dim', catLabel:'DIMENSION',
+  desc:'Continue multiple dimensions from the same baseline.',
+  fullDesc:'Creates successive dimensions all originating from the same baseline (first extension line of previous dimension).',
+  steps:[
+    {label:'Place first dim',input:'DLI / DAL',action:'Place the first dimension (linear or aligned) normally'},
+    {label:'Activate',input:'DBA',action:'Type DBA + Enter — automatically continues from last dimension'},
+    {label:'Pick next point',input:'click',action:'Pick each next measurement point — a new dimension is added from same baseline each time'},
+    {label:'End',input:'Enter Enter',action:'Press Enter twice to end the command'},
+  ],
+  options:[{key:'S',desc:'Select — pick a different base dimension to start from'}],
+  tips:['DIMCONTINUE (DCO): chain dimensions end-to-end instead of from baseline','Set DIMDLI for baseline spacing (distance between parallel dimension lines)'],
+  related:['DIMCONTINUE','DIMLINEAR']
+},
+
+{ id:'dimcont', cmd:'DIMCONTINUE', alias:'DCO', cat:'dim', catLabel:'DIMENSION',
+  desc:'Chain linear dimensions end-to-end from the last dimension.',
+  fullDesc:'Places dimensions in a chain — each new dim starts where the last one ended.',
+  steps:[
+    {label:'Place first dim',input:'DLI',action:'Place the first dimension'},
+    {label:'Activate',input:'DCO',action:'Type DCO + Enter — continues from last dim'},
+    {label:'Pick next points',input:'click',action:'Pick each next measurement endpoint — chain grows'},
+    {label:'End',input:'Enter Enter',action:'Two Enters to exit'},
+  ],
+  options:[{key:'S',desc:'Select a different starting dimension'}],
+  tips:['Baseline vs Continue: Baseline all from one origin, Continue chain (cumulative)','Great for row of holes or features along a part'],
+  related:['DIMBASELINE','DIMLINEAR']
+},
+
+{ id:'leader', cmd:'QLEADER', alias:'LE', cat:'dim', catLabel:'DIMENSION',
+  desc:'Place a leader (pointer line) with annotation text.',
+  fullDesc:'QLEADER creates a quick leader with text. MLEADER creates more flexible multi-segment leaders with various attachment options.',
+  steps:[
+    {label:'Activate',input:'LE',action:'Type LE + Enter'},
+    {label:'First leader point',input:'click',action:'Click the arrowhead point (on the feature)'},
+    {label:'Next points',input:'click',action:'Click waypoints of the leader line'},
+    {label:'End leader line',input:'Enter',action:'Press Enter to stop drawing leader segments'},
+    {label:'Type annotation',input:'type',action:'Type the annotation text + Enter. Enter again to end'},
+  ],
+  options:[{key:'Settings',input:'S',desc:'Set annotation type (text/block/tolerance), arrowhead, attachment'}],
+  tips:['MLEADER (ML): more powerful — multiple leaders to one note, block content','Leader arrowhead: set in DIMSTYLE or MLEADERSTYLE','For hole callouts: include diameter symbol %%c in text (renders as Ø)','%%d = °, %%p = ±, %%c = Ø'],
+  related:['MLEADER','DIMSTYLE','TOLERANCE']
+},
+
+{ id:'dimstyle', cmd:'DIMSTYLE', alias:'D', cat:'dim', catLabel:'DIMENSION',
+  desc:'Create and manage dimension styles.',
+  fullDesc:'DIMSTYLE manager controls all dimension appearance: text, arrows, lines, fit, units, tolerances.',
+  steps:[
+    {label:'Activate',input:'D',action:'Type D + Enter — opens Dimension Style Manager'},
+    {label:'New style',input:'New button',action:'Click New → name it (e.g. ISO-RIECO-1:50) → based on ISO-25 → Continue'},
+    {label:'Configure',input:'tabs',action:'Lines: arrowhead size, extension offset. Text: style, height, placement. Fit: scale. Primary Units: precision, suffix. Tolerances.'},
+    {label:'DIMSCALE',input:'Fit tab',action:'Set Overall Scale = drawing plot scale (e.g. 50 for 1:50). This scales arrowheads, text, etc. to print correctly'},
+    {label:'Set current',input:'Set Current',action:'Make the style current → Close'},
+  ],
+  options:[{key:'DIMSCALE',desc:'Overall scale factor — matches dim size to plot scale'},{key:'DIMDEC',desc:'Decimal places for primary units'},{key:'DIMTOL',desc:'Enable tolerance display'},{key:'DIMAUNIT',desc:'Angular units'}],
+  tips:['DIMSCALE: set to DIMSCALE = plot scale. Dims in model space look big but print correctly','Create one standard dim style per company — save in drawing template','MATCHPROP (MA) can copy dim styles between dims','Override: right-click dim style → Override for one-off changes'],
+  related:['DIMLINEAR','MLEADERSTYLE','UNITS']
+},
+
+// ── LAYER / PROPERTIES ───────────────────────────────────────
+{ id:'layer', cmd:'LAYER', alias:'LA', cat:'layer', catLabel:'LAYER',
+  desc:'Open the Layer Manager to create, rename, delete, and control layers.',
+  fullDesc:'The Layer Manager controls all layer properties: colour, linetype, lineweight, plot state, freeze/thaw, lock/unlock.',
+  steps:[
+    {label:'Activate',input:'LA',action:'Type LA + Enter — Layer Manager opens'},
+    {label:'New layer',input:'New button (Alt+N)',action:'Click New → type layer name → press Enter → set colour, linetype, lineweight'},
+    {label:'Set colour',input:'click colour swatch',action:'Click the colour swatch for the layer → choose colour (ACI 1-7 for plot-pen colours)'},
+    {label:'Set linetype',input:'click linetype',action:'Click linetype field → Load → select linetype (HIDDEN, CENTER, DASHED etc.) → OK'},
+    {label:'Set current',input:'double-click or tick',action:'Double-click a layer or click the checkmark to make it current'},
+    {label:'Freeze / Lock',input:'snowflake / padlock icon',action:'Freeze = hide and skip regen (faster); Lock = visible but cannot edit'},
+  ],
+  options:[{key:'CLAYER',desc:'Sysvar for current layer — type CLAYER to see or set current layer name'},{key:'LAYISO',desc:'Isolate — hide all layers except selected entity layers'},{key:'LAYUNISO',desc:'Restore all layers after LAYISO'},{key:'LAYWALK',desc:'Walk through layers to inspect content'}],
+  tips:['Use colour-by-layer (not colour-by-entity) for clean CTB plot control','Freeze vs Off: Off = hidden but still regenerates; Freeze = excluded from regen (use Freeze for unused layers in complex drawings)','LAYERSTATE: save and restore layer states (e.g. for different plot configurations)','Defpoints layer: auto-created, never plots — good for construction geometry'],
+  related:['LINETYPE','LWDISPLAY','PROPERTIES','MATCHPROP']
+},
+
+{ id:'properties', cmd:'PROPERTIES', alias:'PR', cat:'layer', catLabel:'LAYER',
+  desc:'Open Properties panel to inspect and change entity properties.',
+  fullDesc:'Shows and edits all properties of selected entities: layer, colour, linetype, lineweight, geometry, etc.',
+  steps:[
+    {label:'Activate',input:'PR or Ctrl+1',action:'Type PR + Enter or press Ctrl+1 — Properties panel opens'},
+    {label:'Select entity',input:'click',action:'Click any entity — its properties appear in panel'},
+    {label:'Change property',input:'click field',action:'Click any field to edit: layer, colour, linetype, LT scale, geometry values'},
+    {label:'Multi-select',input:'window select',action:'Select multiple entities — common properties shown, editable for all at once'},
+  ],
+  options:[{key:'MATCHPROP (MA)',desc:'Copy properties from one entity to others — pick source, then targets'}],
+  tips:['MATCHPROP (MA): select source entity → select destinations — fastest way to match layer/colour/linetype','Quick Properties: small popup on hover (enabled in status bar) — less detail but faster for small changes','Change layer of selected entities: select all → Properties → change Layer field'],
+  related:['MATCHPROP','LAYER','CHPROP','CHANGE']
+},
+
+{ id:'matchprop', cmd:'MATCHPROP', alias:'MA', cat:'layer', catLabel:'LAYER',
+  desc:'Copy properties (layer, colour, linetype, etc.) from one entity to another.',
+  fullDesc:'Paints properties from a source entity to one or more destination entities. Fastest way to fix wrong-layer entities.',
+  steps:[
+    {label:'Activate',input:'MA',action:'Type MA + Enter'},
+    {label:'Source entity',input:'click',action:'Click the entity whose properties you want to COPY FROM'},
+    {label:'Destination(s)',input:'click',action:'Click each entity to apply properties TO — can click many'},
+    {label:'Settings',input:'S',action:'Type S to control which properties are matched (colour, linetype, layer, dim style, text style etc.)'},
+    {label:'End',input:'Enter',action:'Press Enter when done'},
+  ],
+  options:[{key:'S',desc:'Settings — choose which properties to match: basic (colour/layer/linetype) or also dimension style, text style, hatch pattern etc.'}],
+  tips:['Fastest fix for entities on wrong layer: MA from correct-layer entity to wrong ones','Also works for matching hatch patterns between areas','Works across different entity types'],
+  related:['PROPERTIES','LAYER','CHANGE']
+},
+
+{ id:'linetype', cmd:'LINETYPE', alias:'LT', cat:'layer', catLabel:'LAYER',
+  desc:'Load and manage linetypes. Set linetype scale with LTSCALE.',
+  fullDesc:'Linetypes control dash/dot patterns of lines. Must be loaded before use. LTSCALE controls global size of dash patterns.',
+  steps:[
+    {label:'Activate',input:'LT',action:'Type LT + Enter — Linetype Manager opens'},
+    {label:'Load',input:'Load button',action:'Click Load → select linetypes from acad.lin or iso.lin → OK'},
+    {label:'Set LTSCALE',input:'LTSCALE',action:'Type LTSCALE + Enter → enter scale factor. Typically = plot scale (e.g. 50). Regen after changing'},
+    {label:'Assign to layer',input:'LAYER manager',action:'In Layer Manager → click Linetype field for layer → pick loaded linetype'},
+  ],
+  options:[{key:'LTSCALE',desc:'Global linetype scale — affects all linetypes in drawing'},{key:'CELTSCALE',desc:'Current entity linetype scale — multiplied with LTSCALE for that entity'},{key:'PSLTSCALE',desc:'1=linetypes scale to paper space, 0=model space scale used'}],
+  tips:['LTSCALE = plot scale: dashes appear same physical size regardless of view scale','Short line segments: if they look solid, LTSCALE may need to increase','ISO linetypes (iso.lin) have larger dashes — designed for ISO standards'],
+  related:['LAYER','LWEIGHT','PROPERTIES']
+},
+
+// ── BLOCKS & XREFS ───────────────────────────────────────────
+{ id:'block', cmd:'BLOCK', alias:'B', cat:'block', catLabel:'BLOCK',
+  desc:'Create a named block from selected entities.',
+  fullDesc:'Defines a block (symbol) from selected entities. Blocks can be inserted multiple times, saving file size and enabling updates.',
+  steps:[
+    {label:'Activate',input:'B',action:'Type B + Enter — Block Definition dialog opens'},
+    {label:'Name',input:'type name',action:'Type a meaningful block name (e.g. M20-BOLT, VALVE-GATE, NORTH-ARROW)'},
+    {label:'Base point',input:'Pick Point',action:'Click Pick Point → snap to the insertion base point (e.g. bottom-centre, corner)'},
+    {label:'Select objects',input:'Select Objects',action:'Click Select Objects → select all entities for the block → Enter'},
+    {label:'Block units',input:'dropdown',action:'Set units (Millimetres usually)'},
+    {label:'Options',input:'checkboxes',action:'Open in block editor = edit now. Delete / Convert to block / Retain originals'},
+    {label:'OK',input:'OK',action:'Click OK — block is defined and available for INSERT'},
+  ],
+  options:[{key:'Annotative',desc:'Block scales automatically for different viewport scales'},{key:'Allow exploding',desc:'Uncheck to prevent users from exploding the block'},{key:'Scale uniformly',desc:'Forces uniform scale on insertion'}],
+  tips:['Draw block geometry on layer 0 — it inherits the insertion layer properties','ByBlock colour/linetype: entities use the block insertion colour, not their own','WBLOCK: write a block to its own separate DWG file','Nested blocks: blocks can contain other blocks up to any depth'],
+  related:['INSERT','WBLOCK','ATTDEF','REFEDIT','EXPLODE']
+},
+
+{ id:'insert', cmd:'INSERT', alias:'I', cat:'block', catLabel:'BLOCK',
+  desc:'Insert a block or DWG file into the current drawing.',
+  fullDesc:'Inserts a defined block or an external DWG file as a block instance. Set insertion point, scale, and rotation.',
+  steps:[
+    {label:'Activate',input:'I',action:'Type I + Enter — Insert dialog opens'},
+    {label:'Select block',input:'Name dropdown',action:'Choose block from dropdown (defined in drawing) OR Browse to insert external DWG'},
+    {label:'Insertion point',input:'check/uncheck',action:'Uncheck Specify on-screen to type coords. Or leave checked to pick on screen'},
+    {label:'Scale',input:'X Y Z fields',action:'Set scale factors (1,1,1 = as drawn). Uniform scale: lock X/Y/Z together'},
+    {label:'Rotation',input:'angle',action:'Type rotation angle or check specify on-screen'},
+    {label:'OK + pick point',input:'click',action:'Click OK → pick insertion point if on-screen was checked'},
+  ],
+  options:[{key:'Explode on insert',desc:'Inserts entities directly (not as block) — loses block benefits'},{key:'Scale',desc:'Can scale non-uniformly — but may cause issues with some commands'}],
+  tips:['Design Centre (DC): drag and drop blocks from other drawings','Tool Palette: create palette of standard blocks for quick insertion','MINSERT: inserts a block as a rectangular array in one step','Dynamic blocks: blocks with grip-controlled variations — created in Block Editor (BEDIT)'],
+  related:['BLOCK','WBLOCK','ATTDEF','ATTDIA','MINSERT','DESIGNCENTER']
+},
+
+{ id:'attdef', cmd:'ATTDEF', alias:'ATT', cat:'block', catLabel:'BLOCK',
+  desc:'Define an attribute — variable text field embedded in a block.',
+  fullDesc:'Attribute definitions are text placeholders within blocks. When the block is inserted, the user is prompted to fill in the attribute values (e.g. part number, description in title block).',
+  steps:[
+    {label:'Activate',input:'ATT',action:'Type ATT + Enter — Attribute Definition dialog opens'},
+    {label:'Tag',input:'type tag',action:'Tag = identifier (no spaces): PART_NO, DESCRIPTION, DWG_NO'},
+    {label:'Prompt',input:'type prompt',action:'Prompt = what user sees when inserting: "Enter part number:"'},
+    {label:'Default',input:'type default',action:'Default value shown if user presses Enter without typing'},
+    {label:'Text settings',input:'style/height/justify',action:'Set text style, height, justification'},
+    {label:'Modes',input:'checkboxes',action:'Invisible = hides attribute text in drawing. Constant = fixed value, not prompted. Verify/Preset.'},
+    {label:'Place',input:'OK then click',action:'OK → click where to place the attribute text in your block geometry area'},
+    {label:'Make block',input:'BLOCK',action:'Select ALL entities including the attribute definitions → create block with BLOCK command'},
+  ],
+  options:[{key:'Invisible',desc:'Attribute not displayed in drawing (still in data)'},{key:'Constant',desc:'Fixed value — no prompt on insertion'},{key:'Verify',desc:'Prompted twice to verify'},{key:'Preset',desc:'Default value used without prompt'}],
+  tips:['Order matters: attribute prompt order = draw order. Place atts in desired prompt order','ATTEDIT: edit attribute values of an inserted block','ATTEXT / EATTEXT: extract attribute data to CSV/table','BATTMAN: batch edit all attribute values in drawing'],
+  related:['BLOCK','INSERT','ATTEDIT','EATTEXT','ATTDIA']
+},
+
+{ id:'xref', cmd:'XREF', alias:'XR', cat:'block', catLabel:'BLOCK',
+  desc:'Attach, overlay, detach, and manage external reference drawings.',
+  fullDesc:'XRefs link external DWG files into the current drawing. Attach = always shows in nested refs. Overlay = only shows in current drawing.',
+  steps:[
+    {label:'Activate',input:'XR',action:'Type XR + Enter — XRef Manager opens (or EXTERNALREFERENCES panel)'},
+    {label:'Attach DWG',input:'Attach DWG button',action:'Click Attach DWG → Browse to DWG file → set Attachment or Overlay → OK'},
+    {label:'Insertion point',input:'pick or type',action:'Pick insertion point (usually 0,0,0 for coordinated project drawings)'},
+    {label:'Reload/Detach',input:'right-click',action:'Right-click XRef in manager → Reload (refresh from saved file) or Detach (remove)'},
+    {label:'Bind',input:'right-click → Bind',action:'Bind = permanently incorporates XRef into current drawing (use for client deliverables)'},
+    {label:'Clip',input:'XCLIP',action:'Type XCLIP → select XRef → define clipping boundary to show only part of XRef'},
+  ],
+  options:[{key:'Attach',desc:'XRef appears in all drawings that reference this drawing'},{key:'Overlay',desc:'XRef only shows in current drawing — not in further references (prevents circular refs)'},{key:'Bind',desc:'Makes XRef permanent — becomes a block'},{key:'Insert',desc:'Binds and explodes — merges layers without prefix'}],
+  tips:['Keep XRefs in same folder as host drawing — use relative paths','XREF layers named FILENAME|LAYERNAME — do not rename','VISRETAIN sysvar: 1 = remember XRef layer visibility settings between sessions','Reload after XRef file is updated — or enable auto-reload on open'],
+  related:['XCLIP','VISRETAIN','LAYER','BIND']
+},
+
+{ id:'wblock', cmd:'WBLOCK', alias:'W', cat:'block', catLabel:'BLOCK',
+  desc:'Write a block or selection to an external DWG file.',
+  fullDesc:'WBLOCK exports a named block, the entire drawing, or a selection to a new standalone DWG file.',
+  steps:[
+    {label:'Activate',input:'W',action:'Type W + Enter — Write Block dialog opens'},
+    {label:'Source',input:'radio button',action:'Block = export an existing block. Entire drawing = clean export. Objects = pick selection'},
+    {label:'Base point',input:'pick',action:'Set insertion base point for the exported file'},
+    {label:'Select objects',input:'pick',action:'If Objects selected: pick entities to export'},
+    {label:'Destination',input:'browse',action:'Browse to destination folder and set filename'},
+    {label:'OK',input:'OK',action:'Click OK — new DWG file written'},
+  ],
+  options:[{key:'Retain / Convert / Delete',desc:'Source objects: keep in place, convert to block, or delete after writing'}],
+  tips:['WBLOCK entire drawing: cleans up unreferenced blocks/layers before export (cleaner than SAVEAS)','Use WBLOCK to share individual symbols without sending full drawing','Purge before WBLOCK to reduce file size'],
+  related:['BLOCK','INSERT','PURGE']
+},
+
+{ id:'refedit', cmd:'REFEDIT', alias:'REFEDIT', cat:'block', catLabel:'BLOCK',
+  desc:'Edit a block or XRef in-place within the host drawing.',
+  fullDesc:'REFEDIT allows editing a block or XRef entities directly in context of the current drawing. Changes propagate back to the block definition or saved XRef.',
+  steps:[
+    {label:'Activate',input:'REFEDIT',action:'Type REFEDIT + Enter — OR double-click the block'},
+    {label:'Select ref',input:'click',action:'Click the block or XRef to edit'},
+    {label:'Choose nested',input:'tree',action:'If nested blocks: choose which nesting level to edit in the REFEDIT dialog'},
+    {label:'Edit',input:'normal CAD work',action:'Add/modify/delete entities. Only selected entities are editable'},
+    {label:'Save changes',input:'REFCLOSE',action:'Type REFCLOSE or click Save reference edits button — saves back to block definition'},
+    {label:'Discard',input:'REFCLOSE then Discard',action:'REFCLOSE → choose Discard to abandon changes'},
+  ],
+  options:[{key:'REFCLOSE',desc:'Close reference editing session — Save or Discard changes'}],
+  tips:['BEDIT (Block Editor) is better for complex block editing','REFEDIT limitation: only entities added to working set are editable','For XRefs: REFEDIT actually edits and saves the external DWG file directly'],
+  related:['BLOCK','BEDIT','INSERT','XREF']
+},
+
+// ── VIEW ─────────────────────────────────────────────────────
+{ id:'zoom', cmd:'ZOOM', alias:'Z', cat:'view', catLabel:'VIEW',
+  desc:'Zoom the viewport — Extents, Window, Scale, Previous, All.',
+  fullDesc:'Controls the view magnification. Most zoom operations are easier with scroll wheel, but command allows precise control.',
+  steps:[
+    {label:'Activate',input:'Z',action:'Type Z + Enter'},
+    {label:'Option',input:'E / W / S / P / A',action:'E=Extents (fit all), W=Window (box area), S=Scale, P=Previous view, A=All (including limits)'},
+    {label:'Realtime',input:'drag',action:'Default = Realtime — click drag up/down to zoom in/out'},
+  ],
+  options:[{key:'E',desc:'Extents — fits all entities in viewport'},{key:'W',desc:'Window — zoom into a box you draw'},{key:'S',desc:'Scale — enter scale factor (2=2x, 0.5=half, 2XP=2x relative to paper space)'},{key:'P',desc:'Previous — back to last view'},{key:'A',desc:'All — zoom to limits or extents, whichever larger'},{key:'C',desc:'Center — zoom to a centre point and height'}],
+  tips:['Double-click scroll wheel = ZOOM Extents (instant)','Scroll wheel = zoom to cursor location','REGEN after zoom if display looks corrupt','Z E E (type Z, Enter, E, Enter) = fastest way to fit all'],
+  related:['PAN','VIEW','REGEN','3DORBIT']
+},
+
+{ id:'pan', cmd:'PAN', alias:'P', cat:'view', catLabel:'VIEW',
+  desc:'Pan the view without changing zoom level.',
+  fullDesc:'Shifts the viewport without changing zoom. Most commonly used by holding middle mouse button.',
+  steps:[
+    {label:'Activate',input:'P',action:'Type P + Enter — cursor becomes hand'},
+    {label:'Drag',input:'click + drag',action:'Click and drag to pan'},
+    {label:'End',input:'Esc or Enter',action:'Press Esc or right-click to end'},
+  ],
+  options:[],
+  tips:['Middle mouse button held = pan without activating command','Scroll then Shift+drag: combined zoom+pan in one motion','PAN in layouts: activate a viewport first, then pan inside it'],
+  related:['ZOOM','VIEW','3DORBIT']
+},
+
+{ id:'view', cmd:'VIEW', alias:'V', cat:'view', catLabel:'VIEW',
+  desc:'Save and restore named views.',
+  fullDesc:'View Manager saves specific zoom/pan states as named views. Essential for complex drawings with multiple focus areas.',
+  steps:[
+    {label:'Activate',input:'V',action:'Type V + Enter — View Manager dialog'},
+    {label:'New',input:'New button',action:'Click New → name the view (e.g. DETAIL-A, SECTION-B, OVERVIEW) → OK'},
+    {label:'Restore',input:'Restore or double-click',action:'Select view name → click Restore → OK — viewport jumps to saved view'},
+  ],
+  options:[{key:'Category',desc:'Organize views into categories'},{key:'Boundary',desc:'Define exact boundary for view (for named view layout)'},{key:'Shot properties',desc:'Camera position for 3D'}],
+  tips:['Named views used in layouts: link a viewport to a named view','Great for multi-sheet drawings: save each sheet detail area as a named view'],
+  related:['ZOOM','MVIEW','LAYOUT']
+},
+
+{ id:'regen', cmd:'REGEN', alias:'RE', cat:'view', catLabel:'VIEW',
+  desc:'Regenerate the drawing display — fixes display artifacts.',
+  fullDesc:'Recalculates and redraws all entity display from the database. Fixes corrupted/jagged display without changing geometry.',
+  steps:[
+    {label:'Activate',input:'RE',action:'Type RE + Enter — drawing regenerates'},
+    {label:'All viewports',input:'REGENALL',action:'Type REGENALL to regenerate all viewports simultaneously'},
+  ],
+  options:[{key:'REGENALL',desc:'Regenerates all viewports including paper space'}],
+  tips:['Circles/arcs look faceted at zoom? RE fixes it','REGENAUTO: controls if BricsCAD regenerates automatically or asks permission','REDRAW (RD): faster than REGEN, just repaints without recalculating'],
+  related:['REDRAW','REGENALL','ZOOM']
+},
+
+{ id:'orbit', cmd:'3DORBIT', alias:'3DO', cat:'view', catLabel:'VIEW',
+  desc:'Interactively rotate the 3D view around a target point.',
+  fullDesc:'Free orbit rotates the view around any axis. Constrained orbit (3DCORBIT) is easier for standard orientations.',
+  steps:[
+    {label:'Activate',input:'3DO',action:'Type 3DO + Enter — or Shift+Middle mouse button'},
+    {label:'Orbit',input:'drag',action:'Drag to rotate the view around the centre of the orbit sphere'},
+    {label:'Constrained',input:'3DCORBIT',action:'3DCORBIT limits rotation to Z-up — avoids upside-down views'},
+    {label:'Exit',input:'Esc',action:'Press Esc to exit and return to normal editing'},
+  ],
+  options:[{key:'Shift+Middle mouse',desc:'Temporary 3D orbit without activating command'},{key:'3DPAN',desc:'Pan in 3D view'},{key:'3DZOOM',desc:'Zoom in 3D view'}],
+  tips:['Shift + middle mouse button = quickest orbit','Set visual style: VSCURRENT → Realistic/Shaded/Wireframe','PERSPECTIVE sysvar: 1=perspective view, 0=parallel projection'],
+  related:['ZOOM','PAN','VSCURRENT','VIEW']
+},
+
+{ id:'layout', cmd:'LAYOUT', alias:'LO', cat:'view', catLabel:'VIEW',
+  desc:'Create, rename, and manage paper space layouts.',
+  fullDesc:'Layouts represent paper sheets for plotting. Each layout can have multiple viewports showing different views and scales.',
+  steps:[
+    {label:'Activate',input:'LO',action:'Type LO + Enter — Layout Manager opens'},
+    {label:'New layout',input:'New',action:'Click New → name it (e.g. A3-PLAN, A1-DETAIL)'},
+    {label:'Page setup',input:'Page Setup',action:'Right-click layout tab → Page Setup → set printer, paper size, plot style'},
+    {label:'Add viewports',input:'MVIEW',action:'Switch to layout → type MVIEW → draw viewport rectangle to show model space view'},
+    {label:'Set scale',input:'in viewport',action:'Double-click inside viewport (activates it) → type Z → type scale e.g. 1/50XP for 1:50'},
+    {label:'Lock viewport',input:'VPLOCK or Properties',action:'Lock viewport scale: right-click viewport border → Display Locked → Yes'},
+  ],
+  options:[{key:'MVIEW',desc:'Create viewports in layout'},{key:'VPLOCK',desc:'Lock viewport scale to prevent accidental zoom'},{key:'VPLAYER',desc:'Control layer visibility per viewport'}],
+  tips:['Always lock viewports after setting scale — prevents accidental zoom','VPLAYER: freeze layers in specific viewports (e.g. hide notes in plan viewport)','Viewport border on non-plot layer: place viewport entities on VIEWPORT layer → no-plot'],
+  related:['MVIEW','PAGESETUP','PLOT','ZOOM']
+},
+
+// ── 3D SOLID ─────────────────────────────────────────────────
+{ id:'box3d', cmd:'BOX', alias:'BOX', cat:'3d', catLabel:'3D SOLID',
+  desc:'Create a solid rectangular box (cuboid).',
+  fullDesc:'Draws a 3D solid box. Defined by two corner points and height, or by centre.',
+  steps:[
+    {label:'Activate',input:'BOX',action:'Type BOX + Enter'},
+    {label:'First corner',input:'click',action:'Pick one corner of the base'},
+    {label:'Other corner',input:'click or @w,d',action:'Pick opposite corner of base OR type @width,depth'},
+    {label:'Height',input:'number',action:'Type height + Enter (positive = up from current UCS, negative = down)'},
+  ],
+  options:[{key:'C',desc:'Centre — define by centre point of box'},{key:'Cube',desc:'Equal all sides — type length once for all three'}],
+  tips:['Visual style: VSCURRENT Conceptual or Realistic to see solid','BOX then MOVE: draw at origin (0,0,0) then move to position','CHAMFEREDGE / FILLETEDGE for edge finishing after creation'],
+  related:['CYLINDER','SPHERE','EXTRUDE','CHAMFEREDGE','FILLETEDGE']
+},
+
+{ id:'cylinder', cmd:'CYLINDER', alias:'CYL', cat:'3d', catLabel:'3D SOLID',
+  desc:'Create a solid cylinder.',
+  fullDesc:'Creates a solid cylinder from a circular base. Can also create elliptical cylinders.',
+  steps:[
+    {label:'Activate',input:'CYL',action:'Type CYL + Enter'},
+    {label:'Centre base',input:'click',action:'Pick centre of circular base'},
+    {label:'Radius',input:'number',action:'Type radius (or D for diameter)'},
+    {label:'Height',input:'number',action:'Type height. OR type 2P to define by two base points, or 3P for 3-point base'},
+  ],
+  options:[{key:'D',desc:'Diameter instead of radius'},{key:'2P/3P',desc:'Define base circle by 2 or 3 points'},{key:'E',desc:'Elliptical base'},{key:'Axis endpoint',desc:'Pick top centre instead of height'}],
+  tips:['For bores: draw full cylinder, then SUBTRACT smaller cylinder','CHAMFEREDGE on top face edge for chamfered top','FILLETEDGE for radii'],
+  related:['BOX','SPHERE','EXTRUDE','SUBTRACT']
+},
+
+{ id:'extrude', cmd:'EXTRUDE', alias:'EXT', cat:'3d', catLabel:'3D SOLID',
+  desc:'Extrude a 2D profile into a 3D solid.',
+  fullDesc:'Pushes a closed 2D profile (polyline, circle, region) into a 3D solid. Can taper, follow a path, or use direction vector.',
+  steps:[
+    {label:'Prepare profile',input:'PLINE / REGION',action:'Draw a closed polyline or use REGION. Profile must be closed and planar'},
+    {label:'Activate',input:'EXT',action:'Type EXT + Enter'},
+    {label:'Select profile',input:'click',action:'Click the closed polyline/circle/region + Enter'},
+    {label:'Height',input:'number',action:'Type extrusion height + Enter (perpendicular to profile plane)'},
+    {label:'Taper angle',input:'T then number',action:'Type T → type taper angle (0=straight, positive=inward taper, negative=flare)'},
+    {label:'Path',input:'P',action:'Type P → select a path curve — solid follows the path shape'},
+  ],
+  options:[{key:'T',desc:'Taper angle — draft angle for moulded parts'},{key:'P',desc:'Path — extrude along a line, arc, or polyline'},{key:'D',desc:'Direction — extrude in specific direction vector'}],
+  tips:['Profile must be closed — use BOUNDARY or JOIN first','PRESSPULL command: hover over any closed region and drag to extrude/cut interactively','EXTRUDE on open profiles creates surfaces (not solids)','Negative height = extrude in opposite UCS Z direction'],
+  related:['REVOLVE','PRESSPULL','LOFT','SWEEP','REGION']
+},
+
+{ id:'revolve', cmd:'REVOLVE', alias:'REV', cat:'3d', catLabel:'3D SOLID',
+  desc:'Revolve a 2D profile around an axis to create a solid of revolution.',
+  fullDesc:'Rotates a 2D closed profile around a defined axis. Creates axisymmetric solids: shafts, bottles, bowls.',
+  steps:[
+    {label:'Prepare profile',input:'PLINE',action:'Draw closed profile on one side of the intended axis'},
+    {label:'Activate',input:'REV',action:'Type REV + Enter'},
+    {label:'Select profile',input:'click',action:'Click profile + Enter'},
+    {label:'Axis',input:'click two points or option',action:'Pick two points defining the axis line. OR type O=Object (existing line), X/Y/Z axis, S=Start point'},
+    {label:'Angle',input:'number',action:'Type revolution angle (360=full, 270=270° sector). Positive=CCW about axis'},
+  ],
+  options:[{key:'O',desc:'Object — use an existing line as axis'},{key:'X/Y/Z',desc:'Revolve around global X, Y, or Z axis'},{key:'Start',desc:'Define axis start point then endpoint'}],
+  tips:['Profile must not cross the axis — it must be entirely on one side','Half-section views: revolve 180° for a sectioned appearance','Common for: shafts, turned parts, vessels, pipe fittings'],
+  related:['EXTRUDE','SWEEP','LOFT']
+},
+
+{ id:'union', cmd:'UNION', alias:'UNI', cat:'3d', catLabel:'3D SOLID',
+  desc:'Join two or more solid bodies into one.',
+  fullDesc:'Boolean union: combines multiple solids into a single solid. Overlapping volumes become one.',
+  steps:[
+    {label:'Activate',input:'UNI',action:'Type UNI + Enter'},
+    {label:'Select solids',input:'click / window',action:'Click or window all solids to unite + Enter'},
+  ],
+  options:[],
+  tips:['UNION + SUBTRACT + INTERSECT are the three Boolean operations','Always work from separate solid primitives — build complex shapes by combining simples','MASSPROP: check volume/centroid after Boolean operations'],
+  related:['SUBTRACT','INTERSECT','EXTRUDE','CYLINDER']
+},
+
+{ id:'subtract', cmd:'SUBTRACT', alias:'SU', cat:'3d', catLabel:'3D SOLID',
+  desc:'Subtract one solid from another (cut a hole or pocket).',
+  fullDesc:'Boolean subtraction: removes the volume of one or more solids from another. Used for holes, pockets, and material removal.',
+  steps:[
+    {label:'Activate',input:'SU',action:'Type SU + Enter'},
+    {label:'Select source (to subtract FROM)',input:'click',action:'Click the main solid body + Enter'},
+    {label:'Select to subtract',input:'click',action:'Click the solid(s) to remove from main body + Enter — they disappear from main body'},
+  ],
+  options:[],
+  tips:['Workflow: BOX + CYLINDER (for hole) → SUBTRACT cylinder from box','Make subtracted solid slightly larger than needed to avoid zero-thickness faces (Boolean artefacts)','PRESSPULL alternative: hover over face, drag inward to subtract interactively'],
+  related:['UNION','INTERSECT','EXTRUDE','PRESSPULL']
+},
+
+{ id:'chamferedge', cmd:'CHAMFEREDGE', alias:'CHFE', cat:'3d', catLabel:'3D SOLID',
+  desc:'Apply a chamfer to a solid edge.',
+  fullDesc:'Adds a planar chamfer to one or more edges of a 3D solid. Specify distance or distance+angle.',
+  steps:[
+    {label:'Activate',input:'CHAMFEREDGE',action:'Type CHAMFEREDGE + Enter'},
+    {label:'Select edge(s)',input:'click',action:'Click edges to chamfer (Ctrl+click for multiple)'},
+    {label:'Set distance',input:'D then number',action:'Type D → enter distance 1 → distance 2 (equal for 45°)'},
+    {label:'Apply',input:'Enter',action:'Press Enter to apply'},
+  ],
+  options:[{key:'D',desc:'Distance method'},{key:'A',desc:'Angle method — distance + angle'},{key:'Loop',desc:'Chamfer entire edge loop of a face'}],
+  tips:['Equal distances = 45° chamfer','FILLETEDGE for rounded edges','2×45° standard engineering chamfer: set both distances to 2'],
+  related:['FILLETEDGE','SUBTRACT','UNION']
+},
+
+{ id:'filletedge', cmd:'FILLETEDGE', alias:'FILLETEDGE', cat:'3d', catLabel:'3D SOLID',
+  desc:'Apply a fillet (round) to a solid edge.',
+  fullDesc:'Rounds one or more edges of a 3D solid with a tangent arc of specified radius.',
+  steps:[
+    {label:'Activate',input:'FILLETEDGE',action:'Type FILLETEDGE + Enter'},
+    {label:'Set radius',input:'R then number',action:'Type R → type radius value'},
+    {label:'Select edges',input:'click',action:'Click edges to fillet + Enter'},
+  ],
+  options:[{key:'R',desc:'Set radius'},{key:'Chain',desc:'Fillet a series of tangent edges'},{key:'Loop',desc:'Fillet an entire face loop'},{key:'Variable',desc:'Variable radius — different radii at different points'}],
+  tips:['Small radius first, then larger — easier for solver','Complex shapes: fillet one edge at a time if multi-edge fillet fails','MASSPROP after filleting to verify volume'],
+  related:['CHAMFEREDGE','SUBTRACT','UNION']
+},
+
+{ id:'section', cmd:'SECTION', alias:'SEC', cat:'3d', catLabel:'3D SOLID',
+  desc:'Create a cross-section region from a solid using a cutting plane.',
+  fullDesc:'SECTION generates a 2D region at the intersection of a solid and a plane. SECTIONPLANE creates an interactive live section.',
+  steps:[
+    {label:'SECTION command',input:'SECTION',action:'Type SECTION + Enter → select solid → define cutting plane by 3 points or Object/XY/YZ/ZX'},
+    {label:'SECTIONPLANE',input:'SECTIONPLANE',action:'Type SECTIONPLANE → pick face or pick 2 points → interactive section with live display'},
+    {label:'Generate 2D section',input:'SECTIONPLANE then Generate',action:'Right-click section plane → Generate 2D/3D section → creates flattened views'},
+  ],
+  options:[{key:'SECTIONPLANE',desc:'Interactive live section with jog capability'},{key:'FLATSHOT',desc:'Creates 2D projection of 3D model for documentation'}],
+  tips:['FLATSHOT: generate 2D drawings from 3D model — visible and hidden line views','SOLPROF: section profile for use in layout viewports','BricsCAD Drawing Generation panel: automated 2D views from 3D model'],
+  related:['EXTRUDE','SUBTRACT','UNION','FLATSHOT']
+},
+
+// ── INQUIRY ──────────────────────────────────────────────────
+{ id:'dist', cmd:'DIST', alias:'DI', cat:'inquiry', catLabel:'INQUIRY',
+  desc:'Measure the distance and angle between two points.',
+  fullDesc:'Reports: distance, delta X, delta Y, delta Z, and angle from X-axis between two picked points.',
+  steps:[
+    {label:'Activate',input:'DI',action:'Type DI + Enter'},
+    {label:'First point',input:'click',action:'Click first point (use OSNAP)'},
+    {label:'Second point',input:'click',action:'Click second point — distance reported in command line'},
+  ],
+  options:[{key:'M',desc:'Multiple — measure total path distance through many points'}],
+  tips:['DIST with M option: click a path of points for total route distance','Check result in command window — also shows angle and delta X/Y','MEASUREGEOM (MEA): unified command for distance, radius, angle, area'],
+  related:['AREA','ID','LIST','MEASUREGEOM']
+},
+
+{ id:'area', cmd:'AREA', alias:'AA', cat:'inquiry', catLabel:'INQUIRY',
+  desc:'Measure area and perimeter of shapes or picked points.',
+  fullDesc:'Reports area and perimeter. Can pick boundary points manually or select a closed entity. Add/Subtract mode for composite areas.',
+  steps:[
+    {label:'Activate',input:'AA',action:'Type AA + Enter'},
+    {label:'Object method',input:'O',action:'Type O → click a closed polyline/circle/region — reports area and perimeter directly'},
+    {label:'Point method',input:'click points',action:'Click polygon vertices (use OSNAP) + Enter — area calculated from points'},
+    {label:'Add mode',input:'A',action:'Type A → pick first area → type A again to add more areas (running total)'},
+    {label:'Subtract mode',input:'S in Add',action:'While in Add mode: type S → pick areas to subtract (holes, cutouts)'},
+  ],
+  options:[{key:'O',desc:'Object — select a closed entity'},{key:'A',desc:'Add mode — accumulate areas'},{key:'S',desc:'Subtract mode — deduct from total'}],
+  tips:['Add mode + Subtract mode: great for gross area minus holes','MEASUREGEOM: also measures area with more feedback','HATCH reports area too — select hatch, check Properties panel'],
+  related:['DIST','LIST','MEASUREGEOM','MASSPROP']
+},
+
+{ id:'list', cmd:'LIST', alias:'LI', cat:'inquiry', catLabel:'INQUIRY',
+  desc:'Display all database properties of selected entities.',
+  fullDesc:'Shows complete entity information: type, layer, colour, linetype, geometry (endpoints, radius, length, area), and more.',
+  steps:[
+    {label:'Activate',input:'LI',action:'Type LI + Enter'},
+    {label:'Select entities',input:'click',action:'Select one or more entities + Enter — data appears in command window / text window'},
+  ],
+  options:[],
+  tips:['F2 to open command history and read full LIST output','DBLIST: lists ALL entities in drawing (very long for large drawings)','Properties panel shows similar info but LIST shows exact database values'],
+  related:['DIST','AREA','PROPERTIES','ID']
+},
+
+{ id:'id', cmd:'ID', alias:'ID', cat:'inquiry', catLabel:'INQUIRY',
+  desc:'Report the X,Y,Z coordinates of a picked point.',
+  fullDesc:'Displays the absolute coordinates of a picked point. Sets the last point for @ relative coordinates.',
+  steps:[
+    {label:'Activate',input:'ID',action:'Type ID + Enter'},
+    {label:'Pick point',input:'click',action:'Click any point (OSNAP for precision) — X, Y, Z reported'},
+  ],
+  options:[],
+  tips:['After ID, the point becomes the reference for @ relative coordinates in the next command','Useful for checking if a point is at the intended coordinate'],
+  related:['DIST','LIST','MOVE']
+},
+
+{ id:'massprop', cmd:'MASSPROP', alias:'MASSPROP', cat:'inquiry', catLabel:'INQUIRY',
+  desc:'Calculate mass properties of 2D regions or 3D solids.',
+  fullDesc:'Reports: volume, area, centroid, moments of inertia, radii of gyration, principal moments. Essential for structural/mechanical verification.',
+  steps:[
+    {label:'Activate',input:'MASSPROP',action:'Type MASSPROP + Enter'},
+    {label:'Select',input:'click',action:'Click 3D solid or 2D region + Enter'},
+    {label:'Export',input:'Y or N',action:'Write to file? Y to save .mpr report, N to view only in command window'},
+  ],
+  options:[],
+  tips:['Material density not applied — volume only (multiply by density for mass)','MASSPROP on REGION: area, perimeter, centroid, moments — useful for cross-section properties','Run after every major boolean operation to verify geometry'],
+  related:['AREA','REGION','SUBTRACT','UNION']
+},
+
+// ── SETTINGS ─────────────────────────────────────────────────
+{ id:'units', cmd:'UNITS', alias:'UN', cat:'settings', catLabel:'SETTINGS',
+  desc:'Set drawing units, precision, and angle format.',
+  fullDesc:'Controls the display format and precision for linear and angular units. Does not scale existing geometry.',
+  steps:[
+    {label:'Activate',input:'UN',action:'Type UN + Enter — Drawing Units dialog opens'},
+    {label:'Length type',input:'dropdown',action:'Decimal (standard for metric engineering). Architectural/Fractional for imperial.'},
+    {label:'Precision',input:'dropdown',action:'Set decimal places (0.00 = 2dp typical for mm drawings)'},
+    {label:'Angle type',input:'dropdown',action:'Decimal Degrees standard. Grads/Radians for specific uses.'},
+    {label:'Insertion scale',input:'dropdown',action:'Millimetres — ensures blocks inserted at correct scale from other drawings'},
+  ],
+  options:[{key:'INSUNITS',desc:'Sysvar for insertion units — 4=mm, 2=inches, 0=unitless'}],
+  tips:['Units do not scale drawing — they only affect how numbers are displayed','INSUNITS: set in your template to prevent scale issues when inserting blocks from other drawings','Angles: positive counterclockwise is default (ANGDIR=0)'],
+  related:['LIMITS','DIMSTYLE','INSUNITS']
+},
+
+{ id:'limits', cmd:'LIMITS', alias:'LIMITS', cat:'settings', catLabel:'SETTINGS',
+  desc:'Set the drawing limits (virtual paper boundary in model space).',
+  fullDesc:'Defines a rectangular boundary in model space. LIMCHECK prevents drawing outside limits. Used for grid extent and ZOOM All.',
+  steps:[
+    {label:'Activate',input:'LIMITS',action:'Type LIMITS + Enter'},
+    {label:'Lower-left',input:'coords',action:'Enter lower-left corner (usually 0,0) + Enter'},
+    {label:'Upper-right',input:'coords',action:'Enter upper-right corner = paper size × scale (e.g. for A1 at 1:50: 2970×50, 2100×50 → 148500,105000)'},
+  ],
+  options:[{key:'ON',desc:'Enable limit checking — prevents entities outside limits'},{key:'OFF',desc:'Disable limit checking (default)'}],
+  tips:['Set limits = paper size × plot scale for model space planning','ZOOM A: zooms to limits (or extents if larger)','For most work: set limits but keep LIMCHECK off'],
+  related:['UNITS','ZOOM','GRID']
+},
+
+{ id:'snap', cmd:'SNAP', alias:'SN', cat:'settings', catLabel:'SETTINGS',
+  desc:'Set cursor snap spacing and mode.',
+  fullDesc:'Forces cursor to snap to a grid of invisible points. F9 toggles snap on/off.',
+  steps:[
+    {label:'Activate',input:'SN',action:'Type SN + Enter'},
+    {label:'Set spacing',input:'number',action:'Type snap spacing (e.g. 1 for 1 mm snap, 5 for 5 mm)'},
+    {label:'Toggle',input:'F9',action:'F9 = toggle snap on/off during drawing'},
+  ],
+  options:[{key:'A',desc:'Aspect — different X and Y spacing'},{key:'R',desc:'Rotate — rotate snap grid'},{key:'S',desc:'Style — Standard or Isometric'},{key:'T',desc:'Type — Grid or Polar snap'}],
+  tips:['Isometric snap (S → Isometric): enables F5 isoplane cycling for 2D isometric drawings','Polar snap: snaps at set distance along tracking angles (alternative to grid snap)'],
+  related:['GRID','ORTHO','POLAR']
+},
+
+{ id:'osnap', cmd:'OSNAP', alias:'OS', cat:'settings', catLabel:'SETTINGS',
+  desc:'Configure running Object Snap modes.',
+  fullDesc:'OSNAP controls which snaps are always active. Individual overrides can be typed anytime during a command.',
+  steps:[
+    {label:'Activate',input:'OS',action:'Type OS + Enter — Drafting Settings → Object Snap tab'},
+    {label:'Enable/Disable',input:'checkboxes',action:'Check: Endpoint, Midpoint, Centre, Intersection, Perpendicular, Tangent as minimum set'},
+    {label:'Toggle all',input:'F3',action:'F3 = toggle all running snaps on/off without losing settings'},
+    {label:'Override',input:'type 3 letters',action:'During any command: type END, MID, CEN, INT, TAN, PER etc. for one-shot override'},
+  ],
+  options:[{key:'OSMODE',desc:'Sysvar bitmask for snap settings (0=off, 1=END, 2=MID, 4=CEN, 8=NOD, 16=QUA, 32=INT...)'}],
+  tips:['Too many snaps on = conflicts. Recommended: END, MID, CEN, INT, PER, TAN','Override: always type the 3-letter code during command for a clean, one-time snap','OTRACK (F11): object snap tracking — track along extensions from snap points'],
+  related:['GRID','SNAP','POLAR','ORTHO']
+},
+
+{ id:'ucs', cmd:'UCS', alias:'UCS', cat:'settings', catLabel:'SETTINGS',
+  desc:'Define the User Coordinate System — custom work plane.',
+  fullDesc:'UCS sets the XY work plane for drawing and 3D modeling. Essential for drawing on angled or 3D faces.',
+  steps:[
+    {label:'Activate',input:'UCS',action:'Type UCS + Enter'},
+    {label:'Option',input:'W / F / O / X / Y / Z',action:'W=World (reset to global), F=Face (click a solid face), O=Origin (move origin), X/Y/Z=rotate about axis, 3=3-point UCS'},
+    {label:'3-point UCS',input:'3',action:'Type 3 → pick new origin → pick point on +X axis → pick point in +Y direction'},
+    {label:'Save',input:'S then name',action:'Type S → type name to save current UCS for reuse'},
+    {label:'Restore',input:'UCSMAN',action:'Type UCSMAN to open UCS Manager and restore saved UCS'},
+  ],
+  options:[{key:'W',desc:'World — reset to global WCS'},{key:'F',desc:'Face — align to solid face'},{key:'O',desc:'Origin — move UCS origin'},{key:'3',desc:'3-point — define by origin + X direction + Y direction'},{key:'P',desc:'Previous UCS'},{key:'V',desc:'View — align to current view direction'}],
+  tips:['DUCS (F6): Dynamic UCS — automatically aligns to solid face as you hover (3D only)','UCS icon: always displayed — shows current UCS orientation','Plan view of UCS: PLAN → Current UCS — resets view perpendicular to UCS'],
+  related:['PLAN','OSNAP','3DORBIT','DUCS']
+},
+
+{ id:'purge', cmd:'PURGE', alias:'PU', cat:'settings', catLabel:'SETTINGS',
+  desc:'Remove unused named objects (blocks, layers, linetypes, styles) from the drawing.',
+  fullDesc:'Cleans the drawing database of unreferenced definitions. Reduces file size. Must run repeatedly if objects are nested.',
+  steps:[
+    {label:'Activate',input:'PU',action:'Type PU + Enter — Purge dialog opens'},
+    {label:'Select items',input:'Purge All',action:'Click Purge All → confirm → repeat until nothing left to purge'},
+    {label:'Nested',input:'Purge nested',action:'Check Purge nested items to remove deeply nested unused objects in one pass'},
+  ],
+  options:[{key:'Purge All',desc:'Remove all purgeable items'},{key:'Nested',desc:'Removes items nested inside other purgeable items'}],
+  tips:['Run PURGE before WBLOCK, AUDIT, or sending to client','AUDIT: checks and repairs database errors (run before PURGE)','RECOVER: opens a corrupted drawing file and attempts repair'],
+  related:['AUDIT','WBLOCK','RECOVER']
+},
+
+// ── LISP / MACRO ─────────────────────────────────────────────
+{ id:'lisp_load', cmd:'LOAD LISP', alias:'APPLOAD', cat:'lisp', catLabel:'AUTOLISP',
+  desc:'Load an AutoLISP (.lsp) or compiled (.fas/.vlx) file into BricsCAD.',
+  fullDesc:'APPLOAD loads LISP routines so their commands become available. ACADDOC.LSP or bricscad.lsp auto-loads at startup.',
+  steps:[
+    {label:'Activate',input:'APPLOAD',action:'Type APPLOAD + Enter — Load Application dialog opens'},
+    {label:'Browse',input:'Browse',action:'Browse to your .lsp file and click Load'},
+    {label:'Command line',input:'(load "path/file.lsp")',action:'At command line type: (load "C:/path/to/file.lsp") + Enter'},
+    {label:'Auto-load',input:'startup suite',action:'In APPLOAD: add file to Startup Suite → loads automatically every session'},
+    {label:'Startup file',input:'BRICSCAD.LSP',action:'Place BRICSCAD.LSP (or ACAD.LSP) in support path — auto-loads every drawing'},
+  ],
+  options:[{key:'Startup Suite',desc:'Files loaded automatically when BricsCAD starts'},{key:'(load)',desc:'LISP function to load from command line or another LISP file'}],
+  tips:['VLISP / VLIDE: open Visual LISP IDE for editing and debugging (type VLIDE)','UTF-8 with BOM may cause issues — save .lsp as UTF-8 without BOM','(princ) at end of LISP file suppresses nil output on load','Test by typing function name in command line after loading'],
+  related:['VLIDE','SCRIPT','ACTRECORD']
+},
+
+{ id:'vlide', cmd:'VLIDE', alias:'VLIDE', cat:'lisp', catLabel:'AUTOLISP',
+  desc:'Open the Visual LISP Integrated Development Environment.',
+  fullDesc:'VLIDE is the built-in editor and debugger for AutoLISP. Write, test, and debug LISP routines with syntax highlighting.',
+  steps:[
+    {label:'Activate',input:'VLIDE',action:'Type VLIDE + Enter — LISP IDE opens'},
+    {label:'Open file',input:'File → Open',action:'Open an existing .lsp file or create new'},
+    {label:'Load to BricsCAD',input:'Tools → Load into Editor',action:'Load current file into BricsCAD session'},
+    {label:'Console',input:'VLIDE console',action:'Type LISP expressions directly in the console pane to test'},
+    {label:'Format code',input:'Tools → Format Code',action:'Auto-format and indent LISP code'},
+  ],
+  options:[{key:'Check',desc:'Syntax check without loading'},{key:'Console',desc:'LISP REPL for interactive testing'},{key:'Breakpoints',desc:'Set breakpoints in debugger'}],
+  tips:['(command "LINE" ...) function calls BricsCAD commands from LISP','(getpoint) (getreal) (getstring): user input functions','(entget (car (entsel))): get entity data of picked entity','(ssget): selection set — pick entities programmatically'],
+  related:['APPLOAD','SCRIPT','LAYER']
+},
+
+{ id:'script', cmd:'SCRIPT', alias:'SCR', cat:'lisp', catLabel:'AUTOLISP',
+  desc:'Run a script file (.scr) — batch automation of BricsCAD commands.',
+  fullDesc:'Script files contain sequences of BricsCAD commands and inputs. Executed as if typed at the command line. Useful for batch plotting, drawing setup, and repetitive tasks.',
+  steps:[
+    {label:'Create .scr file',input:'text editor',action:'Write commands as text: one command per line OR space-separated. Blank line = Enter.'},
+    {label:'Example script',input:'text',action:'LAYER\nN\nDIMENSION\n\nCOLOR\n4\n\n  (sets Dimension layer cyan)'},
+    {label:'Activate',input:'SCR',action:'Type SCR + Enter → browse to .scr file → Open → runs automatically'},
+  ],
+  options:[{key:'-SCRIPT',desc:'Command-line version — run script at startup with /b switch'}],
+  tips:['Each line in script = Enter press in BricsCAD','Blank line = one Enter','Semicolons also = Enter (;)','Test scripts on a copy first — no undo within script execution'],
+  related:['APPLOAD','VLIDE','ACTRECORD']
+},
+
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — SYSTEM VARIABLES
+// ══════════════════════════════════════════════════════════════
+const sysvars = [
+  {name:'LTSCALE',def:'1',type:'Real',cat:'Display',desc:'Global linetype scale factor. Set to plot scale (e.g. 50 for 1:50). Affects dashes/dots on all linetypes.'},
+  {name:'CELTSCALE',def:'1',type:'Real',cat:'Display',desc:'Per-entity linetype scale multiplier. Multiplied with LTSCALE. Usually keep at 1.'},
+  {name:'LWDISPLAY',def:'0',type:'Integer (0/1)',cat:'Display',desc:'0=lineweights displayed as hairlines on screen. 1=lineweights shown at actual width. Toggle with LWT button.'},
+  {name:'PSLTSCALE',def:'1',type:'Integer (0/1)',cat:'Display',desc:'1=linetypes scale relative to paper space (same dash size in all viewports). 0=model space scale used.'},
+  {name:'DIMSCALE',def:'1',type:'Real',cat:'Dimension',desc:'Overall dimension scale factor. Set to plot scale so dimensions plot at correct size. Affects arrowheads, text height, offsets.'},
+  {name:'DIMTXT',def:'2.5',type:'Real (mm)',cat:'Dimension',desc:'Default dimension text height (mm). ISO standard: 2.5 mm. Overridden per DIMSTYLE.'},
+  {name:'DIMASZ',def:'2.5',type:'Real (mm)',cat:'Dimension',desc:'Arrowhead size. ISO standard: 2.5 mm. Scale with DIMSCALE.'},
+  {name:'DIMAUNIT',def:'0',type:'Integer',cat:'Dimension',desc:'Angular units: 0=decimal degrees, 1=deg/min/sec, 2=gradians, 3=radians, 4=surveyor.'},
+  {name:'DIMDEC',def:'4',type:'Integer',cat:'Dimension',desc:'Decimal places for primary dimension units. 2 is typical for mm engineering drawings.'},
+  {name:'DIMTOL',def:'0',type:'Integer (0/1)',cat:'Dimension',desc:'0=no tolerance display. 1=symmetric tolerance. Set tolerance values with DIMTP and DIMTM.'},
+  {name:'MIRRTEXT',def:'0',type:'Integer (0/1)',cat:'Modify',desc:'0=text NOT mirrored (stays readable). 1=text mirrored. Almost always keep at 0.'},
+  {name:'ORTHOMODE',def:'0',type:'Integer (0/1)',cat:'Drawing',desc:'0=ortho off. 1=ortho on. Toggle with F8. Forces cursor to 0/90/180/270 degree directions.'},
+  {name:'SNAPMODE',def:'0',type:'Integer (0/1)',cat:'Drawing',desc:'0=snap off. 1=snap on. Toggle with F9.'},
+  {name:'GRIDMODE',def:'0',type:'Integer (0/1)',cat:'Display',desc:'0=grid off. 1=grid on. Toggle with F7. Grid is display-only — not a snap.'},
+  {name:'ANGBASE',def:'0',type:'Real (degrees)',cat:'Drawing',desc:'Base angle for 0°. Default: 0=East (right). Changing this affects all angle inputs.'},
+  {name:'ANGDIR',def:'0',type:'Integer (0/1)',cat:'Drawing',desc:'0=counterclockwise (standard math). 1=clockwise. Affects angle input and display.'},
+  {name:'INSUNITS',def:'4',type:'Integer',cat:'Drawing',desc:'Units for block insertion: 0=unitless, 1=inches, 2=feet, 4=mm, 5=cm, 6=m. Set in template.'},
+  {name:'OSMODE',def:'4133',type:'Integer (bitmask)',cat:'Drawing',desc:'Running OSNAP bitmask. 0=all off. Common: END(1)+MID(2)+CEN(4)+INT(32)+PER(512)+TAN(256)=807. View in OSNAP dialog.'},
+  {name:'APERTURE',def:'10',type:'Integer (pixels)',cat:'Drawing',desc:'OSNAP target box size in pixels. Smaller=more precise, Larger=easier to snap. Range 1-50.'},
+  {name:'PICKBOX',def:'3',type:'Integer (pixels)',cat:'Drawing',desc:'Entity pick box size in pixels at cursor. Range 0-50.'},
+  {name:'PICKFIRST',def:'1',type:'Integer (0/1)',cat:'Drawing',desc:'1=noun-verb selection (select before command). 0=verb-noun only (command then select).'},
+  {name:'GRIPS',def:'1',type:'Integer (0/1)',cat:'Drawing',desc:'0=grips disabled. 1=grips enabled. Grips are blue squares on selected entities.'},
+  {name:'GRIPSIZE',def:'3',type:'Integer (pixels)',cat:'Display',desc:'Size of grip squares in pixels.'},
+  {name:'HIGHLIGHT',def:'1',type:'Integer (0/1)',cat:'Display',desc:'1=selected entities highlighted. 0=no highlight (useful for screenshots).'},
+  {name:'SAVETIME',def:'10',type:'Integer (minutes)',cat:'System',desc:'Auto-save interval in minutes. 0=disabled. Saves to temp file — not original.'},
+  {name:'FILEDIA',def:'1',type:'Integer (0/1)',cat:'System',desc:'1=file dialog boxes shown. 0=command-line file entry only (scripting mode).'},
+  {name:'CMDDIA',def:'1',type:'Integer (0/1)',cat:'System',desc:'1=dialog boxes shown for commands. 0=command-line mode for commands like HATCH.'},
+  {name:'EXPERT',def:'0',type:'Integer (0-5)',cat:'System',desc:'Suppresses prompts/warnings. 0=all prompts shown. Higher=more suppressed (use carefully in scripts).'},
+  {name:'TRIMMODE',def:'1',type:'Integer (0/1)',cat:'Modify',desc:'1=CHAMFER and FILLET trim source lines to intersection. 0=no trim (keeps originals).'},
+  {name:'EDGEMODE',def:'0',type:'Integer (0/1)',cat:'Modify',desc:'0=TRIM/EXTEND only to actual entities. 1=extend to imaginary extension of cutting edge.'},
+  {name:'OFFSETGAPTYPE',def:'0',type:'Integer (0/2)',cat:'Modify',desc:'How OFFSET handles corners on polylines: 0=extend segments, 1=fillet, 2=chamfer.'},
+  {name:'PEDITACCEPT',def:'0',type:'Integer (0/1)',cat:'Modify',desc:'1=PEDIT converts lines/arcs to plines without asking. 0=prompts before converting.'},
+  {name:'VISRETAIN',def:'1',type:'Integer (0/1)',cat:'XRef',desc:'1=remember layer visibility changes in XRefs between sessions. 0=reload XRef layer states on open.'},
+  {name:'XLOADCTL',def:'1',type:'Integer (0/2)',cat:'XRef',desc:'0=full load. 1=demand load (faster). 2=demand load with copy (XRef not locked).'},
+  {name:'REFEDITNAME',def:'""',type:'String',cat:'XRef',desc:'Read-only. Shows name of block/XRef currently being edited with REFEDIT.'},
+  {name:'TEXTSIZE',def:'2.5',type:'Real (mm)',cat:'Text',desc:'Default text height for new TEXT/DTEXT entities when style height is 0.'},
+  {name:'TEXTSTYLE',def:'Standard',type:'String',cat:'Text',desc:'Current text style name. Set with STYLE command.'},
+  {name:'ATTDIA',def:'0',type:'Integer (0/1)',cat:'Block',desc:'1=attribute insertion uses dialog box. 0=attributes prompted at command line.'},
+  {name:'ATTREQ',def:'1',type:'Integer (0/1)',cat:'Block',desc:'1=attribute values prompted on INSERT. 0=all attributes use defaults without prompting.'},
+  {name:'UCSFOLLOW',def:'0',type:'Integer (0/1)',cat:'UCS',desc:'1=view automatically changes to plan view when UCS changes. 0=view unchanged.'},
+  {name:'WORLDVIEW',def:'1',type:'Integer (0/1)',cat:'UCS',desc:'1=view restored to WCS for DVIEW/VPOINT commands. 0=current UCS maintained.'},
+  {name:'PDMODE',def:'0',type:'Integer',cat:'Draw',desc:'Point display mode: 0=dot, 1=none, 2=+, 3=×, 4=|. Add 32=circle, 64=square. E.g. 34=× in circle.'},
+  {name:'PDSIZE',def:'0',type:'Real',cat:'Draw',desc:'Point display size. 0=5% of viewport height. Positive=absolute units. Negative=% of viewport.'},
+  {name:'SPLINESEGS',def:'8',type:'Integer',cat:'Draw',desc:'Number of line segments used to display spline-fit polylines. Higher=smoother but slower.'},
+  {name:'FACETRES',def:'0.5',type:'Real (0.01-10)',cat:'3D',desc:'Controls smoothness of 3D solid display: higher=smoother sphere/cylinder but slower REGEN.'},
+  {name:'DISPSILH',def:'0',type:'Integer (0/1)',cat:'3D',desc:'1=silhouette curves displayed on solid model in wireframe. 0=hidden. Requires REGEN.'},
+  {name:'ISOLINES',def:'4',type:'Integer (0-2047)',cat:'3D',desc:'Number of isolines (mesh lines) displayed on 3D solid faces. 4=minimal, 16=detailed.'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — ALIASES
+// ══════════════════════════════════════════════════════════════
+const aliases = [
+  ['L','LINE'],['PL','PLINE'],['C','CIRCLE'],['A','ARC'],
+  ['REC','RECTANG'],['POL','POLYGON'],['EL','ELLIPSE'],['SPL','SPLINE'],
+  ['XL','XLINE'],['H','HATCH'],['T','TEXT'],['MT','MTEXT'],
+  ['M','MOVE'],['CO','COPY'],['RO','ROTATE'],['SC','SCALE'],
+  ['MI','MIRROR'],['O','OFFSET'],['TR','TRIM'],['EX','EXTEND'],
+  ['F','FILLET'],['CHA','CHAMFER'],['S','STRETCH'],['AR','ARRAY'],
+  ['X','EXPLODE'],['J','JOIN'],['BR','BREAK'],['LEN','LENGTHEN'],
+  ['PE','PEDIT'],['MA','MATCHPROP'],['PR','PROPERTIES'],
+  ['LA','LAYER'],['LT','LINETYPE'],['B','BLOCK'],['I','INSERT'],
+  ['ATT','ATTDEF'],['XR','XREF'],['W','WBLOCK'],
+  ['Z','ZOOM'],['P','PAN'],['V','VIEW'],['RE','REGEN'],
+  ['3DO','3DORBIT'],['LO','LAYOUT'],
+  ['BOX','BOX'],['CYL','CYLINDER'],['EXT','EXTRUDE'],
+  ['REV','REVOLVE'],['UNI','UNION'],['SU','SUBTRACT'],
+  ['DI','DIST'],['AA','AREA'],['LI','LIST'],['ID','ID'],
+  ['D','DIMSTYLE'],['DLI','DIMLINEAR'],['DAL','DIMALIGNED'],
+  ['DBA','DIMBASELINE'],['DCO','DIMCONTINUE'],
+  ['DRA','DIMRADIUS'],['DDI','DIMDIAMETER'],['DAN','DIMANGULAR'],
+  ['LE','QLEADER'],['ML','MLEADER'],
+  ['UN','UNITS'],['OS','OSNAP'],['SN','SNAP'],['PU','PURGE'],
+  ['SCR','SCRIPT'],['AP','APPLOAD'],['ME','MEASURE'],['DIV','DIVIDE'],
+  ['DT','DTEXT'],['MT','MTEXT'],['SP','SPELL'],['FI','FIND'],
+  ['BO','BOUNDARY'],['REG','REGION'],
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — WORKFLOWS
+// ══════════════════════════════════════════════════════════════
+const workflows = {
+  draw_2d: {
+    title:'Draw a 2D Engineering Part from Scratch',
+    intro:'Complete workflow from blank drawing to dimensioned 2D part ready for plotting.',
+    steps:[
+      {n:'1',title:'Set up drawing',body:'Type UN → set Decimal units, precision 0.00, Millimetres. Type LIMITS → 0,0 → drawing area. Type LTSCALE → set to your plot scale (e.g. 50).'},
+      {n:'2',title:'Create layers',body:'Type LA → create: VISIBLE (white, Continuous, 0.5mm), HIDDEN (yellow, HIDDEN, 0.25mm), CENTRE (red, CENTER, 0.18mm), DIM (cyan, Continuous, 0.18mm), TEXT (green, Continuous, 0.25mm). Set VISIBLE as current.'},
+      {n:'3',title:'Draw centrelines first',body:'Switch to CENTRE layer. Type XL or LINE → draw centrelines for holes and symmetry axes. Set LTSCALE so dashes are visible.'},
+      {n:'4',title:'Draw outline',body:'Switch to VISIBLE layer. Type PL → draw closed outer profile using relative coordinates (@dx,dy). Use F8 ORTHO for H/V lines. Use FILLET for internal corners.'},
+      {n:'5',title:'Add features',body:'CIRCLE (C) for holes. OFFSET (O) for wall thickness. TRIM (TR) to clean intersections. MIRROR (MI) for symmetric features.'},
+      {n:'6',title:'Hidden lines',body:'Switch to HIDDEN layer. Draw dashed lines for hidden features (bores, counterbores visible in other view).'},
+      {n:'7',title:'Add dimensions',body:'Switch to DIM layer. Run DIMSTYLE (D) → set DIMSCALE = plot scale. Place DLI (linear), DAL (aligned), DRA (radius), DAN (angular) dimensions.'},
+      {n:'8',title:'Add text/notes',body:'Switch to TEXT layer. Type DT or MT → add part notes, surface finish callouts, tolerances. Use QLEADER (LE) for callout leaders.'},
+      {n:'9',title:'Check and clean',body:'Type ZOOM → E to see all. Check layers are correct (PROPERTIES panel). PURGE (PU) to clean. AUDIT for errors.'},
+    ]
+  },
+  block_create: {
+    title:'Create and Insert a Standard Symbol Block',
+    intro:'Best practice for reusable symbols: draw on layer 0, define with BLOCK, insert anywhere.',
+    steps:[
+      {n:'1',title:'Draw on Layer 0',body:'Set current layer to 0. Draw all block geometry (lines, circles, text) on Layer 0. Use ByBlock colour and linetype so block inherits insertion layer properties.'},
+      {n:'2',title:'Add attributes (if needed)',body:'Type ATT → define tags (PARTNUMBER, DESCRIPTION etc.) → place attribute text placeholders within the geometry.'},
+      {n:'3',title:'Define the block',body:'Type B → name the block (use consistent naming: PREFIX-NAME, e.g. SYM-VALVE-GATE) → click Pick Point → snap to logical insertion point → click Select Objects → select all geometry + attributes → OK.'},
+      {n:'4',title:'Test insertion',body:'Type I → select the block from dropdown → set scale 1,1,1 and rotation 0 → insert and check appearance. Verify attributes prompt correctly.'},
+      {n:'5',title:'Save to library',body:'Type W (WBLOCK) → Source: Block → select block name → browse to standard library folder → save as DWG. Now available for any project.'},
+      {n:'6',title:'Insert from library',body:'Type I → Browse → find library DWG → set insertion point on screen → pick position. OR use Design Centre (type DC) → browse to folder → drag and drop.'},
+    ]
+  },
+  xref: {
+    title:'Attach and Manage External References (XRefs)',
+    intro:'XRefs allow multiple team members to work on different files that combine into one layout.',
+    steps:[
+      {n:'1',title:'Prepare the referenced drawing',body:'Ensure the XRef DWG is saved with correct layer standards. Coordinate system must match host drawing (usually 0,0 = site datum or machine datum).'},
+      {n:'2',title:'Attach XRef',body:'Type XR → click Attach DWG → browse to file → Type: Attachment (shows in all parents) or Overlay (current drawing only) → Path: Relative (recommended) → OK.'},
+      {n:'3',title:'Place the XRef',body:'Pick insertion point (usually 0,0,0 to align coordinate systems). Scale 1,1,1. Rotation 0. Click OK or Enter.'},
+      {n:'4',title:'Control layers',body:'Open Layer Manager (LA) → XRef layers appear as FILENAME|LAYERNAME. Control visibility here. Set VISRETAIN=1 so your changes persist on next open.'},
+      {n:'5',title:'Clip the XRef',body:'Type XCLIP → select XRef → New boundary → Rectangular or Polygonal → draw clip boundary. Only area inside clip shows.'},
+      {n:'6',title:'Reload when updated',body:'Type XR → in manager: right-click XRef → Reload. Or enable auto-reload on drawing open. Binding: right-click → Bind → Bind (prefix keeps) or Insert (merges layers).'},
+    ]
+  },
+  hatch: {
+    title:'Apply Section Hatch Correctly',
+    intro:'Correct hatch application for engineering cross-sections following ISO conventions.',
+    steps:[
+      {n:'1',title:'Ensure closed boundary',body:'Section area must be a closed polyline or closed region. Type BOUNDARY (BO) → click inside area → creates a pline boundary automatically if area is enclosed by lines.'},
+      {n:'2',title:'Activate Hatch',body:'Type H → Hatch Editor opens on ribbon. Select pattern: ANSI31 = standard metal hatching (45° lines). Scale = plot scale (e.g. 50 for 1:50 drawings).'},
+      {n:'3',title:'Set angle',body:'Angle 0 = 45° lines (ANSI31 draws at 45° by default). For adjacent part in section: change angle to 135° (90° rotation). Adjacent parts hatch at different angles.'},
+      {n:'4',title:'Pick internal point',body:'Click Pick Points → click inside the closed boundary area → preview shows. Click more areas to hatch multiple regions.'},
+      {n:'5',title:'Adjust islands',body:'Islands (holes within the hatched region) are automatically excluded. Use Remove Islands option if you want to hatch through a hole.'},
+      {n:'6',title:'Apply on correct layer',body:'Ensure HATCH layer is current before running H. Or change hatch entity layer in Properties after placing. HATCH layer should be a distinct colour (e.g. Magenta/6).'},
+    ]
+  },
+  dim_style: {
+    title:'Set Up a Dimension Style for Plotting',
+    intro:'Correct dimension style setup ensures dimensions plot at the right physical size regardless of model space scale.',
+    steps:[
+      {n:'1',title:'Know your plot scale',body:'Determine the plot scale (e.g. 1:50 = scale factor 50, 1:10 = 10, 1:1 = 1). DIMSCALE will be set to this value.'},
+      {n:'2',title:'Open Dim Style Manager',body:'Type D → Dimension Style Manager opens. Click New → base it on ISO-25 → name it (e.g. ISO-50 for 1:50 scale drawings) → Continue.'},
+      {n:'3',title:'Lines tab',body:'Baseline spacing (for DIMBASELINE): set to 7 mm. Extension line offset from origin: 1.5 mm. Extension line extension: 2 mm.'},
+      {n:'4',title:'Symbols and Arrows',body:'Arrowhead: Closed filled (ISO standard). Size: 2.5 mm. Centre marks: Mark (for DIMCENTER command).'},
+      {n:'5',title:'Text tab',body:'Text style: select your ISO font style (set up with STYLE first — ISO Proportional or similar). Height: 2.5 mm. Placement: Above (ISO standard). Align: With dimension line.'},
+      {n:'6',title:'Fit tab — DIMSCALE',body:'Use overall scale: set to your plot scale (e.g. 50). This scales all arrow/text/offset sizes by 50× — they look big on screen but plot at 2.5 mm.'},
+      {n:'7',title:'Primary Units tab',body:'Unit format: Decimal. Precision: 0.00 (2 dp). Decimal separator: period or comma per standard. Suppress: trailing zeros (optional per company standard).'},
+      {n:'8',title:'Set current and test',body:'Click Set Current → Close. Place a test dimension on known geometry and check it reads correctly. Verify it plots at correct physical size.'},
+    ]
+  },
+  layout_print: {
+    title:'Set Up a Layout and Print to Scale',
+    intro:'Paper space layouts allow multiple scales and views on one sheet, plotting accurately.',
+    steps:[
+      {n:'1',title:'Create the layout',body:'Type LO → New → name it (e.g. A3-PLAN). Right-click layout tab → Page Setup → set: printer, paper size (A3), plot style (CTB file), plot area=Layout, scale=1:1.'},
+      {n:'2',title:'Enter paper space',body:'Click the layout tab at bottom. Paper space is active when you see the paper sheet boundary. UCS icon shows paper space triangle.'},
+      {n:'3',title:'Create a viewport',body:'Type MVIEW → draw a rectangle on the paper where you want the model space view to appear. A viewport is created showing the full model.'},
+      {n:'4',title:'Set viewport scale',body:'Double-click inside the viewport (activates model space within it). Type Z → type 1/50XP (for 1:50 scale) + Enter. View is now at 1:50. Other common: 1/10XP, 1/20XP, 1/100XP.'},
+      {n:'5',title:'Pan to centre the view',body:'While inside the viewport: type P (PAN) to position the drawing correctly. Do NOT zoom after panning — it changes the scale.'},
+      {n:'6',title:'Lock the viewport',body:'Click viewport border to select it (click Esc first if in model space). Properties → Display Locked → Yes. Or right-click border → Display Locked → Yes. Now zoom/pan does not change scale.'},
+      {n:'7',title:'Layer control per viewport',body:'VPLAYER or Layer Manager → Freeze column in Current Viewport → freeze layers that should not show in this view (e.g. freeze VIEWPORT layer to hide viewport border outline).'},
+      {n:'8',title:'Plot',body:'Type PLOT → confirm settings → Plot. Or Ctrl+P. Preview first to check layout. Plot style CTB maps colours to pen widths/colours.'},
+    ]
+  },
+  '3d_solid': {
+    title:'Model a Simple 3D Solid Part',
+    intro:'Step-by-step 3D solid modelling of a flanged connector as an example.',
+    steps:[
+      {n:'1',title:'Set 3D environment',body:'Type VSCURRENT → Conceptual (to see solids). Type 3DO to orbit. Set UCS to World (type UCS → W). Switch to SE Isometric view: type VPOINT → 1,-1,1 or use View Cube.'},
+      {n:'2',title:'Draw base profile',body:'Draw closed polyline (PL) of the cross-section in the XY plane. This becomes your revolution or extrusion profile. Use OSNAP and exact coordinates.'},
+      {n:'3',title:'Create main body',body:'For a turned part: type REV → select profile → pick axis of revolution (the centreline) → angle 360°. For prismatic: type EXT → select profile → type height.'},
+      {n:'4',title:'Add features by subtraction',body:'Draw feature profiles (circles for holes) → EXT them → SUBTRACT from main body. For through holes: extend subtracted cylinder beyond main body to avoid zero-face artefacts.'},
+      {n:'5',title:'Add rounds and chamfers',body:'Type FILLETEDGE → R → set radius → click edges. Type CHAMFEREDGE → D → set distances → click edges. Apply fillets before chamfers in most cases.'},
+      {n:'6',title:'Verify geometry',body:'Type MASSPROP → select solid → check volume, centroid. Multiply volume by material density to estimate mass. Check for any unintended open faces.'},
+      {n:'7',title:'Generate 2D views',body:'In paper space layout: MVIEW → viewport. In viewport: set standard view (PLAN, FRONT, SIDE). Use SOLPROF for section profile with hidden lines.'},
+    ]
+  },
+  array: {
+    title:'Create Rectangular and Polar Arrays',
+    intro:'Arrays for bolt circles, grids of holes, and repeated features.',
+    steps:[
+      {n:'1',title:'Draw source entity',body:'Draw the entity to be arrayed: one bolt hole, one slot, one symbol. Position it at its correct location (e.g. first hole in a bolt circle).'},
+      {n:'2',title:'Activate Array',body:'Type AR → select entity + Enter → choose array type: R (rectangular), P (polar), PA (path).'},
+      {n:'3',title:'Rectangular array',body:'Select R → enter number of rows → enter row spacing (Y direction, positive=up) → enter number of columns → enter column spacing (X direction, positive=right). Preview shows live.'},
+      {n:'4',title:'Polar (bolt circle)',body:'Select P → pick centre of the bolt circle → enter total number of items (e.g. 8 for 8-bolt PCD) → Fill angle: 360 for full circle → Rotate items = Yes to rotate each copy. Press Enter to accept.'},
+      {n:'5',title:'Adjust associative array',body:'Click the array → grips appear. Drag grip handles to change row/column count or spacing interactively. Or use Properties panel to type exact values.'},
+      {n:'6',title:'Explode if needed',body:'Type X (EXPLODE) → click array → Enter. Array becomes individual entities that can be edited independently.'},
+    ]
+  },
+  offset_fillet: {
+    title:'Offset and Fillet a Profile (Wall Construction)',
+    intro:'Classic workflow for creating parallel walls with radiused corners from a single outer profile.',
+    steps:[
+      {n:'1',title:'Draw outer profile',body:'Type PL → draw the outer boundary of your profile as a closed polyline. Use exact dimensions with @dx,dy notation.'},
+      {n:'2',title:'Offset inward for wall',body:'Type O → type wall thickness (e.g. 6) → click the polyline → click INSIDE the profile. Inner wall profile created. Repeat for multiple walls.'},
+      {n:'3',title:'Fillet corners',body:'Type F → R → type fillet radius → P → click the outer polyline → all corners filleted at once. Repeat for inner profile. Check radius ≤ half wall width.'},
+      {n:'4',title:'Trim intersections',body:'If corners are open or overlapping after fillet: type TR → Enter → click parts to trim. Or use PEDIT to join segments.'},
+      {n:'5',title:'Add boss features',body:'CIRCLE (C) for bosses or holes within wall. TRIM to cut circles into wall profile if they intersect. UNION of regions if needed for solid modeling.'},
+      {n:'6',title:'Check closure',body:'Type AREA → O → click profile → check area and perimeter. Confirms it is truly closed. Use for hatch or extrusion.'},
+    ]
+  },
+  lisp_load: {
+    title:'Load and Use an AutoLISP Routine',
+    intro:'Standard workflow for loading .lsp files including title block automation scripts.',
+    steps:[
+      {n:'1',title:'Locate the LISP file',body:'Identify the .lsp file path (e.g. C:\\RIECO\\LSP\\fill_drawing.lsp). Ensure file is saved as UTF-8 without BOM (not UTF-8 BOM — causes load errors in some versions).'},
+      {n:'2',title:'Load via APPLOAD',body:'Type APPLOAD → Browse → navigate to .lsp file → click Load. Success message appears. OR for one-time load: type (load "C:/path/file.lsp") directly at command prompt. Note: use forward slashes.'},
+      {n:'3',title:'Add to Startup Suite',body:'In APPLOAD dialog → Startup Suite → click Contents → Add → browse to file → Close. File now loads automatically every BricsCAD session.'},
+      {n:'4',title:'Run the routine',body:'Type the command name defined in the LISP file (e.g. FILLDRAWING or FD) + Enter. If the command is not recognized: load failed — check for LISP error messages in command window.'},
+      {n:'5',title:'Debug load errors',body:'Type VLIDE → open the .lsp file → check for red syntax errors. Common issues: unmatched parentheses, UTF-8 BOM header, undefined function reference, file path with backslashes.'},
+      {n:'6',title:'Auto-load at drawing open',body:'For auto-load in every drawing: place (load "path/file.lsp") in a file named BRICSCAD.LSP and save it to the BricsCAD Support Files path (check in Settings → Support Files search path).'},
+    ]
+  },
+  title_block: {
+    title:'Fill a Title Block via Attributes',
+    intro:'Workflow for inserting a standard title block block with attributes and filling in drawing data.',
+    steps:[
+      {n:'1',title:'Prepare title block block',body:'Title block must have been created with ATTDEF attributes for each field: DWG_NO, REV, TITLE, DRAWN_BY, DATE, SCALE, MATERIAL etc. If using existing DWG: check with ATTDISP.'},
+      {n:'2',title:'Set ATTDIA',body:'Type ATTDIA → set to 1. This makes attribute entry use a dialog box instead of command-line prompts — much easier for filling multiple fields.'},
+      {n:'3',title:'Insert the title block',body:'Type I → browse to title block DWG → set insertion point 0,0 in paper space layout → scale 1,1,1 → rotation 0 → OK.'},
+      {n:'4',title:'Fill attributes',body:'With ATTDIA=1: dialog box opens with all fields. Fill: Drawing Number, Title, Revision, Scale (e.g. 1:50), Date, Drawn By, Checked By, Material → OK.'},
+      {n:'5',title:'Edit attributes after insert',body:'Double-click the title block block → Enhanced Attribute Editor (EATTEDIT) opens → edit any field → OK. OR type ATTEDIT → select block → modify in command line.'},
+      {n:'6',title:'AutoLISP automation',body:'For automated fill: use a LISP routine (like fill_drawing.lsp) that reads from an external Excel/CSV and writes attribute values programmatically. Call with a custom command.'},
+    ]
+  },
+  layer_manage: {
+    title:'Set Up and Manage Layers for a Project',
+    intro:'Layer standards ensure consistent plotting and team collaboration.',
+    steps:[
+      {n:'1',title:'Plan layer structure',body:'Define layers before drawing. Standard set: VISIBLE, HIDDEN, CENTRE, DIM, TEXT, HATCH, BORDER, VIEWPORT, CONSTRUCTION. Add OBJECT-specific layers: STEEL, CONCRETE, PIPE, CABLE as needed.'},
+      {n:'2',title:'Create all layers at once',body:'Type LA → repeatedly click New → name each layer → set colour, linetype, lineweight. Faster: use a LISP script to batch-create standard layers.'},
+      {n:'3',title:'Save as template',body:'After setting layers, text styles, dim styles: SAVEAS → DWT (drawing template format). New drawings start from this template: type NEW → select template. All standards preserved.'},
+      {n:'4',title:'Layer isolation for editing',body:'LAYISO: select entity on layer to isolate → all other layers frozen or hidden. Edit without interference. LAYUNISO to restore.'},
+      {n:'5',title:'Layer states',body:'Type LAYERSTATE → Save → name (e.g. PLOT-PLAN, PLOT-SECTION). Switch between layer visibility configurations for different plot requirements without manual toggling.'},
+      {n:'6',title:'Viewport-specific layers',body:'In layout with multiple viewports: double-click viewport to activate → Layer Manager → Freeze column shows VP-Freeze → freeze layers in THIS viewport only. Other viewports unaffected.'},
+    ]
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// DATA — TIPS
+// ══════════════════════════════════════════════════════════════
+const tips = [
+  {icon:'⚡',title:'Repeat last command instantly',body:'Press Enter or Space after a command ends to repeat it immediately. Fastest for repetitive tasks like placing many circles or moving multiple entities.'},
+  {icon:'🖱️',title:'Middle mouse wheel mastery',body:'Scroll=zoom, hold+drag=pan, double-click=Zoom Extents. Shift+middle=orbit in 3D. These three shortcuts eliminate most ZOOM and PAN command usage.'},
+  {icon:'📐',title:'Dynamic Input (DYN)',body:'F12 toggles Dynamic Input — shows coordinate entry and command prompts near your cursor. Type values directly at the cursor without looking at the command bar.'},
+  {icon:'🔒',title:'Lock viewports immediately',body:'After setting a viewport scale with Z → 1/50XP, IMMEDIATELY lock the viewport. One accidental scroll ruins the scale. Properties → Display Locked → Yes.'},
+  {icon:'🧹',title:'PURGE + AUDIT before sending',body:'Always run AUDIT then PU (PURGE, purge all, nested) before sending DWG files to clients or collaborators. Removes ghost layers, unused blocks, bad objects.'},
+  {icon:'📏',title:'Relative coordinates @dx,dy',body:'The @ prefix means "from last point". @100,0 = 100mm right. @0,50 = 50mm up. @100<45 = 100mm at 45°. Fastest way to draw precise geometry without coordinate calculator.'},
+  {icon:'🔎',title:'OOPS after accidental erase',body:'Type OOPS after ERASE to restore the last erased entities — even after other commands have been run. UNDO reverses all actions; OOPS only reverses the last erase.'},
+  {icon:'📋',title:'Properties panel always open',body:'Ctrl+1 toggles the Properties panel. Keep it open — it shows selected entity properties instantly and allows real-time editing without running commands.'},
+  {icon:'⌨️',title:'Command aliases in PGP file',body:'Custom 2-letter aliases: edit default.pgp (Tools → Customize → Command Aliases). Add your own: "FD, *FILLDRAWING" for your LISP commands. Massive typing time savings.'},
+  {icon:'🔄',title:'MATCHPROP (MA) is underused',body:'Select source entity → run MA → click destination entities. Copies layer, colour, linetype, dim style, text style in one click. Fastest fix for wrong-layer entities.'},
+  {icon:'📂',title:'Save to DWT template',body:'Company standards (layers, dim styles, text styles, blocks) saved in a DWT template = zero setup time for new drawings. Use NEW → select template.'},
+  {icon:'🔗',title:'XRef instead of copying',body:'Never copy geometry from another drawing into your drawing if you need the latest version. XRef it. Changes in the source update automatically on reload.'},
+];
+
+const mistakes = [
+  {title:'Drawing on Layer 0',fix:'Never draw general geometry on Layer 0. It exists for block geometry only. Check with LAYER — set a proper layer current before drawing.'},
+  {title:'Tight tolerances without need',fix:'Every tolerance grade tighter than IT10 costs significantly more to manufacture. Use free tolerances (±0.5 mm) wherever function allows.'},
+  {title:'LTSCALE not set for plot scale',fix:'Dashed lines look solid or too spaced? Set LTSCALE = plot scale. After: RE (REGEN) to refresh display.'},
+  {title:'Dimension text overridden to hardcode',fix:'Never type a fixed number in dim text override. Always use <> (the measured value) possibly with prefix/suffix. Overridden dims do not update if geometry changes.'},
+  {title:'Not locking viewports',fix:'Scale changed after you set it? The viewport was not locked. Lock immediately after setting scale. Properties → Display Locked → Yes.'},
+  {title:'Colours by entity not by layer',fix:'All colours should be ByLayer. Colour by entity breaks CTB plot style control. Select all (Ctrl+A) → Properties → Colour → ByLayer to fix.'},
+  {title:'EXPLODING blocks carelessly',fix:'Exploded blocks cannot be un-exploded (only Undo). Exploded dims lose associativity. Never explode unless you intend to permanently break the structure.'},
+  {title:'Not using OSNAP',fix:'Geometry that appears connected may not actually connect. Always enable relevant OSNAPs (END, MID, CEN, INT) and snap to exact points. Random click = dimensional errors.'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+id+"'"));
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ── TAB 1: COMMAND LIBRARY ──
+const catColors = {draw:'cat-draw',modify:'cat-modify',dim:'cat-dim',layer:'cat-layer',block:'cat-block',view:'cat-view','3d':'cat-3d',inquiry:'cat-inquiry',settings:'cat-settings',lisp:'cat-lisp'};
+let activeLibCat = 'all';
+let selectedCmd = null;
+
+function renderLibFilterBar() {
+  const cats = [
+    {id:'all',label:'All'},
+    {id:'draw',label:'Draw'},
+    {id:'modify',label:'Modify'},
+    {id:'dim',label:'Dimension'},
+    {id:'layer',label:'Layer/Props'},
+    {id:'block',label:'Block/XRef'},
+    {id:'view',label:'View'},
+    {id:'3d',label:'3D Solid'},
+    {id:'inquiry',label:'Inquiry'},
+    {id:'settings',label:'Settings'},
+    {id:'lisp',label:'AutoLISP'},
+  ];
+  document.getElementById('catFilterBar').innerHTML = cats.map(c => `
+    <button class="filter-btn ${activeLibCat===c.id?'active-f':''}" onclick="setLibCat('${c.id}')">${c.label}</button>
+  `).join('');
+}
+
+function setLibCat(cat) {
+  activeLibCat = cat;
+  renderLibFilterBar();
+  renderCmdGrid();
+}
+
+function filterCommands() {
+  renderCmdGrid();
+}
+
+function renderCmdGrid() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = commands.filter(c => {
+    const matchCat = activeLibCat === 'all' || c.cat === activeLibCat;
+    const matchSearch = !search || c.cmd.toLowerCase().includes(search) || c.alias.toLowerCase().includes(search) || c.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('cmdGrid').innerHTML = filtered.length ? filtered.map(c => `
+    <div class="cmd-card ${selectedCmd===c.id?'selected':''}" id="cc-${c.id}" onclick="selectCmd('${c.id}')">
+      <div class="cc-check">✓</div>
+      <div class="cc-cmd">${c.cmd}</div>
+      <div class="cc-alias">Alias: ${c.alias}</div>
+      <div class="cc-desc">${c.desc}</div>
+      <span class="cc-cat ${catColors[c.cat]}">${c.catLabel}</span>
+    </div>
+  `).join('') : '<p style="color:var(--text-dim);font-size:13px;padding:12px;">No commands match your search.</p>';
+}
+
+function selectCmd(id) {
+  const detail = document.getElementById('cmdDetail');
+  if (selectedCmd === id) {
+    selectedCmd = null;
+    detail.style.display = 'none';
+    renderCmdGrid();
+    return;
+  }
+  selectedCmd = id;
+  renderCmdGrid();
+  const c = commands.find(x => x.id === id);
+
+  const stepsHtml = c.steps.map((s,i) => `
+    <div class="prompt-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-content">
+        <div class="step-label">${s.label}</div>
+        <div class="step-text">${s.action}</div>
+        ${s.input ? `<div class="step-input">${s.input}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const optsHtml = c.options.length ? `
+    <div class="option-row">
+      ${c.options.map(o => `<span class="opt-pill key">${o.key}</span><span class="opt-pill" style="margin-right:12px;">${o.desc}</span>`).join('')}
+    </div>
+  ` : '<p style="font-size:12px;color:var(--text-dim);">No sub-options</p>';
+
+  document.getElementById('cmdDetailTitle').textContent = c.cmd + ' — ' + c.desc;
+  document.getElementById('cmdDetailContent').innerHTML = `
+    <div class="detail-grid">
+      <div>
+        <div class="card-title" style="font-size:12px;border-color:var(--brics);">📋 Command Steps — Prompt Sequence</div>
+        <div class="tip-box">Type: <strong>${c.cmd}</strong> &nbsp;|&nbsp; Alias: <strong>${c.alias}</strong> &nbsp;|&nbsp; Category: ${c.catLabel}</div>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;line-height:1.7;">${c.fullDesc}</p>
+        <div class="prompt-seq">${stepsHtml}</div>
+
+        <div class="card-title" style="font-size:12px;margin-top:16px;border-color:var(--accent2);">⚙️ Options / Sub-commands</div>
+        ${optsHtml}
+      </div>
+      <div>
+        <div class="card-title" style="font-size:12px;border-color:var(--green);">💡 Tips & Best Practices</div>
+        <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--text-dim);">
+          ${c.tips.map(t => `<li>${t}</li>`).join('')}
+        </ul>
+        <div class="card-title" style="font-size:12px;margin-top:16px;border-color:var(--accent3);">🔗 Related Commands</div>
+        <div class="option-row">
+          ${c.related.map(r => `<span class="opt-pill" style="cursor:pointer;background:#e8f4fd;color:#1a5fa8;border-color:#b8d8ee;" onclick="findAndSelect('${r}')">${r}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  detail.style.display = 'block';
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function findAndSelect(cmdName) {
+  const c = commands.find(x => x.cmd === cmdName || x.alias === cmdName);
+  if (!c) return;
+  activeLibCat = 'all';
+  document.getElementById('searchInput').value = '';
+  renderLibFilterBar();
+  renderCmdGrid();
+  setTimeout(() => selectCmd(c.id), 100);
+}
+
+// ── TAB 2: QUICK REF ──
+let activeQrefCat = 'all';
+
+function renderQrefFilterBar() {
+  const cats = [{id:'all',label:'All'},{id:'draw',label:'Draw'},{id:'modify',label:'Modify'},{id:'dim',label:'Dimension'},{id:'layer',label:'Layer'},{id:'block',label:'Block'},{id:'view',label:'View'},{id:'3d',label:'3D'},{id:'inquiry',label:'Inquiry'},{id:'settings',label:'Settings'},{id:'lisp',label:'LISP'}];
+  document.getElementById('qrefFilterBar').innerHTML = cats.map(c => `
+    <button class="filter-btn ${activeQrefCat===c.id?'active-f':''}" onclick="setQrefCat('${c.id}')">${c.label}</button>
+  `).join('');
+}
+
+function setQrefCat(cat) {
+  activeQrefCat = cat;
+  renderQrefFilterBar();
+  renderQref();
+}
+
+function filterQref() {
+  renderQref();
+}
+
+function renderQref() {
+  const search = document.getElementById('qrefSearch').value.toLowerCase();
+  const filtered = commands.filter(c => {
+    const matchCat = activeQrefCat === 'all' || c.cat === activeQrefCat;
+    const matchSearch = !search || c.cmd.toLowerCase().includes(search) || c.alias.toLowerCase().includes(search) || c.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('qrefBody').innerHTML = filtered.map(c => {
+    const keyPrompts = c.steps.slice(0,2).map(s => `<span class="step-input" style="font-size:11px;padding:1px 6px;">${s.input}</span>`).join(' → ');
+    return `
+      <tr>
+        <td><span class="cmd-mono">${c.cmd}</span></td>
+        <td><span class="alias-mono">${c.alias}</span></td>
+        <td><span class="cc-cat ${catColors[c.cat]}" style="display:inline-block;">${c.catLabel}</span></td>
+        <td style="font-size:12px;">${c.desc}</td>
+        <td style="font-size:11px;">${keyPrompts}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── TAB 3: WORKFLOWS ──
+function renderWorkflow() {
+  const key = document.getElementById('wfSelect').value;
+  const wf = workflows[key];
+  document.getElementById('workflowContent').innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">${wf.title}</div>
+      <p style="font-size:13px;color:var(--text-dim);">${wf.intro}</p>
+    </div>
+    ${wf.steps.map(s => `
+      <div class="wf-step">
+        <div class="wf-num">Step ${s.n}</div>
+        <div class="wf-title">${s.title}</div>
+        <div class="wf-body">${s.body.replace(/([A-Z]{2,}[0-9]?(?:\s?[→]\s?[A-Z0-9])?)(?=\s|$|:)/g, m => `<span class="wf-cmd">${m}</span>`)}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── TAB 4: SYSVARS ──
+const sysvarCats = ['All','Display','Dimension','Modify','Drawing','XRef','Text','Block','UCS','3D','Draw','System'];
+let activeSVCat = 'All';
+
+function renderSysvarFilterBar() {
+  document.getElementById('sysvarFilterBar').innerHTML = sysvarCats.map(c => `
+    <button class="filter-btn ${activeSVCat===c?'active-f':''}" onclick="setSVCat('${c}')">${c}</button>
+  `).join('');
+}
+
+function setSVCat(cat) {
+  activeSVCat = cat;
+  renderSysvarFilterBar();
+  renderSysvars();
+}
+
+function filterSysvars() {
+  renderSysvars();
+}
+
+function renderSysvars() {
+  const search = document.getElementById('sysvarSearch').value.toLowerCase();
+  const filtered = sysvars.filter(s => {
+    const matchCat = activeSVCat === 'All' || s.cat === activeSVCat;
+    const matchSearch = !search || s.name.toLowerCase().includes(search) || s.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('sysvarBody').innerHTML = filtered.map(s => `
+    <tr>
+      <td class="sv-name">${s.name}</td>
+      <td class="sv-val">${s.def}</td>
+      <td style="font-size:12px;color:var(--text-dim);">${s.type}</td>
+      <td><span class="cc-cat cat-settings" style="display:inline-block;">${s.cat}</span></td>
+      <td style="font-size:12px;">${s.desc}</td>
+    </tr>
+  `).join('');
+}
+
+// ── TAB 5: ALIASES ──
+function renderAliases() {
+  const rows = [];
+  for (let i = 0; i < aliases.length; i += 3) {
+    const trio = [aliases[i]||['',''], aliases[i+1]||['',''], aliases[i+2]||['','']];
+    rows.push(`<tr>${trio.map(a => `<td class="alias-mono">${a[0]}</td><td style="font-size:12px;">${a[1]}</td>`).join('')}</tr>`);
+  }
+  document.getElementById('aliasBody').innerHTML = rows.join('');
+}
+
+// ── TAB 6: TIPS ──
+function renderTips() {
+  document.getElementById('tipsContent').innerHTML = tips.map(t => `
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0f0f0;">
+      <span style="font-size:20px;flex-shrink:0;">${t.icon}</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px;">${t.title}</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">${t.body}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('mistakesContent').innerHTML = mistakes.map(m => `
+    <div style="margin-bottom:12px;padding:10px 14px;border-radius:4px;border-left:3px solid var(--accent);background:#fff5f5;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">✗ ${m.title}</div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">${m.fix}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+renderLibFilterBar();
+renderCmdGrid();
+renderQrefFilterBar();
+renderQref();
+renderWorkflow();
+renderSysvarFilterBar();
+renderSysvars();
+renderAliases();
+renderTips();
+</script>
+</body>
+</html>

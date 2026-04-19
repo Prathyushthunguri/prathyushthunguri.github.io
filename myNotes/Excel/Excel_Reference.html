@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Excel Reference Tool</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; color: #333; }
+
+    /* ── TOP NAV ── */
+    .top-navbar {
+      position: fixed; top: 0; width: 100%;
+      background-color: #1d6f42; color: #fff;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 20px; z-index: 1000; height: 52px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .navbar-left { font-size: 19px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+    .navbar-left .xl-icon { font-size: 22px; }
+    .navbar-right { display: flex; align-items: center; gap: 10px; }
+
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      position: relative; display: flex; align-items: center;
+    }
+    .search-input {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 6px; padding: 7px 36px 7px 12px;
+      color: #fff; font-size: 13px; font-family: inherit;
+      width: 280px; outline: none; transition: background 0.2s, width 0.3s;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.6); }
+    .search-input:focus { background: rgba(255,255,255,0.25); width: 340px; }
+    .search-icon { position: absolute; right: 10px; color: rgba(255,255,255,0.7); font-size: 14px; pointer-events: none; }
+    .search-clear { position: absolute; right: 10px; color: rgba(255,255,255,0.8); font-size: 16px; cursor: pointer; display: none; font-weight: bold; }
+    .search-clear:hover { color: #fff; }
+
+    /* ── SEARCH RESULTS OVERLAY ── */
+    #search-results {
+      display: none; position: fixed; top: 52px; left: 0; right: 0; bottom: 0;
+      background: #f4f4f4; z-index: 900; overflow-y: auto; padding: 20px;
+    }
+    #search-results.visible { display: block; }
+    .search-results-header {
+      font-size: 13px; color: #888; margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid #ddd;
+    }
+    .search-results-header strong { color: #1d6f42; }
+    .sr-item {
+      background: #fff; border: 1px solid #ddd; border-radius: 8px;
+      padding: 14px 18px; margin-bottom: 10px; cursor: pointer;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .sr-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #1d6f42; }
+    .sr-item .sr-tag { font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.8px; padding: 2px 8px; border-radius: 3px; margin-bottom: 6px; display: inline-block; }
+    .tag-shortcut { background: #e8f4fd; color: #1565c0; }
+    .tag-formula  { background: #e8f5e9; color: #1d6f42; }
+    .tag-tip      { background: #fff8e1; color: #e65100; }
+    .tag-feature  { background: #f3e5f5; color: #6a1b9a; }
+    .tag-chart    { background: #fce4ec; color: #880e4f; }
+    .sr-item .sr-title { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 4px; }
+    .sr-item .sr-desc  { font-size: 12.5px; color: #555; line-height: 1.5; }
+    .sr-item .sr-tab   { font-size: 11px; color: #999; margin-top: 6px; }
+    .sr-item mark { background: #fff176; color: #222; border-radius: 2px; padding: 0 2px; }
+    .no-results { text-align: center; padding: 60px 20px; color: #aaa; font-size: 15px; }
+
+    /* ── MAIN CONTAINER ── */
+    .main-container {
+      max-width: 1600px; margin: 72px auto 40px auto; padding: 20px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    }
+    .tab-bar button {
+      background: #eee; color: #444; border: 1px solid #ccc;
+      border-bottom: none; padding: 8px 16px; cursor: pointer;
+      font-size: 13px; border-radius: 6px 6px 0 0;
+      font-family: 'Segoe UI', sans-serif; transition: background 0.15s;
+    }
+    .tab-bar button:hover { background: #ddd; }
+    .tab-bar button.active { background: #fff; color: #1d6f42; font-weight: bold;
+      border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SECTION HEADING ── */
+    .section-h {
+      font-size: 12px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #e0e0e0;
+    }
+    .section-h:first-child { margin-top: 0; }
+
+    /* ── TABLES ── */
+    table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.07); border-radius: 8px;
+      overflow: hidden; margin-bottom: 20px; background: #fff;
+    }
+    thead th {
+      background: #f2f2f2; color: #222; font-weight: 700;
+      padding: 9px 14px; text-align: left; border: 1px solid #ccc; font-size: 12px;
+    }
+    td { padding: 8px 14px; border: 1px solid #ddd; vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafa; }
+    tr:hover td { background: #f0f7f0; }
+
+    /* ── KBD KEYS ── */
+    kbd {
+      display: inline-block; background: #f5f5f5; border: 1px solid #bbb;
+      border-bottom: 3px solid #999; border-radius: 4px;
+      padding: 2px 7px; font-size: 12px; font-family: 'Courier New', monospace;
+      color: #333; white-space: nowrap; line-height: 1.5;
+    }
+    .key-combo { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+    .key-plus { color: #999; font-size: 11px; }
+
+    /* ── FORMULA CHIP ── */
+    .fx {
+      display: inline-block; background: #e8f5e9; border: 1px solid #c8e6c9;
+      border-radius: 4px; padding: 2px 8px; font-family: 'Courier New', monospace;
+      font-size: 12.5px; color: #1d6f42; white-space: nowrap;
+    }
+    .fx-block {
+      background: #f9fdf9; border-left: 4px solid #1d6f42;
+      border-radius: 0 6px 6px 0; padding: 12px 16px;
+      font-family: 'Courier New', monospace; font-size: 13px; color: #1d6f42;
+      margin: 8px 0; line-height: 1.8;
+    }
+    .fx-block .fx-comment { color: #888; font-style: italic; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
+
+    /* ── NOTE / WARN / TIP ── */
+    .note-box { background: #f9f9f9; border-left: 4px solid #aaa; border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 8px 0; font-size: 13px; }
+    .warn-box { background: #fff8f2; border-left: 4px solid #b85c00; border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 8px 0; font-size: 13px; }
+    .warn-box strong { color: #b85c00; }
+    .tip-box  { background: #fffde7; border-left: 4px solid #f9a825; border-radius: 0 4px 4px 0; padding: 10px 14px; margin: 8px 0; font-size: 13px; }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff; border: 1px solid #ddd; border-radius: 10px;
+      padding: 20px 22px; margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card h3 { font-size: 14px; color: #1d6f42; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+
+    /* ── GRID ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+    @media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+    /* ── BADGE ── */
+    .badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid #ccc; }
+    .bg { background: #eaf4ea; color: #2d6a2d; border-color: #b0d4b0; }
+    .bw { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+    .bb { background: #fdecea; color: #9b2c2c; border-color: #f0b8b8; }
+    .bp { background: #f3e5f5; color: #6a1b9a; border-color: #ce93d8; }
+  </style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    <span class="xl-icon">𝙭</span> Excel Reference Tool
+  </div>
+  <div class="navbar-right">
+    <div class="search-wrap">
+      <input class="search-input" id="searchInput" type="text" placeholder="Search shortcuts, formulas, tips…" oninput="doSearch(this.value)" />
+      <span class="search-icon" id="searchIcon">🔍</span>
+      <span class="search-clear" id="searchClear" onclick="clearSearch()">✕</span>
+      
+    </div>
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<!-- SEARCH RESULTS OVERLAY -->
+<div id="search-results">
+  <div class="search-results-header" id="sr-header"></div>
+  <div id="sr-body"></div>
+</div>
+
+<div class="main-container" id="main-content">
+
+  <div class="tab-bar">
+    <button class="active" onclick="showTab('shortcuts',this)">⌨ Shortcuts</button>
+    <button onclick="showTab('formulas',this)">ƒx Formulas</button>
+    <button onclick="showTab('lookup',this)">🔎 Lookup &amp; Ref</button>
+    <button onclick="showTab('text',this)">🔤 Text Functions</button>
+    <button onclick="showTab('date',this)">📅 Date &amp; Time</button>
+    <button onclick="showTab('math',this)">∑ Math &amp; Stats</button>
+    <button onclick="showTab('logic',this)">⚡ Logic &amp; Conditional</button>
+    <button onclick="showTab('pivot',this)">📊 Pivot Tables</button>
+    <button onclick="showTab('charts',this)">📈 Charts</button>
+    <button onclick="showTab('data',this)">🗄 Data Tools</button>
+    <button onclick="showTab('format',this)">🎨 Formatting</button>
+    <button onclick="showTab('tips',this)">💡 Power Tips</button>
+  </div>
+
+  <!-- ═══════════════ SHORTCUTS ═══════════════ -->
+  <div class="tab-panel active" id="tab-shortcuts">
+
+    <div class="section-h">Navigation</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-nav"></tbody>
+    </table>
+
+    <div class="section-h">Selection</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-sel"></tbody>
+    </table>
+
+    <div class="section-h">Editing</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-edit"></tbody>
+    </table>
+
+    <div class="section-h">Formatting</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-fmt"></tbody>
+    </table>
+
+    <div class="section-h">Workbook &amp; Sheets</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-wb"></tbody>
+    </table>
+
+    <div class="section-h">Formula &amp; Function Keys</div>
+    <table>
+      <thead><tr><th style="width:260px">Shortcut</th><th>Action</th><th>Notes</th></tr></thead>
+      <tbody id="shortcuts-fn"></tbody>
+    </table>
+
+  </div>
+
+  <!-- ═══════════════ FORMULAS ═══════════════ -->
+  <div class="tab-panel" id="tab-formulas">
+    <div class="section-h">Formula Basics &amp; Syntax</div>
+    <div id="formulas-basic"></div>
+
+    <div class="section-h">Absolute vs Relative References</div>
+    <div id="formulas-ref"></div>
+
+    <div class="section-h">Named Ranges</div>
+    <div id="formulas-named"></div>
+
+    <div class="section-h">Array Formulas (CSE / Dynamic)</div>
+    <div id="formulas-array"></div>
+  </div>
+
+  <!-- ═══════════════ LOOKUP ═══════════════ -->
+  <div class="tab-panel" id="tab-lookup">
+    <div id="lookup-content"></div>
+  </div>
+
+  <!-- ═══════════════ TEXT ═══════════════ -->
+  <div class="tab-panel" id="tab-text">
+    <div id="text-content"></div>
+  </div>
+
+  <!-- ═══════════════ DATE ═══════════════ -->
+  <div class="tab-panel" id="tab-date">
+    <div id="date-content"></div>
+  </div>
+
+  <!-- ═══════════════ MATH ═══════════════ -->
+  <div class="tab-panel" id="tab-math">
+    <div id="math-content"></div>
+  </div>
+
+  <!-- ═══════════════ LOGIC ═══════════════ -->
+  <div class="tab-panel" id="tab-logic">
+    <div id="logic-content"></div>
+  </div>
+
+  <!-- ═══════════════ PIVOT ═══════════════ -->
+  <div class="tab-panel" id="tab-pivot">
+    <div id="pivot-content"></div>
+  </div>
+
+  <!-- ═══════════════ CHARTS ═══════════════ -->
+  <div class="tab-panel" id="tab-charts">
+    <div id="charts-content"></div>
+  </div>
+
+  <!-- ═══════════════ DATA TOOLS ═══════════════ -->
+  <div class="tab-panel" id="tab-data">
+    <div id="data-content"></div>
+  </div>
+
+  <!-- ═══════════════ FORMATTING ═══════════════ -->
+  <div class="tab-panel" id="tab-format">
+    <div id="format-content"></div>
+  </div>
+
+  <!-- ═══════════════ POWER TIPS ═══════════════ -->
+  <div class="tab-panel" id="tab-tips">
+    <div id="tips-content"></div>
+  </div>
+
+</div><!-- /main-container -->
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════
+
+function k(...keys) {
+  return '<div class="key-combo">' + keys.map((k,i) =>
+    i % 2 === 1 ? `<span class="key-plus">${k}</span>` : `<kbd>${k}</kbd>`
+  ).join('') + '</div>';
+}
+function fx(s) { return `<span class="fx">${s}</span>`; }
+
+// ── SHORTCUTS DATA ────────────────────────────────────
+const SC = {
+  nav: [
+    [k('Ctrl','+','Home'),            'Go to cell A1',                       'Beginning of sheet'],
+    [k('Ctrl','+','End'),             'Go to last used cell',                 'Last cell with data'],
+    [k('Ctrl','+','Arrow'),           'Jump to edge of data region',          'Stops at first/last filled cell'],
+    [k('Ctrl','+','Backspace'),       'Scroll to show active cell',           'Re-centres view on cursor'],
+    [k('Ctrl','+','G')+'  or  '+k('F5'), 'Go To dialog',                     'Navigate to named range or cell address'],
+    [k('Ctrl','+','F'),               'Find',                                 'Find & Replace with Ctrl+H'],
+    [k('Ctrl','+','H'),               'Find & Replace',                       ''],
+    [k('Ctrl','+','Page Up/Down'),    'Move between sheets',                  ''],
+    [k('Alt','+','Page Up/Down'),     'Scroll one screen left/right',         ''],
+    [k('F5'),                         'Go To…',                               'Also navigates to named ranges'],
+    [k('Tab'),                        'Move right within selection',          'Shift+Tab to go left'],
+    [k('Enter'),                      'Confirm and move down',                'Shift+Enter moves up'],
+  ],
+  sel: [
+    [k('Ctrl','+','Shift','+','End'),   'Select to last used cell',           'Extends selection to data boundary'],
+    [k('Ctrl','+','Shift','+','Home'),  'Select to A1',                       ''],
+    [k('Ctrl','+','Shift','+','Arrow'), 'Extend selection to data edge',      ''],
+    [k('Ctrl','+','A'),                 'Select all cells',                   'Press twice to select entire sheet'],
+    [k('Ctrl','+','Space'),             'Select entire column',               ''],
+    [k('Shift','+','Space'),            'Select entire row',                  ''],
+    [k('Ctrl','+','Shift','+','Space'), 'Select entire worksheet',            ''],
+    [k('Shift','+','Click'),            'Extend selection to clicked cell',   ''],
+    [k('Ctrl','+','Click'),             'Add non-adjacent cells to selection',''],
+    [k('Ctrl','+','Shift','+','*'),     'Select current data region',         'Same as Ctrl+Shift+8'],
+    [k('Alt','+',';'),                  'Select visible cells only',          'Use after filtering to skip hidden rows'],
+    [k('F8'),                           'Toggle Extend mode',                 'Extend selection with arrow keys without holding Shift'],
+  ],
+  edit: [
+    [k('F2'),                         'Edit active cell (enter edit mode)',   'Places cursor at end of cell content'],
+    [k('Ctrl','+','Z'),               'Undo',                                 ''],
+    [k('Ctrl','+','Y'),               'Redo',                                 ''],
+    [k('Ctrl','+','C'),               'Copy',                                 'Marching ants border shows copied range'],
+    [k('Ctrl','+','X'),               'Cut',                                  ''],
+    [k('Ctrl','+','V'),               'Paste',                                ''],
+    [k('Ctrl','+','Alt','+','V'),     'Paste Special dialog',                 'Choose values, formats, transpose etc.'],
+    [k('Ctrl','+','D'),               'Fill Down',                            'Fills selected cells down from top cell'],
+    [k('Ctrl','+','R'),               'Fill Right',                           'Fills selected cells right from left cell'],
+    [k('Ctrl','+',';'),               'Insert today\'s date',                 'Static — does not update'],
+    [k('Ctrl','+','Shift','+',':'),   'Insert current time',                  'Static — does not update'],
+    [k('Ctrl','+','\''),              'Copy formula from cell above',         'Without adjusting references'],
+    [k('Ctrl','+','"'),               'Copy value from cell above',           ''],
+    [k('Ctrl','+','-'),               'Delete cells / rows / columns',        'Shows delete dialog'],
+    [k('Ctrl','+','Shift','+','+'),   'Insert cells / rows / columns',        'Shows insert dialog'],
+    [k('Delete'),                     'Clear cell contents',                  'Does not delete the cell'],
+    [k('Alt','+','Enter'),            'New line within a cell',               'Creates multi-line content in one cell'],
+    [k('Escape'),                     'Cancel cell entry / close dialog',     ''],
+    [k('F4'),             'Repeat last action / toggle $ in formula',         'In formula: cycles A1 → $A$1 → A$1 → $A1'],
+  ],
+  fmt: [
+    [k('Ctrl','+','1'),               'Format Cells dialog',                  'All formatting options in one place'],
+    [k('Ctrl','+','B'),               'Bold',                                 ''],
+    [k('Ctrl','+','I'),               'Italic',                               ''],
+    [k('Ctrl','+','U'),               'Underline',                            ''],
+    [k('Ctrl','+','5'),               'Strikethrough',                        ''],
+    [k('Ctrl','+','Shift','+','$'),   'Currency format',                      ''],
+    [k('Ctrl','+','Shift','+','%'),   'Percentage format',                    ''],
+    [k('Ctrl','+','Shift','+','!'),   'Number format (2 decimal places)',     ''],
+    [k('Ctrl','+','Shift','+','#'),   'Date format (DD-MMM-YY)',              ''],
+    [k('Ctrl','+','Shift','+','@'),   'Time format (h:mm AM/PM)',             ''],
+    [k('Ctrl','+','Shift','+','^'),   'Scientific notation format',           ''],
+    [k('Alt','+','H','+','H'),        'Highlight/Fill color picker',          'Use after selecting cells'],
+    [k('Alt','+','H','+','FC'),       'Font colour picker',                   ''],
+    [k('Ctrl','+','Shift','+','&'),   'Apply border outline',                 ''],
+    [k('Ctrl','+','Shift','+','_'),   'Remove borders',                       ''],
+  ],
+  wb: [
+    [k('Ctrl','+','N'),               'New workbook',                         ''],
+    [k('Ctrl','+','O'),               'Open workbook',                        ''],
+    [k('Ctrl','+','S'),               'Save',                                 ''],
+    [k('Ctrl','+','Shift','+','S'),   'Save As',                              ''],
+    [k('Ctrl','+','W'),               'Close workbook',                       ''],
+    [k('Ctrl','+','P'),               'Print / Print Preview',               ''],
+    [k('Alt','+','F11'),              'Open VBA Editor',                      'Macro development'],
+    [k('Alt','+','F8'),               'Macro dialog (Run / Edit)',            ''],
+    [k('Shift','+','F11'),            'Insert new worksheet',                 ''],
+    [k('Ctrl','+','F4'),              'Close current window',                 ''],
+    [k('Alt','+','Tab'),              'Switch between open windows/workbooks',''],
+    [k('Ctrl','+','F9'),              'Minimise workbook window',             ''],
+    [k('Ctrl','+','F10'),             'Maximise / restore workbook window',   ''],
+    [k('F12'),                        'Save As dialog',                       ''],
+    [k('F11'),                        'Create chart on new sheet from selection',''],
+  ],
+  fn: [
+    [k('='),                          'Start a formula',                      'All formulas begin with ='],
+    [k('F9'),                         'Calculate all sheets / evaluate selected formula part','In formula bar: select part then F9 to see result'],
+    [k('Shift','+','F9'),             'Calculate active sheet only',          ''],
+    [k('Ctrl','+','Shift','+','Enter'),'Enter array formula (legacy CSE)',    'In 365: use normal Enter for dynamic arrays'],
+    [k('Ctrl','+','`'),               'Toggle Show Formulas mode',            'Shows formula text instead of results'],
+    [k('Ctrl','+','Shift','+','A'),   'Insert function arguments',            'After typing function name'],
+    [k('Shift','+','F3'),             'Insert Function dialog',               ''],
+    [k('Tab'),                        'Accept AutoComplete suggestion',       'When typing function names'],
+    [k('F4'),                         'Toggle $ reference type in formula',   'Cycles: A1 → $A$1 → A$1 → $A1 → A1'],
+    [k('Ctrl','+','['),               'Select direct precedents',             'Shows which cells feed into formula'],
+    [k('Ctrl','+',']'),               'Select direct dependents',             'Shows which cells use this cell'],
+    [k('Alt','+','='),                'AutoSum',                              'Inserts SUM for cells above/left'],
+  ],
+};
+
+// ── FORMULAS DATA ─────────────────────────────────────
+const FORMULAS_BASIC = `
+<div class="card"><h3>Formula Syntax Rules</h3>
+<table><thead><tr><th>Rule</th><th>Example</th><th>Notes</th></tr></thead><tbody>
+<tr><td>All formulas start with =</td><td>${fx('=A1+B1')}</td><td>Without = it is treated as text</td></tr>
+<tr><td>Operators: + − * / ^ &amp;</td><td>${fx('=A1^2')}</td><td>^ = power, &amp; = text join</td></tr>
+<tr><td>Parentheses control order</td><td>${fx('=(A1+B1)*C1')}</td><td>Same as algebra — BODMAS applies</td></tr>
+<tr><td>Text must be in double quotes</td><td>${fx('="Hello "&A1')}</td><td>Numbers need no quotes</td></tr>
+<tr><td>Comparison operators</td><td>${fx('=A1>B1')}</td><td>Returns TRUE/FALSE. Also: &lt; &gt;= &lt;= &lt;&gt;</td></tr>
+<tr><td>Function syntax</td><td>${fx('=FUNCTION(arg1,arg2,...)')}</td><td>Arguments separated by commas (or ; depending on locale)</td></tr>
+<tr><td>Nested functions</td><td>${fx('=IF(SUM(A1:A5)>100,"High","Low")')}</td><td>Up to 64 levels of nesting</td></tr>
+<tr><td>Cell range</td><td>${fx('=SUM(A1:A10)')}</td><td>Colon defines a range</td></tr>
+<tr><td>Non-adjacent cells</td><td>${fx('=SUM(A1,C1,E1)')}</td><td>Comma separates non-adjacent</td></tr>
+<tr><td>Cross-sheet reference</td><td>${fx("=Sheet2!A1")}</td><td>SheetName!CellRef — use quotes if sheet has spaces: 'Sheet Name'!A1</td></tr>
+<tr><td>Cross-workbook reference</td><td>${fx("=[Book1.xlsx]Sheet1!$A$1")}</td><td>File must be open or full path needed</td></tr>
+</tbody></table></div>`;
+
+const FORMULAS_REF = `
+<div class="card"><h3>Reference Types — $ Dollar Sign</h3>
+<table><thead><tr><th>Reference</th><th>When Copied</th><th>Use case</th></tr></thead><tbody>
+<tr><td>${fx('A1')}</td><td>Both row AND column adjust</td><td>Most formulas — flexible copying in any direction</td></tr>
+<tr><td>${fx('$A$1')}</td><td>Neither row nor column adjusts — absolute</td><td>Fixed lookup values, constants, tax rates — press F4 once</td></tr>
+<tr><td>${fx('$A1')}</td><td>Column fixed, row adjusts</td><td>Same column across many rows — press F4 three times</td></tr>
+<tr><td>${fx('A$1')}</td><td>Row fixed, column adjusts</td><td>Same row across many columns — press F4 twice</td></tr>
+</tbody></table>
+<div class="tip-box">💡 <strong>F4 key</strong> cycles through all four $ combinations when cursor is on a cell reference in the formula bar.</div>
+</div>`;
+
+const FORMULAS_NAMED = `
+<div class="card"><h3>Named Ranges</h3>
+<table><thead><tr><th>Task</th><th>How</th><th>Example</th></tr></thead><tbody>
+<tr><td>Create named range</td><td>Formulas → Name Manager → New, or type in Name Box (left of formula bar)</td><td>Select A1:A10, type "SalesData" in Name Box → Enter</td></tr>
+<tr><td>Use in formula</td><td>Type the name directly</td><td>${fx('=SUM(SalesData)')}</td></tr>
+<tr><td>Define from selection</td><td>Formulas → Create from Selection — uses row/column headers as names</td><td>Auto-names using header row</td></tr>
+<tr><td>Scope</td><td>Workbook-level (default) or Sheet-level</td><td>Sheet-level: Sheet1!MyRange</td></tr>
+<tr><td>Dynamic named range (legacy)</td><td>Use OFFSET + COUNTA</td><td>${fx('=OFFSET(A1,0,0,COUNTA(A:A),1)')}</td></tr>
+<tr><td>Dynamic named range (365)</td><td>Use spill references</td><td>${fx('=MyTable[Column]')}</td></tr>
+</tbody></table></div>`;
+
+const FORMULAS_ARRAY = `
+<div class="card"><h3>Dynamic Arrays (Excel 365 / 2019+)</h3>
+<table><thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead><tbody>
+<tr><td>${fx('FILTER()')}</td><td>Returns subset of array meeting criteria</td><td>${fx('=FILTER(A2:C10, B2:B10="Pass")')}</td></tr>
+<tr><td>${fx('SORT()')}</td><td>Sorts array by column</td><td>${fx('=SORT(A2:B10, 2, -1)')}<span style="font-size:11px;color:#888"> — sort col 2 descending</span></td></tr>
+<tr><td>${fx('SORTBY()')}</td><td>Sort by one or more external arrays</td><td>${fx('=SORTBY(A2:A10, B2:B10, -1)')}</td></tr>
+<tr><td>${fx('UNIQUE()')}</td><td>Returns unique values from range</td><td>${fx('=UNIQUE(A2:A100)')}</td></tr>
+<tr><td>${fx('SEQUENCE()')}</td><td>Generates number sequence</td><td>${fx('=SEQUENCE(10,1,1,2)')}<span style="font-size:11px;color:#888"> — 1,3,5…19</span></td></tr>
+<tr><td>${fx('XLOOKUP()')}</td><td>Modern replacement for VLOOKUP</td><td>${fx('=XLOOKUP(A1, B:B, C:C, "Not found")')}</td></tr>
+<tr><td>${fx('XMATCH()')}</td><td>Returns position in array</td><td>${fx('=XMATCH(A1, B:B, 0)')}</td></tr>
+<tr><td>${fx('LET()')}</td><td>Assigns variable names in formula</td><td>${fx('=LET(x, A1+B1, x*x)')}</td></tr>
+<tr><td>${fx('LAMBDA()')}</td><td>Creates custom reusable function</td><td>${fx('=LAMBDA(x, x^2+2*x+1)')}</td></tr>
+<tr><td>${fx('MAKEARRAY()')}</td><td>Builds array using formula</td><td>${fx('=MAKEARRAY(5,3,LAMBDA(r,c,r*c))')}</td></tr>
+</tbody></table>
+<div class="note-box">Spill operator <strong>#</strong> references all cells a dynamic array spills into. Example: ${fx('=SUM(A2#)')} sums all cells in the spill from A2.</div>
+<div class="warn-box"><strong>Legacy Array Formulas (CSE):</strong> Ctrl+Shift+Enter creates { } around formula. Avoid in new work — use dynamic arrays instead. Legacy arrays cannot spill.</div>
+</div>`;
+
+// ── LOOKUP DATA ───────────────────────────────────────
+const LOOKUP_DATA = `
+<div class="section-h">VLOOKUP / HLOOKUP</div>
+<div class="card"><h3>VLOOKUP</h3>
+<div class="fx-block">=VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])<br>
+<span class="fx-comment">lookup_value: what to search for | table_array: range to search (first col is key) | col_index_num: which column to return | range_lookup: FALSE=exact, TRUE=approx</span></div>
+<table><thead><tr><th>Example</th><th>What it does</th><th>Notes</th></tr></thead><tbody>
+<tr><td>${fx('=VLOOKUP(D1, A:C, 3, FALSE)')}</td><td>Finds D1 in column A, returns col 3 (C)</td><td>FALSE = exact match always for data lookup</td></tr>
+<tr><td>${fx('=VLOOKUP(D1, A:C, 3, TRUE)')}</td><td>Approximate match — finds closest value ≤ lookup</td><td>Table must be sorted ascending. Use for grade bands, tax brackets</td></tr>
+<tr><td>${fx('=IFERROR(VLOOKUP(D1,A:C,3,FALSE),"Not Found")')}</td><td>Returns "Not Found" if no match instead of #N/A error</td><td>Always wrap in IFERROR for production use</td></tr>
+</tbody></table>
+<div class="warn-box"><strong>VLOOKUP limitations:</strong> Only looks right (cannot return column to left of key). Fix: use INDEX/MATCH or XLOOKUP. Also breaks if columns are inserted.</div>
+</div>
+
+<div class="card"><h3>INDEX &amp; MATCH — Preferred over VLOOKUP</h3>
+<div class="fx-block">=INDEX(return_range, MATCH(lookup_value, lookup_range, 0))<br>
+<span class="fx-comment">More flexible — can look left, right, up, down. Won't break if columns inserted.</span></div>
+<table><thead><tr><th>Example</th><th>What it does</th></tr></thead><tbody>
+<tr><td>${fx('=INDEX(C:C, MATCH(D1, A:A, 0))')}</td><td>Finds D1 in A, returns corresponding value from C — any direction</td></tr>
+<tr><td>${fx('=INDEX(A:C, MATCH(D1,A:A,0), 3)')}</td><td>Returns value from column 3 of A:C where A matches D1</td></tr>
+<tr><td>${fx('=INDEX(B2:B10, MATCH(1,(A2:A10="X")*(C2:C10>100),0))')}</td><td>Multi-criteria match — Enter as Ctrl+Shift+Enter in legacy Excel</td></tr>
+<tr><td>${fx('=INDEX(A2:A10, MATCH(MAX(B2:B10), B2:B10, 0))')}</td><td>Returns name corresponding to the maximum value in B</td></tr>
+</tbody></table>
+</div>
+
+<div class="card"><h3>XLOOKUP (Excel 365 / 2019+)</h3>
+<div class="fx-block">=XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode])<br>
+<span class="fx-comment">Replaces VLOOKUP + HLOOKUP + INDEX/MATCH. Returns entire row/column. Defaults to exact match.</span></div>
+<table><thead><tr><th>Example</th><th>What it does</th></tr></thead><tbody>
+<tr><td>${fx('=XLOOKUP(D1, A:A, C:C)')}</td><td>Exact match of D1 in A, return C — simplest use</td></tr>
+<tr><td>${fx('=XLOOKUP(D1, A:A, C:C, "Not found")')}</td><td>Custom not-found text instead of error</td></tr>
+<tr><td>${fx('=XLOOKUP(D1, A:A, B:E)')}</td><td>Returns multiple columns (spills right)</td></tr>
+<tr><td>${fx('=XLOOKUP(D1, A:A, C:C,,-1)')}</td><td>Approximate match — find next smaller</td></tr>
+<tr><td>${fx('=XLOOKUP(D1, A:A, C:C,,0,-1)')}</td><td>Search from bottom (last match)</td></tr>
+</tbody></table>
+<table style="margin-top:10px"><thead><tr><th>match_mode</th><th>search_mode</th></tr></thead><tbody>
+<tr><td>0 = Exact (default) | -1 = Exact or next smaller | 1 = Exact or next larger | 2 = Wildcard</td><td>1 = First to last (default) | -1 = Last to first | 2 = Binary asc | -2 = Binary desc</td></tr>
+</tbody></table>
+</div>
+
+<div class="card"><h3>Other Lookup Functions</h3>
+<table><thead><tr><th>Function</th><th>Syntax</th><th>Description</th></tr></thead><tbody>
+<tr><td>${fx('MATCH()')}</td><td>${fx('=MATCH(value, range, 0)')}</td><td>Returns position (row/col number) of value in range. 0=exact, 1=approx asc, -1=approx desc</td></tr>
+<tr><td>${fx('CHOOSE()')}</td><td>${fx('=CHOOSE(index, val1, val2, ...)')}</td><td>Returns value from list by index number</td></tr>
+<tr><td>${fx('OFFSET()')}</td><td>${fx('=OFFSET(ref, rows, cols, [height], [width])')}</td><td>Returns range offset from reference — used in dynamic ranges</td></tr>
+<tr><td>${fx('INDIRECT()')}</td><td>${fx('=INDIRECT("A"&ROW())')}</td><td>Returns reference from text string — volatile, use sparingly</td></tr>
+<tr><td>${fx('ADDRESS()')}</td><td>${fx('=ADDRESS(1,1,4)')}</td><td>Returns cell address as text. arg3: 1=$A$1, 2=A$1, 3=$A1, 4=A1</td></tr>
+<tr><td>${fx('ROW()')}</td><td>${fx('=ROW(A5)')}</td><td>Returns row number of reference. Blank = current row</td></tr>
+<tr><td>${fx('COLUMN()')}</td><td>${fx('=COLUMN(C1)')}</td><td>Returns column number. Blank = current column</td></tr>
+<tr><td>${fx('ROWS()')}</td><td>${fx('=ROWS(A1:A10)')}</td><td>Returns number of rows in range</td></tr>
+<tr><td>${fx('COLUMNS()')}</td><td>${fx('=COLUMNS(A1:E1)')}</td><td>Returns number of columns in range</td></tr>
+<tr><td>${fx('HYPERLINK()')}</td><td>${fx('=HYPERLINK("http://...", "Label")')}</td><td>Creates clickable hyperlink in cell</td></tr>
+</tbody></table></div>`;
+
+// ── TEXT FUNCTIONS ─────────────────────────────────────
+const TEXT_DATA = `
+<div class="card"><h3>Text Manipulation</h3>
+<table><thead><tr><th>Function</th><th>Example</th><th>Result / Notes</th></tr></thead><tbody>
+<tr><td>${fx('LEFT()')}</td><td>${fx('=LEFT(A1, 3)')}</td><td>First 3 characters from left</td></tr>
+<tr><td>${fx('RIGHT()')}</td><td>${fx('=RIGHT(A1, 4)')}</td><td>Last 4 characters from right</td></tr>
+<tr><td>${fx('MID()')}</td><td>${fx('=MID(A1, 3, 5)')}</td><td>5 characters starting at position 3</td></tr>
+<tr><td>${fx('LEN()')}</td><td>${fx('=LEN(A1)')}</td><td>Number of characters including spaces</td></tr>
+<tr><td>${fx('FIND()')}</td><td>${fx('=FIND("/", A1)')}</td><td>Position of "/" in A1 — case sensitive</td></tr>
+<tr><td>${fx('SEARCH()')}</td><td>${fx('=SEARCH("abc", A1)')}</td><td>Position — case insensitive, allows wildcards (* ?)</td></tr>
+<tr><td>${fx('SUBSTITUTE()')}</td><td>${fx('=SUBSTITUTE(A1,"old","new")')}</td><td>Replaces all occurrences. 4th arg = which occurrence</td></tr>
+<tr><td>${fx('REPLACE()')}</td><td>${fx('=REPLACE(A1,3,2,"XY")')}</td><td>Replaces 2 chars starting at position 3 with "XY"</td></tr>
+<tr><td>${fx('TRIM()')}</td><td>${fx('=TRIM(A1)')}</td><td>Removes leading, trailing, and double internal spaces</td></tr>
+<tr><td>${fx('CLEAN()')}</td><td>${fx('=CLEAN(A1)')}</td><td>Removes non-printable characters</td></tr>
+<tr><td>${fx('UPPER()')}</td><td>${fx('=UPPER(A1)')}</td><td>ALL CAPS</td></tr>
+<tr><td>${fx('LOWER()')}</td><td>${fx('=LOWER(A1)')}</td><td>all lowercase</td></tr>
+<tr><td>${fx('PROPER()')}</td><td>${fx('=PROPER(A1)')}</td><td>Title Case — First Letter Of Each Word</td></tr>
+<tr><td>${fx('CONCATENATE()')}</td><td>${fx('=CONCATENATE(A1," ",B1)')}</td><td>Joins text — use & operator instead: ${fx('=A1&" "&B1')}</td></tr>
+<tr><td>${fx('TEXTJOIN()')}</td><td>${fx('=TEXTJOIN(", ",TRUE,A1:A10)')}</td><td>Joins range with delimiter, optionally skipping blanks</td></tr>
+<tr><td>${fx('TEXT()')}</td><td>${fx('=TEXT(A1,"#,##0.00")')}</td><td>Converts number to formatted text string — see format codes below</td></tr>
+<tr><td>${fx('VALUE()')}</td><td>${fx('=VALUE("1,234")')}</td><td>Converts text that looks like number to actual number</td></tr>
+<tr><td>${fx('REPT()')}</td><td>${fx('=REPT("★",A1)')}</td><td>Repeats text A1 times — useful for in-cell bar charts</td></tr>
+<tr><td>${fx('CHAR()')}</td><td>${fx('=CHAR(10)')}</td><td>Returns character by ASCII/Unicode number. CHAR(10)=line break, CHAR(9)=tab</td></tr>
+<tr><td>${fx('CODE()')}</td><td>${fx('=CODE(A1)')}</td><td>Returns ASCII/Unicode number of first character</td></tr>
+<tr><td>${fx('EXACT()')}</td><td>${fx('=EXACT(A1,B1)')}</td><td>Case-sensitive comparison — returns TRUE/FALSE</td></tr>
+<tr><td>${fx('UNICHAR()')}</td><td>${fx('=UNICHAR(128522)')}</td><td>Returns Unicode character — e.g. emojis</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>TEXT() Format Codes</h3>
+<table><thead><tr><th>Format Code</th><th>Example Input</th><th>Result</th></tr></thead><tbody>
+<tr><td>${fx('"#,##0.00"')}</td><td>1234.5</td><td>1,234.50</td></tr>
+<tr><td>${fx('"0.00%"')}</td><td>0.1523</td><td>15.23%</td></tr>
+<tr><td>${fx('"DD-MMM-YYYY"')}</td><td>Date serial</td><td>19-Apr-2025</td></tr>
+<tr><td>${fx('"HH:MM:SS"')}</td><td>Time serial</td><td>14:35:20</td></tr>
+<tr><td>${fx('"£#,##0"')}</td><td>5000</td><td>£5,000</td></tr>
+<tr><td>${fx('"[Red]#,##0;[Green]-#,##0"')}</td><td>Positive/Negative</td><td>Colour-conditional — Red positive, Green negative</td></tr>
+<tr><td>${fx('"000000"')}</td><td>1234</td><td>001234 — zero-padded to 6 digits</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Extracting Parts of Text — Practical Patterns</h3>
+<table><thead><tr><th>Task</th><th>Formula</th></tr></thead><tbody>
+<tr><td>Extract text before delimiter (e.g. @)</td><td>${fx('=LEFT(A1, FIND("@",A1)-1)')}</td></tr>
+<tr><td>Extract text after delimiter</td><td>${fx('=MID(A1, FIND("@",A1)+1, LEN(A1))')}</td></tr>
+<tr><td>Extract last word (after last space)</td><td>${fx('=MID(A1,FIND("☺",SUBSTITUTE(A1," ","☺",LEN(A1)-LEN(SUBSTITUTE(A1," ",""))))+1,100)')}</td></tr>
+<tr><td>Check if cell contains text</td><td>${fx('=ISNUMBER(SEARCH("text",A1))')}</td></tr>
+<tr><td>Count specific character in cell</td><td>${fx('=LEN(A1)-LEN(SUBSTITUTE(A1,"/",""))')}</td></tr>
+<tr><td>Remove all spaces</td><td>${fx('=SUBSTITUTE(A1," ","")')}</td></tr>
+<tr><td>Reverse a string (365)</td><td>${fx('=TEXTJOIN("",1,MID(A1,SEQUENCE(LEN(A1),,LEN(A1),-1),1))')}</td></tr>
+</tbody></table></div>`;
+
+// ── DATE FUNCTIONS ─────────────────────────────────────
+const DATE_DATA = `
+<div class="card"><h3>Date Functions</h3>
+<div class="note-box">Excel stores dates as serial numbers — 1 = 1 Jan 1900. Times are decimal fractions of a day. This is why you can do arithmetic on dates.</div>
+<table><thead><tr><th>Function</th><th>Example</th><th>Result / Notes</th></tr></thead><tbody>
+<tr><td>${fx('TODAY()')}</td><td>${fx('=TODAY()')}</td><td>Today's date — volatile, recalculates daily</td></tr>
+<tr><td>${fx('NOW()')}</td><td>${fx('=NOW()')}</td><td>Current date & time — volatile</td></tr>
+<tr><td>${fx('DATE()')}</td><td>${fx('=DATE(2025,4,19)')}</td><td>Creates date from year, month, day</td></tr>
+<tr><td>${fx('TIME()')}</td><td>${fx('=TIME(14,30,0)')}</td><td>Creates time from hours, minutes, seconds</td></tr>
+<tr><td>${fx('YEAR()')}</td><td>${fx('=YEAR(A1)')}</td><td>Extracts year from date</td></tr>
+<tr><td>${fx('MONTH()')}</td><td>${fx('=MONTH(A1)')}</td><td>Extracts month number (1–12)</td></tr>
+<tr><td>${fx('DAY()')}</td><td>${fx('=DAY(A1)')}</td><td>Extracts day of month (1–31)</td></tr>
+<tr><td>${fx('HOUR()')}</td><td>${fx('=HOUR(A1)')}</td><td>Extracts hour (0–23)</td></tr>
+<tr><td>${fx('MINUTE()')}</td><td>${fx('=MINUTE(A1)')}</td><td>Extracts minute (0–59)</td></tr>
+<tr><td>${fx('SECOND()')}</td><td>${fx('=SECOND(A1)')}</td><td>Extracts second (0–59)</td></tr>
+<tr><td>${fx('WEEKDAY()')}</td><td>${fx('=WEEKDAY(A1,2)')}</td><td>Day of week as number. arg2=2: Mon=1, Sun=7</td></tr>
+<tr><td>${fx('WEEKNUM()')}</td><td>${fx('=WEEKNUM(A1,2)')}</td><td>Week number of year. arg2=2 uses Mon as first day</td></tr>
+<tr><td>${fx('EOMONTH()')}</td><td>${fx('=EOMONTH(A1,0)')}</td><td>Last day of month. Offset 0=same month, 1=next, -1=prev</td></tr>
+<tr><td>${fx('DATEDIF()')}</td><td>${fx('=DATEDIF(A1,B1,"D")')}</td><td>Difference in D=days, M=months, Y=years. Undocumented but works</td></tr>
+<tr><td>${fx('DAYS()')}</td><td>${fx('=DAYS(B1,A1)')}</td><td>Days between two dates (end-start)</td></tr>
+<tr><td>${fx('NETWORKDAYS()')}</td><td>${fx('=NETWORKDAYS(A1,B1,holidays)')}</td><td>Working days between dates — excludes weekends & optional holidays</td></tr>
+<tr><td>${fx('WORKDAY()')}</td><td>${fx('=WORKDAY(A1,10)')}</td><td>Date that is 10 working days from A1</td></tr>
+<tr><td>${fx('EDATE()')}</td><td>${fx('=EDATE(A1,3)')}</td><td>Date 3 months from A1</td></tr>
+<tr><td>${fx('DATEVALUE()')}</td><td>${fx('=DATEVALUE("19-Apr-2025")')}</td><td>Converts date text to date serial number</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Date Arithmetic Patterns</h3>
+<table><thead><tr><th>Task</th><th>Formula</th></tr></thead><tbody>
+<tr><td>Age in full years</td><td>${fx('=DATEDIF(DOB, TODAY(), "Y")')}</td></tr>
+<tr><td>Days remaining to deadline</td><td>${fx('=A1-TODAY()')}</td></tr>
+<tr><td>First day of current month</td><td>${fx('=DATE(YEAR(TODAY()),MONTH(TODAY()),1)')}</td></tr>
+<tr><td>Last day of current month</td><td>${fx('=EOMONTH(TODAY(),0)')}</td></tr>
+<tr><td>Same date next year</td><td>${fx('=DATE(YEAR(A1)+1,MONTH(A1),DAY(A1))')}</td></tr>
+<tr><td>Quarter number</td><td>${fx('=ROUNDUP(MONTH(A1)/3,0)')}</td></tr>
+<tr><td>Is date a weekend?</td><td>${fx('=WEEKDAY(A1,2)>5')}</td></tr>
+<tr><td>Next Monday from date</td><td>${fx('=A1+MOD(2-WEEKDAY(A1,2),7)+7*(WEEKDAY(A1,2)=1)')}</td></tr>
+</tbody></table></div>`;
+
+// ── MATH FUNCTIONS ─────────────────────────────────────
+const MATH_DATA = `
+<div class="card"><h3>Math &amp; Statistical Functions</h3>
+<table><thead><tr><th>Function</th><th>Example</th><th>Notes</th></tr></thead><tbody>
+<tr><td>${fx('SUM()')}</td><td>${fx('=SUM(A1:A10)')}</td><td>Adds all values in range</td></tr>
+<tr><td>${fx('SUMIF()')}</td><td>${fx('=SUMIF(A:A,"Pump",B:B)')}</td><td>Sum B where A = "Pump". Wildcards: * matches any string, ? matches one char</td></tr>
+<tr><td>${fx('SUMIFS()')}</td><td>${fx('=SUMIFS(C:C,A:A,"Pump",B:B,">100")')}</td><td>Sum C where A="Pump" AND B>100. Multiple conditions</td></tr>
+<tr><td>${fx('SUMPRODUCT()')}</td><td>${fx('=SUMPRODUCT(A2:A10,B2:B10)')}</td><td>Multiplies arrays element-by-element then sums — very powerful for weighted calculations</td></tr>
+<tr><td>${fx('COUNT()')}</td><td>${fx('=COUNT(A1:A10)')}</td><td>Counts cells with numbers only</td></tr>
+<tr><td>${fx('COUNTA()')}</td><td>${fx('=COUNTA(A1:A10)')}</td><td>Counts non-empty cells (any content)</td></tr>
+<tr><td>${fx('COUNTBLANK()')}</td><td>${fx('=COUNTBLANK(A1:A10)')}</td><td>Counts empty cells</td></tr>
+<tr><td>${fx('COUNTIF()')}</td><td>${fx('=COUNTIF(A:A,"Pass")')}</td><td>Counts cells meeting one criterion</td></tr>
+<tr><td>${fx('COUNTIFS()')}</td><td>${fx('=COUNTIFS(A:A,"Pass",B:B,">50")')}</td><td>Count with multiple criteria</td></tr>
+<tr><td>${fx('AVERAGE()')}</td><td>${fx('=AVERAGE(A1:A10)')}</td><td>Mean — ignores blank cells but includes zeros</td></tr>
+<tr><td>${fx('AVERAGEIF()')}</td><td>${fx('=AVERAGEIF(A:A,"Pass",B:B)')}</td><td>Average of B where A="Pass"</td></tr>
+<tr><td>${fx('AVERAGEIFS()')}</td><td>${fx('=AVERAGEIFS(C:C,A:A,"Pass",B:B,">50")')}</td><td>Average with multiple criteria</td></tr>
+<tr><td>${fx('MAX()')}</td><td>${fx('=MAX(A1:A10)')}</td><td>Largest value</td></tr>
+<tr><td>${fx('MIN()')}</td><td>${fx('=MIN(A1:A10)')}</td><td>Smallest value</td></tr>
+<tr><td>${fx('MAXIFS()')}</td><td>${fx('=MAXIFS(B:B,A:A,"Type1")')}</td><td>Maximum where condition met</td></tr>
+<tr><td>${fx('MINIFS()')}</td><td>${fx('=MINIFS(B:B,A:A,"Type1")')}</td><td>Minimum where condition met</td></tr>
+<tr><td>${fx('LARGE()')}</td><td>${fx('=LARGE(A1:A10,2)')}</td><td>2nd largest value. k=1 same as MAX</td></tr>
+<tr><td>${fx('SMALL()')}</td><td>${fx('=SMALL(A1:A10,2)')}</td><td>2nd smallest value</td></tr>
+<tr><td>${fx('RANK()')}</td><td>${fx('=RANK(A1,A:A,0)')}</td><td>Rank of A1 within range. 0=descending, 1=ascending</td></tr>
+<tr><td>${fx('STDEV.S()')}</td><td>${fx('=STDEV.S(A1:A10)')}</td><td>Sample standard deviation (most common)</td></tr>
+<tr><td>${fx('STDEV.P()')}</td><td>${fx('=STDEV.P(A1:A10)')}</td><td>Population standard deviation</td></tr>
+<tr><td>${fx('VAR.S()')}</td><td>${fx('=VAR.S(A1:A10)')}</td><td>Sample variance</td></tr>
+<tr><td>${fx('MEDIAN()')}</td><td>${fx('=MEDIAN(A1:A10)')}</td><td>Middle value — less affected by outliers than AVERAGE</td></tr>
+<tr><td>${fx('MODE.SNGL()')}</td><td>${fx('=MODE.SNGL(A1:A10)')}</td><td>Most frequent value</td></tr>
+<tr><td>${fx('PERCENTILE.INC()')}</td><td>${fx('=PERCENTILE.INC(A1:A10,0.9)')}</td><td>90th percentile</td></tr>
+<tr><td>${fx('QUARTILE.INC()')}</td><td>${fx('=QUARTILE.INC(A1:A10,1)')}</td><td>Q1=1, Q2=2(median), Q3=3</td></tr>
+<tr><td>${fx('ROUND()')}</td><td>${fx('=ROUND(A1,2)')}</td><td>Round to 2 decimal places</td></tr>
+<tr><td>${fx('ROUNDUP()')}</td><td>${fx('=ROUNDUP(A1,0)')}</td><td>Always rounds up (away from zero)</td></tr>
+<tr><td>${fx('ROUNDDOWN()')}</td><td>${fx('=ROUNDDOWN(A1,0)')}</td><td>Always rounds down (toward zero)</td></tr>
+<tr><td>${fx('MROUND()')}</td><td>${fx('=MROUND(A1,0.25)')}</td><td>Round to nearest multiple of 0.25</td></tr>
+<tr><td>${fx('CEILING.MATH()')}</td><td>${fx('=CEILING.MATH(A1,5)')}</td><td>Round up to nearest multiple of 5</td></tr>
+<tr><td>${fx('FLOOR.MATH()')}</td><td>${fx('=FLOOR.MATH(A1,5)')}</td><td>Round down to nearest multiple of 5</td></tr>
+<tr><td>${fx('INT()')}</td><td>${fx('=INT(A1)')}</td><td>Integer part — rounds toward negative infinity</td></tr>
+<tr><td>${fx('TRUNC()')}</td><td>${fx('=TRUNC(A1,2)')}</td><td>Truncates to decimal places — toward zero</td></tr>
+<tr><td>${fx('MOD()')}</td><td>${fx('=MOD(A1,5)')}</td><td>Remainder after division — e.g. MOD(7,5)=2</td></tr>
+<tr><td>${fx('ABS()')}</td><td>${fx('=ABS(A1)')}</td><td>Absolute value (removes negative sign)</td></tr>
+<tr><td>${fx('SQRT()')}</td><td>${fx('=SQRT(A1)')}</td><td>Square root</td></tr>
+<tr><td>${fx('POWER()')}</td><td>${fx('=POWER(A1,3)')}</td><td>A1 to the power 3. Same as =A1^3</td></tr>
+<tr><td>${fx('EXP()')}</td><td>${fx('=EXP(A1)')}</td><td>e to the power A1 (e≈2.71828)</td></tr>
+<tr><td>${fx('LN()')}</td><td>${fx('=LN(A1)')}</td><td>Natural logarithm (base e)</td></tr>
+<tr><td>${fx('LOG()')}</td><td>${fx('=LOG(A1,10)')}</td><td>Logarithm — arg2 = base. Default base 10</td></tr>
+<tr><td>${fx('PI()')}</td><td>${fx('=PI()')}</td><td>Returns π to 15 digits</td></tr>
+<tr><td>${fx('RADIANS()')}</td><td>${fx('=RADIANS(A1)')}</td><td>Converts degrees to radians</td></tr>
+<tr><td>${fx('DEGREES()')}</td><td>${fx('=DEGREES(A1)')}</td><td>Converts radians to degrees</td></tr>
+<tr><td>${fx('SIN() COS() TAN()')}</td><td>${fx('=SIN(RADIANS(A1))')}</td><td>Trig functions — input must be in radians</td></tr>
+<tr><td>${fx('RAND()')}</td><td>${fx('=RAND()')}</td><td>Random number 0–1 (volatile — recalculates constantly)</td></tr>
+<tr><td>${fx('RANDBETWEEN()')}</td><td>${fx('=RANDBETWEEN(1,100)')}</td><td>Random integer between two values</td></tr>
+<tr><td>${fx('SUBTOTAL()')}</td><td>${fx('=SUBTOTAL(9,A1:A10)')}</td><td>Function on visible rows only. fn 9=SUM, 1=AVERAGE, 2=COUNT. 109=SUM skipping hidden</td></tr>
+<tr><td>${fx('AGGREGATE()')}</td><td>${fx('=AGGREGATE(9,5,A1:A10)')}</td><td>Like SUBTOTAL but more functions and can ignore errors. fn 9=SUM, opt 5=skip hidden</td></tr>
+</tbody></table></div>`;
+
+// ── LOGIC FUNCTIONS ────────────────────────────────────
+const LOGIC_DATA = `
+<div class="card"><h3>IF, Nested IF, IFS</h3>
+<div class="fx-block">=IF(logical_test, value_if_true, value_if_false)<br>
+<span class="fx-comment">The most fundamental decision function</span></div>
+<table><thead><tr><th>Example</th><th>Result</th></tr></thead><tbody>
+<tr><td>${fx('=IF(A1>100,"High","Low")')}</td><td>"High" if A1&gt;100, else "Low"</td></tr>
+<tr><td>${fx('=IF(A1="","Empty",A1)')}</td><td>Shows "Empty" if blank, else shows value</td></tr>
+<tr><td>${fx('=IF(A1>90,"A",IF(A1>75,"B",IF(A1>60,"C","F")))')}</td><td>Nested IFs — grade classification</td></tr>
+<tr><td>${fx('=IFS(A1>90,"A",A1>75,"B",A1>60,"C",TRUE,"F")')}</td><td>IFS() — cleaner multi-condition alternative to nested IF</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Logical Operators</h3>
+<table><thead><tr><th>Function</th><th>Example</th><th>Description</th></tr></thead><tbody>
+<tr><td>${fx('AND()')}</td><td>${fx('=IF(AND(A1>0,B1>0),"Both positive","No")')}</td><td>TRUE only if ALL conditions are TRUE</td></tr>
+<tr><td>${fx('OR()')}</td><td>${fx('=IF(OR(A1="Yes",B1="Yes"),"OK","Not OK")')}</td><td>TRUE if ANY condition is TRUE</td></tr>
+<tr><td>${fx('NOT()')}</td><td>${fx('=IF(NOT(ISBLANK(A1)),A1,0)')}</td><td>Reverses TRUE/FALSE</td></tr>
+<tr><td>${fx('XOR()')}</td><td>${fx('=XOR(A1>0,B1>0)')}</td><td>TRUE if ODD number of conditions are TRUE</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Error Handling</h3>
+<table><thead><tr><th>Function</th><th>Example</th><th>Description</th></tr></thead><tbody>
+<tr><td>${fx('IFERROR()')}</td><td>${fx('=IFERROR(A1/B1,0)')}</td><td>Returns alt value for ANY error. Catches div/0, N/A, REF etc.</td></tr>
+<tr><td>${fx('IFNA()')}</td><td>${fx('=IFNA(VLOOKUP(...),"Not Found")')}</td><td>Handles #N/A errors only — leaves other errors visible</td></tr>
+<tr><td>${fx('ISERROR()')}</td><td>${fx('=ISERROR(A1/B1)')}</td><td>Returns TRUE if any error</td></tr>
+<tr><td>${fx('ISNA()')}</td><td>${fx('=ISNA(MATCH(A1,B:B,0))')}</td><td>Returns TRUE if #N/A error specifically</td></tr>
+<tr><td>${fx('ISERR()')}</td><td>${fx('=ISERR(A1)')}</td><td>TRUE for any error EXCEPT #N/A</td></tr>
+</tbody></table>
+<div class="warn-box"><strong>Error types:</strong> #N/A = not found | #VALUE! = wrong data type | #REF! = deleted cell | #DIV/0! = divide by zero | #NAME? = unrecognised function name | #NUM! = invalid numeric calculation | #NULL! = invalid range intersection | #### = column too narrow to show value</div>
+</div>
+
+<div class="card"><h3>IS Functions &amp; Type Checking</h3>
+<table><thead><tr><th>Function</th><th>Returns TRUE when…</th></tr></thead><tbody>
+<tr><td>${fx('ISBLANK(A1)')}</td><td>Cell is completely empty</td></tr>
+<tr><td>${fx('ISNUMBER(A1)')}</td><td>Cell contains a number (including dates)</td></tr>
+<tr><td>${fx('ISTEXT(A1)')}</td><td>Cell contains text</td></tr>
+<tr><td>${fx('ISLOGICAL(A1)')}</td><td>Cell contains TRUE or FALSE</td></tr>
+<tr><td>${fx('ISEVEN(A1)')}</td><td>Number is even</td></tr>
+<tr><td>${fx('ISODD(A1)')}</td><td>Number is odd</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>SWITCH &amp; Other Conditional</h3>
+<table><thead><tr><th>Function</th><th>Example</th><th>Notes</th></tr></thead><tbody>
+<tr><td>${fx('SWITCH()')}</td><td>${fx('=SWITCH(A1,1,"One",2,"Two",3,"Three","Other")')}</td><td>Matches exact values — cleaner than nested IF for discrete values</td></tr>
+<tr><td>${fx('CHOOSE()')}</td><td>${fx('=CHOOSE(A1,"Jan","Feb","Mar")')}</td><td>Returns Nth item from list where N=A1</td></tr>
+<tr><td>${fx('MAXIFS()')}</td><td>${fx('=MAXIFS(C:C,A:A,"Type1",B:B,">0")')}</td><td>Max with conditions</td></tr>
+<tr><td>${fx('SUMPRODUCT(IF())')}</td><td>${fx('=SUMPRODUCT((A2:A10="X")*(B2:B10))')}</td><td>Conditional sum without SUMIF — very flexible with complex criteria</td></tr>
+</tbody></table></div>`;
+
+// ── PIVOT DATA ─────────────────────────────────────────
+const PIVOT_DATA = `
+<div class="card"><h3>Creating a Pivot Table</h3>
+<ol style="padding-left:24px;line-height:2;font-size:13px">
+<li>Click inside your data table (or select the range)</li>
+<li>Insert → PivotTable → Choose New Worksheet or Existing</li>
+<li>Drag fields: <strong>Rows</strong> = categories to group by | <strong>Columns</strong> = secondary grouping | <strong>Values</strong> = numbers to aggregate | <strong>Filters</strong> = top-level filter</li>
+<li>Right-click Values field → Value Field Settings → choose Sum, Count, Average, Max, Min, etc.</li>
+</ol>
+<div class="tip-box">💡 <strong>Recommended source:</strong> Format data as an Excel Table first (Ctrl+T). Pivot will auto-expand when new data is added.</div>
+</div>
+
+<div class="card"><h3>Pivot Table Features &amp; Tricks</h3>
+<table><thead><tr><th>Feature</th><th>How</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Refresh data</td><td>Right-click → Refresh  or  Alt+F5 (all: Ctrl+Alt+F5)</td><td>Must refresh after source data changes</td></tr>
+<tr><td>Change aggregation</td><td>Right-click value → Value Field Settings</td><td>Sum, Count, Average, Max, Min, StdDev, Distinct Count</td></tr>
+<tr><td>Show as %</td><td>Value Field Settings → Show Values As</td><td>% of Total, % of Row, % of Column, Running Total, Rank…</td></tr>
+<tr><td>Group dates</td><td>Right-click date field in Rows → Group → select Year/Quarter/Month</td><td>Automatically creates date hierarchy</td></tr>
+<tr><td>Group numbers</td><td>Right-click numeric row → Group → set Start/End/By</td><td>Creates bins/buckets for histogram-like analysis</td></tr>
+<tr><td>Add Calculated Field</td><td>PivotTable Analyze → Fields, Items &amp; Sets → Calculated Field</td><td>Create custom formulas using existing fields</td></tr>
+<tr><td>Slicer</td><td>PivotTable Analyze → Insert Slicer</td><td>Visual filter buttons — can control multiple pivot tables</td></tr>
+<tr><td>Timeline</td><td>PivotTable Analyze → Insert Timeline</td><td>Date filter slider — requires date field</td></tr>
+<tr><td>Drill down</td><td>Double-click a value cell</td><td>Creates new sheet showing underlying records</td></tr>
+<tr><td>GETPIVOTDATA</td><td>${fx('=GETPIVOTDATA("Sales",A3,"Region","North")')}</td><td>Extracts specific values from pivot — more robust than cell references</td></tr>
+<tr><td>Pivot Chart</td><td>PivotTable Analyze → PivotChart</td><td>Chart linked to pivot — filters/slicers also affect chart</td></tr>
+<tr><td>Compact vs Tabular layout</td><td>Design → Report Layout → Show in Tabular Form</td><td>Tabular form is easier to use as data source for formulas</td></tr>
+<tr><td>Repeat item labels</td><td>Design → Report Layout → Repeat All Item Labels</td><td>Fills down blank cells in tabular layout</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Power Pivot (Data Model)</h3>
+<ul style="line-height:2;font-size:13px;padding-left:20px">
+<li>Enable: File → Options → Add-ins → COM Add-ins → Microsoft Office Power Pivot</li>
+<li>Add tables to Data Model: Power Pivot → Add to Data Model</li>
+<li>Create relationships between tables — equivalent to SQL JOIN</li>
+<li>Write DAX measures: <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px">Total Sales:=SUM(Sales[Amount])</code></li>
+<li>Handles millions of rows efficiently — much better than standard Excel limits</li>
+<li>Distinct Count aggregation only available with Data Model</li>
+</ul></div>`;
+
+// ── CHARTS DATA ────────────────────────────────────────
+const CHARTS_DATA = `
+<div class="card"><h3>Chart Types — When to Use</h3>
+<table><thead><tr><th>Chart Type</th><th>Best For</th><th>Avoid When</th></tr></thead><tbody>
+<tr><td><span class="badge bg">Column / Bar</span></td><td>Comparing categories, rankings</td><td>Too many categories (&gt;12)</td></tr>
+<tr><td><span class="badge bw">Line</span></td><td>Trends over time, continuous data</td><td>Non-continuous or categorical x-axis</td></tr>
+<tr><td><span class="badge bb">Pie / Doughnut</span></td><td>Part-to-whole, few segments (&lt;5)</td><td>More than 5 slices — use bar instead</td></tr>
+<tr><td><span class="badge bp">Scatter (XY)</span></td><td>Correlation between two variables, engineering data</td><td>Categorical x-axis</td></tr>
+<tr><td><span class="badge bg">Area</span></td><td>Cumulative totals, stacked volume over time</td><td>Multiple overlapping series (use line)</td></tr>
+<tr><td><span class="badge bw">Histogram</span></td><td>Distribution of data, frequency analysis</td><td>Categorical data</td></tr>
+<tr><td><span class="badge bw">Box &amp; Whisker</span></td><td>Statistical distribution — shows Q1, Q3, median, outliers</td><td>Non-statistical audiences</td></tr>
+<tr><td><span class="badge bp">Waterfall</span></td><td>Running total — showing incremental gains/losses</td><td>Non-sequential data</td></tr>
+<tr><td><span class="badge bg">Combo</span></td><td>Two different data series on same chart (e.g. bar + line)</td><td>Same scale — use regular chart</td></tr>
+<tr><td><span class="badge bw">Radar</span></td><td>Comparing multiple variables across categories (spider chart)</td><td>Large number of categories</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Chart Shortcuts &amp; Tips</h3>
+<table><thead><tr><th>Task</th><th>How</th></tr></thead><tbody>
+<tr><td>Create default chart instantly</td><td>Select data → ${k('F11')} (new sheet) or ${k('Alt','+','F1')} (inline)</td></tr>
+<tr><td>Add data to existing chart</td><td>Select new data range → Copy → click chart → Paste</td></tr>
+<tr><td>Change chart type</td><td>Right-click chart → Change Chart Type</td></tr>
+<tr><td>Move chart to its own sheet</td><td>Right-click chart → Move Chart → New Sheet</td></tr>
+<tr><td>Add secondary axis</td><td>Right-click series → Format Data Series → Secondary Axis</td></tr>
+<tr><td>Add trendline</td><td>Right-click data series → Add Trendline → Linear/Polynomial/Exponential etc.</td></tr>
+<tr><td>Show equation / R²</td><td>Format Trendline → tick "Display Equation" and "R-squared value"</td></tr>
+<tr><td>Resize precisely</td><td>Hold Alt while resizing — snaps to cell gridlines</td></tr>
+<tr><td>Copy chart format to another</td><td>Click source chart → Copy → click target chart → Paste Special → Formats</td></tr>
+<tr><td>Change axis scale</td><td>Right-click axis → Format Axis → set Min/Max/Major Unit</td></tr>
+<tr><td>Link chart title to cell</td><td>Click chart title → type = in formula bar → click cell</td></tr>
+<tr><td>Dynamic chart range</td><td>Use Table as data source — chart auto-expands. Or use OFFSET named range.</td></tr>
+</tbody></table></div>`;
+
+// ── DATA TOOLS ─────────────────────────────────────────
+const DATA_DATA = `
+<div class="card"><h3>Tables (Ctrl+T)</h3>
+<ul style="line-height:2;font-size:13px;padding-left:20px">
+<li>Format as Table: ${k('Ctrl','+','T')} — converts range into structured Table</li>
+<li>Auto-expands when new rows/columns added</li>
+<li>Structured references: ${fx('=SUM(Table1[Sales])')} — readable and robust</li>
+<li>Total Row: Table Design → Total Row — auto adds SUBTOTAL for each column</li>
+<li>Slicers work with Tables: Table Design → Insert Slicer</li>
+<li>Remove duplicates: Table Design → Remove Duplicates</li>
+<li>Convert back to range: Table Design → Convert to Range</li>
+</ul></div>
+
+<div class="card"><h3>Data Validation</h3>
+<table><thead><tr><th>Type</th><th>Settings</th><th>Use Case</th></tr></thead><tbody>
+<tr><td>Dropdown list</td><td>Data → Data Validation → List → source range or comma-separated values</td><td>Force selection from predefined list</td></tr>
+<tr><td>Number range</td><td>Whole number / Decimal → Between → min/max</td><td>Prevent out-of-range entries</td></tr>
+<tr><td>Date range</td><td>Date → Between → start/end date</td><td>Restrict date entry</td></tr>
+<tr><td>Text length</td><td>Text Length → less than → N</td><td>Limit characters entered</td></tr>
+<tr><td>Custom formula</td><td>Custom → formula returning TRUE/FALSE</td><td>${fx('=ISNUMBER(A1)')} — only allow numbers</td></tr>
+<tr><td>Cascading dropdown</td><td>First list → INDIRECT() in second</td><td>${fx('=INDIRECT(A1)')} where A1 is a named range name</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Sort &amp; Filter</h3>
+<table><thead><tr><th>Task</th><th>How</th></tr></thead><tbody>
+<tr><td>AutoFilter</td><td>Data → Filter  or  ${k('Ctrl','+','Shift','+','L')}</td></tr>
+<tr><td>Sort by multiple columns</td><td>Data → Sort → Add Level — each level = secondary sort</td></tr>
+<tr><td>Sort by colour / icon</td><td>Data → Sort → Sort On → Cell Color / Font Color / Icon</td></tr>
+<tr><td>Custom sort order</td><td>Sort → Order → Custom List (e.g. Mon,Tue,Wed order)</td></tr>
+<tr><td>Advanced Filter</td><td>Data → Advanced → Filter in-place or copy to another location + criteria range</td></tr>
+<tr><td>Filter by selected cell value</td><td>Right-click → Filter → Filter by Selected Cell's Value</td></tr>
+<tr><td>Clear all filters</td><td>Data → Clear  or  ${k('Ctrl','+','Shift','+','L')} twice</td></tr>
+<tr><td>FILTER() function (365)</td><td>${fx('=FILTER(A2:C10, B2:B10="Pass")')}</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Remove Duplicates, Text to Columns, Flash Fill</h3>
+<table><thead><tr><th>Feature</th><th>Access</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Remove Duplicates</td><td>Data → Remove Duplicates → choose columns to check</td><td>Permanently deletes — work on a copy</td></tr>
+<tr><td>Text to Columns</td><td>Data → Text to Columns → Delimited or Fixed Width</td><td>Split one column into multiple. Great for importing CSV data</td></tr>
+<tr><td>Flash Fill</td><td>Type pattern in adjacent column → ${k('Ctrl','+','E')}</td><td>Excel learns pattern and fills rest. Works for name splitting, reformatting dates, etc.</td></tr>
+<tr><td>Power Query</td><td>Data → Get Data → From Table/Range</td><td>ETL tool — clean, transform, combine data with repeatable steps. Much better than manual manipulation.</td></tr>
+<tr><td>Consolidate</td><td>Data → Consolidate</td><td>Combine data from multiple ranges/sheets by position or category</td></tr>
+<tr><td>What-If Analysis</td><td>Data → What-If Analysis → Goal Seek / Scenario Manager / Data Table</td><td>Goal Seek: finds input for desired output. Data Table: sensitivity analysis.</td></tr>
+<tr><td>Solver</td><td>Data → Solver (add-in must be enabled)</td><td>Optimisation — finds input values that maximise/minimise/meet constraints</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>Conditional Formatting</h3>
+<table><thead><tr><th>Type</th><th>Use</th></tr></thead><tbody>
+<tr><td>Highlight Cell Rules</td><td>Greater than, Less than, Duplicate values, Top/Bottom N%, etc.</td></tr>
+<tr><td>Data Bars</td><td>In-cell bar chart — length proportional to value</td></tr>
+<tr><td>Colour Scales</td><td>Heat map — gradient from min to max value</td></tr>
+<tr><td>Icon Sets</td><td>Traffic lights, arrows, stars — based on thresholds</td></tr>
+<tr><td>Custom Formula Rule</td><td>Home → Conditional Formatting → New Rule → Use formula. Highlights row based on formula. e.g. ${fx('=$B1="Fail"')} highlights entire row when B="Fail"</td></tr>
+<tr><td>Manage Rules</td><td>Home → Conditional Formatting → Manage Rules — see, edit, delete, reorder rules</td></tr>
+</tbody></table>
+<div class="tip-box">💡 For row-based rules, lock the column ($B1) but not the row — this allows the rule to apply across all rows correctly.</div>
+</div>`;
+
+// ── FORMAT DATA ────────────────────────────────────────
+const FORMAT_DATA = `
+<div class="card"><h3>Number Format Codes</h3>
+<table><thead><tr><th>Code</th><th>Meaning</th><th>Example → Result</th></tr></thead><tbody>
+<tr><td>${fx('0')}</td><td>Digit placeholder — shows 0 if no digit</td><td>7.3 → 7</td></tr>
+<tr><td>${fx('#')}</td><td>Digit placeholder — shows nothing if no digit</td><td>7.3 → 7</td></tr>
+<tr><td>${fx('0.00')}</td><td>2 decimal places, always shows</td><td>7 → 7.00</td></tr>
+<tr><td>${fx('#,##0')}</td><td>Thousands separator, no decimals</td><td>1234567 → 1,234,567</td></tr>
+<tr><td>${fx('#,##0.00')}</td><td>Thousands + 2 decimals</td><td>1234.5 → 1,234.50</td></tr>
+<tr><td>${fx('0.00%')}</td><td>Percentage, 2 decimals</td><td>0.156 → 15.60%</td></tr>
+<tr><td>${fx('0.00E+00')}</td><td>Scientific notation</td><td>12345 → 1.23E+04</td></tr>
+<tr><td>${fx('[Red]#,##0;[Green]-#,##0')}</td><td>Red for positive, green for negative</td><td>Conditional colours</td></tr>
+<tr><td>${fx('#,##0;(#,##0)')}</td><td>Negative in parentheses — accounting style</td><td>-500 → (500)</td></tr>
+<tr><td>${fx('"kg "#,##0.00')}</td><td>Custom unit suffix</td><td>7.5 → kg 7.50</td></tr>
+<tr><td>${fx('DD-MMM-YYYY')}</td><td>Date display</td><td>→ 19-Apr-2025</td></tr>
+<tr><td>${fx('HH:MM:SS')}</td><td>Time display</td><td>→ 14:35:22</td></tr>
+<tr><td>${fx('[h]:MM')}</td><td>Total hours (over 24) — for duration</td><td>→ 36:20</td></tr>
+</tbody></table>
+<div class="note-box">Format codes structure: <strong>Positive ; Negative ; Zero ; Text</strong> — separate each section with semicolons to control all four cases.</div>
+</div>
+
+<div class="card"><h3>Cell Styles &amp; Themes</h3>
+<ul style="line-height:1.9;font-size:13px;padding-left:20px">
+<li>Home → Cell Styles — predefined and custom named styles. Apply with one click. Ensures consistency.</li>
+<li>Page Layout → Themes — changes fonts, colours, effects across entire workbook</li>
+<li>Home → Format Painter — copies format from one cell to another. Double-click to lock on and paint multiple ranges.</li>
+<li>Clear Formats only: Home → Clear → Clear Formats (preserves content)</li>
+</ul></div>
+
+<div class="card"><h3>Row, Column &amp; Sheet Formatting</h3>
+<table><thead><tr><th>Task</th><th>How</th></tr></thead><tbody>
+<tr><td>Auto-fit column width</td><td>Double-click right edge of column header — or select all and double-click</td></tr>
+<tr><td>Set exact column width</td><td>Right-click column header → Column Width → type value</td></tr>
+<tr><td>Hide rows/columns</td><td>Select → right-click → Hide. Unhide: select surrounding rows/cols → right-click → Unhide</td></tr>
+<tr><td>Freeze panes</td><td>View → Freeze Panes. Click cell where freeze starts. Freezes rows above and cols left of that cell.</td></tr>
+<tr><td>Split screen</td><td>View → Split — divides window into up to 4 independent scrollable panes</td></tr>
+<tr><td>Row height auto-fit</td><td>Select rows → Home → Format → AutoFit Row Height</td></tr>
+<tr><td>Protect sheet</td><td>Review → Protect Sheet — set password, choose what users can do</td></tr>
+<tr><td>Tab colour</td><td>Right-click sheet tab → Tab Color</td></tr>
+<tr><td>Zoom</td><td>View → Zoom or Ctrl+Scroll wheel</td></tr>
+<tr><td>Page break preview</td><td>View → Page Break Preview — drag blue lines to adjust print areas</td></tr>
+</tbody></table></div>`;
+
+// ── TIPS DATA ──────────────────────────────────────────
+const TIPS_DATA = `
+<div class="section-h">Productivity &amp; Power User Techniques</div>
+
+<div class="two-col">
+<div class="card"><h3>🚀 Speed Tips</h3>
+<ul style="line-height:2;font-size:13px;padding-left:16px">
+<li><strong>Ctrl+T</strong> every data range — Tables give you auto-filter, structured refs, auto-expand</li>
+<li><strong>Name Box</strong> (left of formula bar) — type a range name or address to navigate instantly</li>
+<li><strong>Ctrl+D / Ctrl+R</strong> — fill down/right is faster than copy-paste for formulas</li>
+<li><strong>Double-click fill handle</strong> — fills formula down to match adjacent column length</li>
+<li><strong>Alt+=</strong> — AutoSum. Excel guesses the right range. Press Enter to confirm.</li>
+<li><strong>Ctrl+\`</strong> — toggle Show Formulas to audit all formulas at once</li>
+<li><strong>F4</strong> — repeat last action. Format a cell, then F4 on next cell = same format instantly</li>
+<li><strong>Quick Access Toolbar</strong> — add your most used commands. Click ▼ at top-left of Excel</li>
+<li><strong>Ctrl+Z</strong> has 100 undo levels — don't be afraid to experiment</li>
+</ul></div>
+
+<div class="card"><h3>📐 Engineering / Calculation Tips</h3>
+<ul style="line-height:2;font-size:13px;padding-left:16px">
+<li>Put all constants in named cells at top (density, g, conversion factors) — reference by name in formulas</li>
+<li>Use ROUND() in engineering calcs to avoid floating point drift in comparisons</li>
+<li>${fx('=TEXT(A1,"0.00E+00")')} for scientific notation display</li>
+<li>SUMPRODUCT() is the Swiss Army knife — weighted averages, multi-criteria sums, frequency counts</li>
+<li>Data Table (What-If Analysis) for sensitivity analysis — vary 1 or 2 inputs, see all results at once</li>
+<li>Solver add-in for optimisation and constraint problems</li>
+<li>Use Scatter chart for engineering plots — allows non-uniform x-axis spacing unlike Line chart</li>
+<li>Log scale on chart axis: Format Axis → Logarithmic Scale — essential for exponential data</li>
+<li>Use ${fx('=CORREL(A:A,B:B)')} to check correlation coefficient between datasets</li>
+</ul></div>
+</div>
+
+<div class="two-col">
+<div class="card"><h3>🛡 Audit &amp; Error Checking</h3>
+<ul style="line-height:2;font-size:13px;padding-left:16px">
+<li>Formulas → Trace Precedents / Trace Dependents — arrows show data flow</li>
+<li>Formulas → Error Checking — steps through formula errors in sheet</li>
+<li>Formulas → Evaluate Formula — step through formula execution one stage at a time</li>
+<li>F9 in formula bar — select any part of formula, press F9 to see its current value</li>
+<li>${k('Ctrl','+','[')} selects cells that feed into current formula</li>
+<li>Conditional formatting with ${fx('=ISFORMULA(A1)')} — highlight all formula cells vs hard-coded values</li>
+<li>Name Manager (Ctrl+F3) — find and clean up broken named ranges</li>
+<li>${fx('=FORMULATEXT(A1)')} — displays a formula as text (for documentation)</li>
+</ul></div>
+
+<div class="card"><h3>🎯 SUMPRODUCT — Superformula</h3>
+<div class="fx-block">=SUMPRODUCT((condition1)*(condition2)*values)<br>
+<span class="fx-comment">Replaces SUMIFS, COUNTIFS — works where those don't (e.g. with arrays, OR logic)</span></div>
+<table><thead><tr><th>Use Case</th><th>Formula</th></tr></thead><tbody>
+<tr><td>Weighted average</td><td>${fx('=SUMPRODUCT(B2:B10,C2:C10)/SUM(C2:C10)')}</td></tr>
+<tr><td>Count with OR logic</td><td>${fx('=SUMPRODUCT(((A2:A10="X")+(A2:A10="Y"))>0)')}</td></tr>
+<tr><td>Multi-criteria sum</td><td>${fx('=SUMPRODUCT((A2:A10="Pump")*(B2:B10>100)*C2:C10)')}</td></tr>
+<tr><td>Count unique values</td><td>${fx('=SUMPRODUCT(1/COUNTIF(A2:A10,A2:A10))')}</td></tr>
+<tr><td>Rank without ties</td><td>${fx('=SUMPRODUCT((B2:B10>B2)*1)+1')}</td></tr>
+</tbody></table>
+</div>
+</div>
+
+<div class="card"><h3>⌨ Custom Number Formats for Engineering</h3>
+<table><thead><tr><th>Purpose</th><th>Format Code</th><th>Result</th></tr></thead><tbody>
+<tr><td>Engineering notation (10³ steps)</td><td>${fx('##0.###E+0')}</td><td>12345 → 12.345E+3</td></tr>
+<tr><td>Show unit suffix</td><td>${fx('#,##0.00" kg/m³"')}</td><td>1200 → 1,200.00 kg/m³</td></tr>
+<tr><td>Show + sign for positive</td><td>${fx('+#,##0.00;-#,##0.00')}</td><td>Shows + for positive values</td></tr>
+<tr><td>Colour-coded pass/fail</td><td>${fx('[Green][>60]"PASS";[Red]"FAIL"')}</td><td>Green PASS if &gt;60, else Red FAIL</td></tr>
+<tr><td>Thousands as k</td><td>${fx('#,##0,"k"')}</td><td>15000 → 15k</td></tr>
+<tr><td>Millions as M</td><td>${fx('#,##0,,"M"')}</td><td>2500000 → 2M</td></tr>
+</tbody></table></div>
+
+<div class="card"><h3>📋 Power Query (Get &amp; Transform) Essentials</h3>
+<ul style="line-height:1.9;font-size:13px;padding-left:20px">
+<li>Access: Data → Get Data → From Table/Range (or From File, From Web, etc.)</li>
+<li>Every transformation step is recorded — right-click any step to edit or delete</li>
+<li>Append queries = Union/stack tables vertically</li>
+<li>Merge queries = JOIN tables on a key column — similar to VLOOKUP but robust</li>
+<li>Unpivot columns — transform wide data to tall (great for pivot tables)</li>
+<li>Custom Column: Add Column → Custom Column → write M language formula</li>
+<li>Replace Values, Remove Duplicates, Split Column — all in Transform tab</li>
+<li>Load to sheet, Table, or just Connection (for use in Data Model)</li>
+<li>Refresh: Data → Refresh All or Ctrl+Alt+F5</li>
+</ul>
+<div class="warn-box"><strong>Golden rule:</strong> Never manually clean source data in Excel. Do all cleaning in Power Query — it's repeatable and auditable.</div>
+</div>`;
+
+// ════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════════════════════
+
+function renderShortcutTable(tbody_id, rows) {
+  const tbody = document.getElementById(tbody_id);
+  if (!tbody) return;
+  tbody.innerHTML = rows.map(([keys, action, note]) =>
+    `<tr><td>${keys}</td><td>${action}</td><td style="color:#888;font-size:12px">${note}</td></tr>`
+  ).join('');
+}
+
+function renderHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════
+//  SEARCH ENGINE
+// ════════════════════════════════════════════════════════
+
+// Flat search index
+const SEARCH_INDEX = [];
+
+function addToIndex(title, desc, tag, tabId, tabLabel) {
+  SEARCH_INDEX.push({ title, desc, tag, tabId, tabLabel });
+}
+
+function buildSearchIndex() {
+  // Shortcuts
+  const scGroups = [
+    {key:'nav',label:'Navigation'},
+    {key:'sel',label:'Selection'},
+    {key:'edit',label:'Editing'},
+    {key:'fmt',label:'Formatting'},
+    {key:'wb',label:'Workbook'},
+    {key:'fn',label:'Formula Keys'},
+  ];
+  scGroups.forEach(g => {
+    SC[g.key].forEach(([k, action, note]) => {
+      const kText = k.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+      addToIndex(action + (note?' — '+note:''), `Keys: ${kText}`, 'shortcut', 'shortcuts', `Shortcuts → ${g.label}`);
+    });
+  });
+
+  // Parse HTML content for formulas/features
+  const contentBlocks = [
+    { html: FORMULAS_BASIC, tag:'formula', tab:'formulas', tabL:'Formulas' },
+    { html: FORMULAS_REF,   tag:'formula', tab:'formulas', tabL:'Formulas → References' },
+    { html: FORMULAS_ARRAY, tag:'formula', tab:'formulas', tabL:'Formulas → Dynamic Arrays' },
+    { html: LOOKUP_DATA,    tag:'formula', tab:'lookup',   tabL:'Lookup & Ref' },
+    { html: TEXT_DATA,      tag:'formula', tab:'text',     tabL:'Text Functions' },
+    { html: DATE_DATA,      tag:'formula', tab:'date',     tabL:'Date & Time' },
+    { html: MATH_DATA,      tag:'formula', tab:'math',     tabL:'Math & Stats' },
+    { html: LOGIC_DATA,     tag:'formula', tab:'logic',    tabL:'Logic & Conditional' },
+    { html: PIVOT_DATA,     tag:'feature', tab:'pivot',    tabL:'Pivot Tables' },
+    { html: CHARTS_DATA,    tag:'chart',   tab:'charts',   tabL:'Charts' },
+    { html: DATA_DATA,      tag:'feature', tab:'data',     tabL:'Data Tools' },
+    { html: FORMAT_DATA,    tag:'feature', tab:'format',   tabL:'Formatting' },
+    { html: TIPS_DATA,      tag:'tip',     tab:'tips',     tabL:'Power Tips' },
+  ];
+
+  contentBlocks.forEach(b => {
+    // Extract table rows
+    const rowRe = /<tr[^>]*>(.*?)<\/tr>/gs;
+    let m;
+    while ((m = rowRe.exec(b.html)) !== null) {
+      const cells = [...m[1].matchAll(/<td[^>]*>(.*?)<\/td>/gs)].map(c =>
+        c[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/\s+/g,' ').trim()
+      ).filter(Boolean);
+      if (cells.length >= 2) {
+        addToIndex(cells[0], cells.slice(1).join(' — '), b.tag, b.tab, b.tabL);
+      }
+    }
+    // Extract list items
+    const liRe = /<li[^>]*>(.*?)<\/li>/gs;
+    while ((m = liRe.exec(b.html)) !== null) {
+      const text = m[1].replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
+      if (text.length > 15) addToIndex(text.slice(0,80)+'…', '', b.tag, b.tab, b.tabL);
+    }
+  });
+}
+
+function hl(text, query) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+}
+
+const TAG_LABELS = {
+  shortcut: 'Shortcut',
+  formula:  'Formula / Function',
+  feature:  'Feature',
+  tip:      'Power Tip',
+  chart:    'Chart',
+};
+
+function doSearch(q) {
+  const query = q.trim().toLowerCase();
+  const clearBtn = document.getElementById('searchClear');
+  const icon = document.getElementById('searchIcon');
+  const overlay = document.getElementById('search-results');
+  const mainContent = document.getElementById('main-content');
+
+  if (!query) {
+    clearSearch(); return;
+  }
+  clearBtn.style.display = 'block';
+  icon.style.display = 'none';
+  overlay.classList.add('visible');
+  mainContent.style.display = 'none';
+
+  const words = query.split(/\s+/);
+  const results = SEARCH_INDEX.filter(item => {
+    const haystack = (item.title + ' ' + item.desc + ' ' + item.tabLabel).toLowerCase();
+    return words.every(w => haystack.includes(w));
+  }).slice(0, 60);
+
+  document.getElementById('sr-header').innerHTML =
+    results.length > 0
+      ? `Showing <strong>${results.length}</strong> result${results.length!==1?'s':''} for "<strong>${q}</strong>"`
+      : `No results for "<strong>${q}</strong>"`;
+
+  if (results.length === 0) {
+    document.getElementById('sr-body').innerHTML =
+      '<div class="no-results">🔍 No matches found. Try different keywords.</div>';
+    return;
+  }
+
+  document.getElementById('sr-body').innerHTML = results.map(r => `
+    <div class="sr-item" onclick="goToTab('${r.tabId}')">
+      <span class="sr-tag tag-${r.tag}">${TAG_LABELS[r.tag]||r.tag}</span>
+      <div class="sr-title">${hl(r.title, q)}</div>
+      ${r.desc ? `<div class="sr-desc">${hl(r.desc.slice(0,200), q)}</div>` : ''}
+      <div class="sr-tab">📁 ${r.tabLabel}</div>
+    </div>
+  `).join('');
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  document.getElementById('searchIcon').style.display = 'block';
+  document.getElementById('search-results').classList.remove('visible');
+  document.getElementById('main-content').style.display = '';
+}
+
+function goToTab(tabId) {
+  clearSearch();
+  const btn = document.querySelector(`.tab-bar button[onclick*="${tabId}"]`);
+  if (btn) showTab(tabId, btn);
+}
+
+// ════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════════════════════
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// Keyboard shortcut: Escape closes search
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') clearSearch();
+  if ((e.ctrlKey||e.metaKey) && e.key==='k') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+window.onload = () => {
+  renderShortcutTable('shortcuts-nav',  SC.nav);
+  renderShortcutTable('shortcuts-sel',  SC.sel);
+  renderShortcutTable('shortcuts-edit', SC.edit);
+  renderShortcutTable('shortcuts-fmt',  SC.fmt);
+  renderShortcutTable('shortcuts-wb',   SC.wb);
+  renderShortcutTable('shortcuts-fn',   SC.fn);
+
+  renderHTML('formulas-basic',  FORMULAS_BASIC);
+  renderHTML('formulas-ref',    FORMULAS_REF);
+  renderHTML('formulas-named',  FORMULAS_NAMED);
+  renderHTML('formulas-array',  FORMULAS_ARRAY);
+  renderHTML('lookup-content',  LOOKUP_DATA);
+  renderHTML('text-content',    TEXT_DATA);
+  renderHTML('date-content',    DATE_DATA);
+  renderHTML('math-content',    MATH_DATA);
+  renderHTML('logic-content',   LOGIC_DATA);
+  renderHTML('pivot-content',   PIVOT_DATA);
+  renderHTML('charts-content',  CHARTS_DATA);
+  renderHTML('data-content',    DATA_DATA);
+  renderHTML('format-content',  FORMAT_DATA);
+  renderHTML('tips-content',    TIPS_DATA);
+
+  buildSearchIndex();
+};
+</script>
+</body>
+</html>
