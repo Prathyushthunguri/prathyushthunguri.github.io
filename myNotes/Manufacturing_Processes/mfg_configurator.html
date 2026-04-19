@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manufacturing Process Configurator</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f4f4f4; --panel:#ffffff; --panel2:#f9f9f9; --border:#cccccc;
+  --accent:#cc0000; --accent2:#b85c00; --accent3:#1a6496;
+  --text:#333333; --text-dim:#666666;
+  --green:#2d6a2d; --green-bg:#eaf4ea; --red:#cc0000; --red-bg:#fdecea; --warn-bg:#fff8f2;
+  --font-body:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --font-mono:'Courier New',Courier,monospace;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+
+.top-navbar {
+  position:fixed; top:0; width:100%; background:#222; color:#fff;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 20px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.navbar-left { font-size:18px; font-weight:bold; display:flex; align-items:center; gap:10px; }
+.navbar-left svg { width:24px; height:24px; fill:#cc0000; }
+.navbar-right button {
+  background:#444; color:#fff; border:none; padding:7px 14px;
+  cursor:pointer; font-size:13px; border-radius:3px;
+}
+.navbar-right button:hover { background:#cc0000; }
+
+.container {
+  max-width:1280px; margin:72px auto 40px; padding:20px;
+  background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.1); border-radius:12px;
+}
+@media(max-width:768px){.container{margin:80px 10px 20px;padding:15px;}}
+
+.tabs {
+  display:flex; flex-wrap:wrap; gap:4px;
+  margin-bottom:20px; border-bottom:2px solid #ccc; padding:0;
+}
+.tab-btn {
+  background:#eee; color:#444; border:1px solid #ccc; border-bottom:none;
+  padding:8px 15px; cursor:pointer; font-size:13px; border-radius:6px 6px 0 0;
+  font-family:var(--font-body); transition:background .2s;
+}
+.tab-btn:hover:not(.active){background:#ddd;color:#222;}
+.tab-btn.active{background:#fff;color:#222;font-weight:bold;border-bottom:2px solid #fff;margin-bottom:-2px;}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+.card-title{
+  font-size:13px;font-weight:bold;color:#222;margin-bottom:16px;padding-bottom:10px;
+  border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:8px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+
+.field{margin-bottom:14px;}
+.field label{display:block;margin-bottom:5px;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.field label span{color:var(--accent3);margin-left:4px;font-family:var(--font-mono);font-size:10px;}
+.field input,.field select{
+  width:100%;background:#fff;border:1px solid #ccc;color:var(--text);
+  font-family:var(--font-mono);font-size:14px;padding:8px 10px;border-radius:4px;outline:none;transition:border-color .2s;
+}
+.field input:focus,.field select:focus{border-color:var(--accent3);box-shadow:0 0 0 2px rgba(26,100,150,0.1);}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;font-family:var(--font-body);font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:4px;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#aa0000;}
+.btn-secondary{background:#eee;color:#444;border:1px solid #ccc;}
+.btn-secondary:hover{background:#ddd;color:#222;}
+
+.result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px;margin-top:16px;}
+.result-item{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.result-item .r-label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);font-weight:600;}
+.result-item .r-value{font-family:var(--font-mono);font-size:18px;color:#222;margin-top:4px;font-weight:bold;}
+.result-item .r-unit{font-size:11px;color:var(--text-dim);}
+.result-item.highlight{border-color:var(--accent);border-left:4px solid var(--accent);}
+.result-item.highlight .r-value{color:var(--accent);}
+.result-item.good{border-color:#b0d4b0;border-left:4px solid var(--green);}
+.result-item.good .r-value{color:var(--green);}
+.result-item.warn{border-color:#ddd09a;border-left:4px solid var(--accent2);}
+.result-item.warn .r-value{color:var(--accent2);}
+
+.verdict-box{margin-top:16px;padding:12px 16px;border-radius:0 4px 4px 0;border-left:4px solid var(--green);background:var(--green-bg);font-size:13px;}
+.verdict-box.bad{border-color:var(--red);background:var(--red-bg);}
+.verdict-box.warn{border-color:var(--accent2);background:var(--warn-bg);}
+
+.formula-box{
+  background:#f2f2f2;border:1px solid #ddd;border-left:4px solid var(--accent3);
+  border-radius:0 4px 4px 0;padding:12px 16px;font-family:var(--font-mono);
+  font-size:13px;color:#1a6496;margin-bottom:16px;line-height:2;
+}
+
+.section-label{
+  font-size:12px;font-weight:bold;color:#444;text-transform:uppercase;letter-spacing:1px;
+  margin:20px 0 12px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid #ddd;padding-bottom:6px;
+}
+
+/* Process Cards */
+.process-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.proc-card{
+  background:#fafafa;border:1px solid var(--border);border-radius:6px;
+  padding:16px;cursor:pointer;transition:all .2s;position:relative;
+  overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.proc-card:hover{border-color:#999;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.12);}
+.proc-card.selected{border-color:var(--accent);background:#fff5f5;border-left:4px solid var(--accent);}
+.proc-card .pc-icon{font-size:26px;margin-bottom:8px;}
+.proc-card .pc-name{font-weight:700;font-size:14px;color:#222;}
+.proc-card .pc-cat{display:inline-block;margin-top:6px;font-size:10px;font-weight:bold;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid #ccc;}
+.cat-subtractive{background:#fdecea;color:#9b2c2c;border-color:#f0b8b8;}
+.cat-forming{background:#fefce8;color:#7a6000;border-color:#ddd09a;}
+.cat-casting{background:#e8f4fd;color:#1a6496;border-color:#b8d8ee;}
+.cat-additive{background:var(--green-bg);color:var(--green);border-color:#b0d4b0;}
+.cat-joining{background:#f3f0ff;color:#4a3d8f;border-color:#c8c0f0;}
+.cat-finishing{background:#fff0f6;color:#862e6e;border-color:#e8b4d4;}
+.proc-card .pc-desc{font-size:11px;color:var(--text-dim);margin-top:6px;line-height:1.5;}
+.proc-card .pc-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;background:var(--accent);display:none;place-items:center;font-size:11px;color:#fff;}
+.proc-card.selected .pc-check{display:grid;}
+
+/* spec table */
+.spec-table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px;}
+.spec-table th{background:#f2f2f2;font-weight:bold;color:var(--accent);padding:7px 10px;border:1px solid #ccc;text-align:left;}
+.spec-table td{border:1px solid #ccc;padding:6px 10px;}
+.spec-table tr:nth-child(even){background:#fafafa;}
+
+/* accuracy bar */
+.acc-bar-wrap{margin:4px 0 10px;}
+.acc-bar-bg{height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden;}
+.acc-bar-fill{height:100%;border-radius:5px;transition:width .6s ease;}
+
+/* matrix */
+.matrix-wrap{overflow-x:auto;}
+.matrix-table{border-collapse:collapse;font-size:11.5px;white-space:nowrap;}
+.matrix-table th{background:#222;color:#fff;padding:8px 10px;border:1px solid #444;text-align:center;font-size:11px;}
+.matrix-table td{border:1px solid #ccc;padding:6px 10px;text-align:center;}
+.matrix-table td.row-label{text-align:left;font-weight:600;color:#333;background:#f9f9f9;white-space:normal;min-width:160px;}
+.matrix-table tr:nth-child(even) td:not(.row-label){background:#fafafa;}
+.dot5{color:#2d6a2d;font-size:15px;}
+.dot3{color:#b85c00;font-size:15px;}
+.dot1{color:#bbb;font-size:15px;}
+
+/* selector */
+.sel-q{margin-bottom:14px;}
+.sel-q label{font-size:13px;font-weight:600;color:#333;display:block;margin-bottom:6px;}
+.sel-q select{width:100%;padding:8px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;background:#fff;}
+
+.rec-box{margin-top:20px;padding:18px;border-radius:8px;border:2px solid var(--accent);background:#fff5f5;}
+.rec-box .rec-title{font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:12px;}
+.rec-name{font-size:22px;font-weight:700;color:#222;margin-bottom:6px;}
+.rec-reason{font-size:13px;color:var(--text-dim);line-height:1.7;}
+.rec-alts{font-size:12px;color:var(--accent3);margin-top:10px;}
+
+/* machine cards */
+.machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.machine-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,0.05);transition:box-shadow .2s;}
+.machine-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+.machine-card .mc-proc{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px;}
+.machine-card .mc-name{font-size:15px;font-weight:700;color:#222;margin-bottom:3px;}
+.machine-card .mc-acc{font-size:12px;color:var(--accent3);margin-bottom:10px;font-family:var(--font-mono);}
+.machine-card .mc-body{font-size:12px;color:var(--text-dim);line-height:1.7;}
+.mc-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;text-transform:uppercase;}
+
+/* theory */
+.theory-h3{font-size:14px;font-weight:bold;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #eee;}
+.theory-p{font-size:13px;line-height:1.8;color:var(--text);margin-bottom:8px;}
+.theory-ul{font-size:13px;line-height:1.9;color:var(--text-dim);padding-left:20px;margin-bottom:12px;}
+.theory-ul li{margin-bottom:3px;}
+
+/* filter bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.filter-btn{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;border:1px solid #ccc;background:#fff;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.3px;}
+.filter-btn:hover{border-color:#999;}
+.filter-btn.active-f{background:#222;color:#fff;border-color:#222;}
+
+/* accuracy color bands */
+.acc-ultra{background:linear-gradient(90deg,#1a6496,#2980b9);}
+.acc-high{background:linear-gradient(90deg,#2d6a2d,#4caf7d);}
+.acc-medium{background:linear-gradient(90deg,#b85c00,#e67e22);}
+.acc-low{background:linear-gradient(90deg,#888,#aaa);}
+
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#f0f0f0;}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54A.484.484 0 0014 2h-4a.484.484 0 00-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.476.476 0 00-.59.22L2.74 8.87a.47.47 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.47.47 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.04.7 1.62.94l.36 2.54c.05.24.27.41.49.41h4c.22 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.07.47 0 .59-.22l1.92-3.32a.47.47 0 00-.12-.61l-2.03-1.58zM12 15.6a3.6 3.6 0 110-7.2 3.6 3.6 0 010 7.2z"/></svg>
+    Manufacturing Process Configurator
+  </div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('processes')">① Process Library</button>
+    <button class="tab-btn" onclick="switchTab('selector')">② Process Selector</button>
+    <button class="tab-btn" onclick="switchTab('machines')">③ Machines & Accuracy</button>
+    <button class="tab-btn" onclick="switchTab('materials')">④ Material–Process Map</button>
+    <button class="tab-btn" onclick="switchTab('matrix')">⑤ Comparison Matrix</button>
+    <button class="tab-btn" onclick="switchTab('theory')">⑥ Theory & DFM</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 1 — PROCESS LIBRARY
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-processes">
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="process-grid" id="processGrid"></div>
+    <div class="card hidden" id="procDetail" style="margin-top:20px;">
+      <div class="card-title" id="procDetailTitle">Process Details</div>
+      <div id="procDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 2 — PROCESS SELECTOR
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-selector">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Part & Production Parameters</div>
+
+        <div class="sel-q">
+          <label>Part Geometry Complexity</label>
+          <select id="s-geom">
+            <option value="simple">Simple — prismatic / flat (blocks, plates, shafts)</option>
+            <option value="moderate">Moderate — pockets, holes, flanges</option>
+            <option value="complex">Complex — undercuts, thin walls, curved surfaces</option>
+            <option value="freeform">Very complex — freeform, organic, internal channels</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Production Volume</label>
+          <select id="s-vol">
+            <option value="prototype">Prototype / 1–5 pcs</option>
+            <option value="low">Low volume — 5–500 pcs</option>
+            <option value="medium">Medium — 500–50,000 pcs</option>
+            <option value="high">High — 50,000+ pcs</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Required Dimensional Accuracy</label>
+          <select id="s-acc">
+            <option value="rough">Rough — ±1 mm or worse (IT14–IT16)</option>
+            <option value="medium">Medium — ±0.1–0.5 mm (IT10–IT13)</option>
+            <option value="fine">Fine — ±0.01–0.1 mm (IT7–IT9)</option>
+            <option value="ultra">Ultra-fine — &lt;0.01 mm (IT5–IT6)</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Material</label>
+          <select id="s-mat">
+            <option value="steel">Carbon / Alloy Steel</option>
+            <option value="ss">Stainless Steel</option>
+            <option value="alum">Aluminium Alloy</option>
+            <option value="cast_iron">Cast Iron</option>
+            <option value="copper">Copper / Brass</option>
+            <option value="plastic">Engineering Plastics (PA, PEEK, POM)</option>
+            <option value="titanium">Titanium / Inconel (difficult-to-cut)</option>
+            <option value="ceramic">Ceramics / Glass</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Surface Finish Required</label>
+          <select id="s-finish">
+            <option value="rough">Rough — Ra &gt; 6.3 µm</option>
+            <option value="medium">Medium — Ra 1.6–6.3 µm</option>
+            <option value="fine">Fine — Ra 0.4–1.6 µm</option>
+            <option value="mirror">Mirror / optical — Ra &lt; 0.1 µm</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Material Removal / Waste Acceptable?</label>
+          <select id="s-waste">
+            <option value="yes">Yes — subtractive fine</option>
+            <option value="low">Prefer near-net-shape (low waste)</option>
+            <option value="no">No — zero waste critical (expensive material)</option>
+          </select>
+        </div>
+
+        <div class="sel-q">
+          <label>Tooling / Setup Cost Budget</label>
+          <select id="s-cost">
+            <option value="low">Low — minimal tooling (R&amp;D / prototype)</option>
+            <option value="medium">Medium — moderate tooling OK</option>
+            <option value="high">High tooling acceptable if unit cost low at volume</option>
+          </select>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="runSelector()">▶ Recommend Process</button>
+          <button class="btn btn-secondary" onclick="resetSelector()">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recommendation</div>
+        <div id="selectorResult">
+          <p style="color:var(--text-dim);font-size:13px;">Set parameters and click Recommend →</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 3 — MACHINES & ACCURACY
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-machines">
+    <div class="section-label">Filter by Process Category</div>
+    <div class="filter-bar" id="machineFilterBar"></div>
+    <div class="machine-grid" id="machineGrid"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 4 — MATERIAL–PROCESS MAP
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-materials">
+    <div class="section-label">Select material to see compatible processes</div>
+    <div class="field" style="max-width:400px;">
+      <label>Material Group</label>
+      <select id="mat-select" onchange="renderMatMap()">
+        <option value="carbon_steel">Carbon &amp; Alloy Steel</option>
+        <option value="stainless">Stainless Steel</option>
+        <option value="aluminium">Aluminium Alloys</option>
+        <option value="cast_iron">Cast Iron</option>
+        <option value="copper">Copper / Brass / Bronze</option>
+        <option value="titanium">Titanium / Superalloys</option>
+        <option value="plastics">Engineering Plastics</option>
+        <option value="ceramics">Ceramics / Glass</option>
+        <option value="composites">Composites (CFRP / GFRP)</option>
+      </select>
+    </div>
+    <div id="matMapContent" style="margin-top:16px;"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 5 — COMPARISON MATRIX
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-matrix">
+    <div class="section-label">Process Comparison Matrix</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">● = Excellent &nbsp; ◑ = Moderate &nbsp; ○ = Poor / Not suitable</p>
+    <div class="matrix-wrap">
+      <table class="matrix-table" id="matrixTable"></table>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 6 — THEORY & DFM
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-theory">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">Manufacturing Process Classification</div>
+          <div class="theory-p">Manufacturing processes transform raw material into finished components. The five primary categories are:</div>
+          <table class="spec-table">
+            <tr><th>Category</th><th>Principle</th><th>Examples</th></tr>
+            <tr><td><span class="pc-cat cat-subtractive" style="display:inline-block;">Subtractive</span></td><td>Material removed from billet</td><td>Turning, milling, grinding, EDM</td></tr>
+            <tr><td><span class="pc-cat cat-casting" style="display:inline-block;">Casting / Molding</span></td><td>Liquid/semi-liquid into mould</td><td>Sand casting, HPDC, injection moulding</td></tr>
+            <tr><td><span class="pc-cat cat-forming" style="display:inline-block;">Forming</span></td><td>Plastic deformation — no removal</td><td>Forging, rolling, deep drawing, extrusion</td></tr>
+            <tr><td><span class="pc-cat cat-additive" style="display:inline-block;">Additive</span></td><td>Material deposited layer-by-layer</td><td>SLS, SLM, FDM, DED, binder jetting</td></tr>
+            <tr><td><span class="pc-cat cat-joining" style="display:inline-block;">Joining</span></td><td>Bonding two or more parts</td><td>Welding, brazing, adhesive bonding</td></tr>
+            <tr><td><span class="pc-cat cat-finishing" style="display:inline-block;">Finishing</span></td><td>Surface improvement post-processing</td><td>Grinding, honing, lapping, plating</td></tr>
+          </table>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">IT Grade — Tolerance Reference</div>
+          <table class="spec-table">
+            <tr><th>IT Grade</th><th>Typical Tolerance (100 mm)</th><th>Process</th></tr>
+            <tr><td>IT4–IT5</td><td>0.006–0.011 mm</td><td>Lapping, honing, precision grinding</td></tr>
+            <tr><td>IT6–IT7</td><td>0.016–0.025 mm</td><td>Grinding, fine boring, reaming</td></tr>
+            <tr><td>IT8–IT9</td><td>0.039–0.062 mm</td><td>CNC turning/milling, broaching</td></tr>
+            <tr><td>IT10–IT11</td><td>0.100–0.160 mm</td><td>Conventional turning, die casting</td></tr>
+            <tr><td>IT12–IT13</td><td>0.250–0.400 mm</td><td>Sand casting, hot forging (machined)</td></tr>
+            <tr><td>IT14–IT16</td><td>0.6–2.5 mm</td><td>Sand casting raw, flame cutting</td></tr>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Surface Roughness Reference (Ra)</div>
+          <table class="spec-table">
+            <tr><th>Process</th><th>Ra achievable (µm)</th></tr>
+            <tr><td>Lapping / Super-finishing</td><td>0.006–0.05</td></tr>
+            <tr><td>Cylindrical / surface grinding</td><td>0.1–0.8</td></tr>
+            <tr><td>Honing</td><td>0.05–0.4</td></tr>
+            <tr><td>Fine turning / boring (CBN/PCD)</td><td>0.2–1.6</td></tr>
+            <tr><td>CNC milling (ball-end finish)</td><td>0.4–3.2</td></tr>
+            <tr><td>EDM (fine)</td><td>0.4–1.6</td></tr>
+            <tr><td>Reaming</td><td>0.4–1.6</td></tr>
+            <tr><td>Standard turning</td><td>1.6–6.3</td></tr>
+            <tr><td>Die casting (HPDC)</td><td>0.8–3.2</td></tr>
+            <tr><td>Investment casting</td><td>1.6–6.3</td></tr>
+            <tr><td>Sand casting</td><td>6.3–50</td></tr>
+            <tr><td>Hot forging (raw)</td><td>3.2–12.5</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">DFM — Design for Manufacturability Rules</div>
+          <div class="theory-h3" style="margin-top:0;">Universal DFM Principles</div>
+          <ul class="theory-ul">
+            <li>Minimise number of parts — combine functions where possible</li>
+            <li>Design for ease of fixturing — flat datum surfaces, consistent grip</li>
+            <li>Avoid tight tolerances unless functionally necessary — each IT grade step = 30–50% cost increase</li>
+            <li>Prefer standard hole sizes and thread forms (metric M-series, ISO)</li>
+            <li>Minimise tool changes — group features requiring same setup</li>
+            <li>Avoid deep blind holes — prefer through holes or step drill accessible depth</li>
+            <li>Corner radii in pockets should equal or exceed end mill radius (no sharp internal corners)</li>
+            <li>Draft angles for castings and mouldings — 1° minimum, 2–3° preferred</li>
+          </ul>
+
+          <div class="theory-h3">Casting DFM</div>
+          <ul class="theory-ul">
+            <li>Uniform wall thickness — avoid hot spots (ratio max:min wall &lt; 3:1)</li>
+            <li>Add fillets at all junctions — R ≥ 3 mm minimum</li>
+            <li>Avoid undercuts — use split line / core if unavoidable</li>
+            <li>Sand cast: min wall 4–6 mm; HPDC: 1.5–3 mm</li>
+            <li>Include machining allowance — 3–5 mm for sand, 0.5–1 mm for HPDC</li>
+          </ul>
+
+          <div class="theory-h3">Machining DFM</div>
+          <ul class="theory-ul">
+            <li>All features accessible from max 4 setups (5-axis allows 1–2)</li>
+            <li>L/D ratio of boring/drilling &lt; 5:1 for standard, &lt; 8:1 with support</li>
+            <li>Thin wall sections: avoid &lt; 1 mm (aluminium), &lt; 0.5 mm (steel) in milling</li>
+            <li>Tapped hole depth: 1.5× D minimum, 3× D maximum</li>
+            <li>Prefer 45° chamfers over radii for deburring access</li>
+          </ul>
+
+          <div class="theory-h3">Forging DFM</div>
+          <ul class="theory-ul">
+            <li>Parting line at largest cross-section</li>
+            <li>No sharp re-entrant angles — min fillet R = 3 mm</li>
+            <li>Flash land + gutter in die design</li>
+            <li>Web thickness: min 6 mm for steel closed die</li>
+          </ul>
+
+          <div class="theory-h3">Additive Manufacturing DFM</div>
+          <ul class="theory-ul">
+            <li>Overhangs &gt;45° need supports — design self-supporting where possible</li>
+            <li>Minimum wall: 0.8 mm SLM, 1.5 mm FDM, 0.3 mm SLA</li>
+            <li>Lattice fill to reduce weight — maintain skin thickness 1.5–2 mm</li>
+            <li>Avoid large solid masses — heat sink and distortion risk in SLM</li>
+            <li>Post-machining required on mating / bearing surfaces</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Process Economics — Quick Reference</div>
+          <table class="spec-table">
+            <tr><th>Process</th><th>Tooling Cost</th><th>Unit Cost (high vol)</th><th>Break-even qty</th></tr>
+            <tr><td>CNC Machining</td><td>Low–Medium</td><td>Medium</td><td>1–50</td></tr>
+            <tr><td>Sand Casting</td><td>Low</td><td>Low–Medium</td><td>50–500</td></tr>
+            <tr><td>Investment Casting</td><td>Medium</td><td>Medium</td><td>200–2000</td></tr>
+            <tr><td>HPDC</td><td>Very High</td><td>Very Low</td><td>10,000+</td></tr>
+            <tr><td>Closed Die Forging</td><td>Very High</td><td>Low</td><td>5,000+</td></tr>
+            <tr><td>Injection Moulding</td><td>Very High</td><td>Very Low</td><td>50,000+</td></tr>
+            <tr><td>SLM / Metal AM</td><td>None</td><td>Very High</td><td>1–5 (niche)</td></tr>
+            <tr><td>Sheet Metal Forming</td><td>Medium</td><td>Low</td><td>1,000+</td></tr>
+            <tr><td>Extrusion</td><td>Medium</td><td>Very Low</td><td>500+</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA — PROCESSES
+// ══════════════════════════════════════════════════════════════
+const processes = [
+  // ── SUBTRACTIVE ──────────────────────────────────────────
+  {
+    id:'turning', name:'CNC Turning', icon:'🔄', cat:'subtractive', catLabel:'SUBTRACTIVE',
+    desc:'Rotating workpiece + stationary cutting tool. Cylinders, tapers, threads.',
+    accuracy:'IT6–IT9 (±0.01–0.05 mm)',
+    roughness:'Ra 0.4–6.3 µm',
+    materials:['Carbon Steel','Stainless Steel','Aluminium','Copper/Brass','Cast Iron','Titanium','Plastics'],
+    machines:['CNC Lathe (2-axis)','CNC Turning Centre (C/Y axis)','Swiss-type CNC (sliding head)'],
+    tooling:'Low–Medium',
+    volume:'1–∞ (any volume)',
+    pros:['Excellent for rotational parts','High accuracy achievable','Wide material range','Fast cycle times'],
+    cons:['Limited to axisymmetric parts','Milling requires live tooling or 2nd op','Internal features limited by boring bar L/D'],
+    apps:['Shafts, pins, bushes, flanges','Threaded fasteners','Hydraulic cylinder rods','Valve bodies'],
+    dfm:['L/D ratio < 10:1 without steady rest','Min bore diameter 2 mm with micro-boring','Draft not needed','Avoid sharp corners — use chamfer or radius 0.5 mm min']
+  },
+  {
+    id:'milling', name:'CNC Milling', icon:'⚙️', cat:'subtractive', catLabel:'SUBTRACTIVE',
+    desc:'Rotating multi-tooth cutter removes material from stationary or moving workpiece.',
+    accuracy:'IT7–IT9 (±0.01–0.05 mm)',
+    roughness:'Ra 0.4–6.3 µm',
+    materials:['Carbon Steel','Stainless Steel','Aluminium','Cast Iron','Titanium','Plastics','Composites'],
+    machines:['VMC (3-axis)','HMC (Horizontal Machining Centre)','5-axis CNC','Gantry mill'],
+    tooling:'Low–Medium',
+    volume:'1–50,000 pcs',
+    pros:['Highly versatile — prismatic and contoured parts','Complex 3D features with 5-axis','Good accuracy','Short setup'],
+    cons:['Slower than turning for cylinders','Thin walls chatter','Tooling cost for hard materials'],
+    apps:['Machine housings','Gear blanks','Moulds & dies','Brackets, frames, structural parts'],
+    dfm:['Internal pocket radii ≥ end-mill radius','Avoid depth-to-width ratio > 5:1 in pockets','Flat datum for fixturing','Min wall 1.5 mm steel, 0.8 mm aluminium']
+  },
+  {
+    id:'grinding', name:'Surface / Cylindrical Grinding', icon:'💫', cat:'finishing', catLabel:'FINISHING',
+    desc:'Abrasive wheel removes micro-layers for tight tolerance and fine finish. Hardened steel specialty.',
+    accuracy:'IT4–IT6 (±0.002–0.01 mm)',
+    roughness:'Ra 0.1–0.8 µm',
+    materials:['Hardened Steel','Tool Steel','Carbide','Cast Iron','Ceramics'],
+    machines:['Cylindrical grinder (OD/ID)','Surface grinder (reciprocating table)','Centreless grinder','CNC profile grinder'],
+    tooling:'Medium',
+    volume:'10–∞',
+    pros:['Highest accuracy of abrasive processes','Excellent surface finish','Handles hardened materials','Tight roundness and cylindricity'],
+    cons:['Slow MRR — finishing operation only','Cannot handle complex forms easily','Wheel dressing required','Heat damage risk (thermal grinding burn)'],
+    apps:['Bearing journals','Gear teeth finishing','Hydraulic spool valves','Gauge/precision components'],
+    dfm:['Provide grinding relief (undercut) at shoulders','Min 0.1–0.5 mm stock on ID/OD for grinding allowance','Avoid grinding blind bores > L/D 4:1','Hardness > 58 HRC preferred for centreless']
+  },
+  {
+    id:'edm', name:'EDM / Wire-EDM', icon:'⚡', cat:'subtractive', catLabel:'SUBTRACTIVE',
+    desc:'Electrical discharge erodes material by spark. No cutting forces — ideal for hard and exotic materials.',
+    accuracy:'±0.003–0.02 mm',
+    roughness:'Ra 0.4–3.2 µm',
+    materials:['Tool Steel','Hardened Steel','Carbide','Titanium','Inconel','Copper'],
+    machines:['Sinker EDM (die sinking)','Wire EDM (WEDM)','EDM drilling (fast hole)'],
+    tooling:'Medium',
+    volume:'1–5000 pcs',
+    pros:['No cutting force — no distortion','Hardness no barrier','Complex profiles possible (WEDM)','Excellent for dies and moulds'],
+    cons:['Slow MRR','Requires conductive material','Electrode wear (sinker)','HAZ / recast layer needs consideration'],
+    apps:['Injection mould inserts','Press tool dies','Turbine blade cooling holes','Carbide profiles'],
+    dfm:['WEDM kerf ~0.25–0.35 mm allow in design','Avoid blind cavities in WEDM','EDM allowance 0.2–0.5 mm on die faces','Material must be electrically conductive']
+  },
+  {
+    id:'drilling', name:'Drilling / Boring', icon:'🔩', cat:'subtractive', catLabel:'SUBTRACTIVE',
+    desc:'Rotating drill creates cylindrical holes. Boring improves accuracy and straightness of existing holes.',
+    accuracy:'Drilling IT10–IT11 | Boring IT6–IT8 (±0.01–0.05 mm)',
+    roughness:'Ra 0.8–6.3 µm (drill) | 0.4–1.6 µm (bore)',
+    materials:['All metals','Plastics','Composites (with care)'],
+    machines:['Radial drill press','CNC machining centre','Deep-hole drilling machine (BTA/gun drill)','Fine boring machine (Honing bore)'],
+    tooling:'Low',
+    volume:'1–∞',
+    pros:['Simple, fast, universal','Deep hole drilling for L/D up to 50:1 (gun drill)','Boring produces precise diameter and position'],
+    cons:['Drill wanders on entry','Limited to circular sections','Coolant management for deep holes'],
+    apps:['Bearing bores','Oil passage drillings','Cylinder bores','Structural bolt holes'],
+    dfm:['Entry surface perpendicular to drill axis','Avoid intersecting holes (web thickness >1mm)','Through holes preferred','Depth ≤ 5D standard drills, gun drill for >10D']
+  },
+  {
+    id:'broaching', name:'Broaching', icon:'🔑', cat:'subtractive', catLabel:'SUBTRACTIVE',
+    desc:'Multi-tooth broach pulled/pushed through workpiece. Produces keyways, splines, non-circular holes in one pass.',
+    accuracy:'IT6–IT8',
+    roughness:'Ra 0.4–1.6 µm',
+    materials:['Carbon Steel','Alloy Steel','Cast Iron','Aluminium','Brass'],
+    machines:['Vertical broaching machine','Horizontal broaching machine','CNC broach centre'],
+    tooling:'Very High (custom broach)',
+    volume:'5,000–∞ (high volume only)',
+    pros:['Extremely fast per piece','Excellent finish and accuracy','Keyways, splines, non-round profiles in one pass','Repeatable'],
+    cons:['Expensive broach tooling','One broach = one profile','Cannot broach blind holes (internal)','Only linear motion'],
+    apps:['Gear keyways','Internal splines','Turbine disc fir-tree slots','Flat surfaces on castings'],
+    dfm:['Allow chip clearance space at pull-through end','Surface hardness < 38 HRC for HSS broach','Exit support needed — avoid cantilever workpiece']
+  },
+
+  // ── CASTING ──────────────────────────────────────────────
+  {
+    id:'sand_cast', name:'Sand Casting', icon:'🏺', cat:'casting', catLabel:'CASTING',
+    desc:'Pattern forms cavity in sand mould. Molten metal poured in. Widest material and size range of all casting methods.',
+    accuracy:'IT12–IT14 (±0.5–2 mm)',
+    roughness:'Ra 6.3–50 µm',
+    materials:['Cast Iron','Carbon Steel','Stainless Steel','Aluminium','Copper/Bronze','Brass'],
+    machines:['Green sand moulding line','No-bake / furan resin sand','Shell moulding machine','CO₂ sand process'],
+    tooling:'Low (wood/resin pattern)',
+    volume:'1–∞ (economical even 1 pc)',
+    pros:['Widest size range (grams to hundreds of tonnes)','Low tooling cost','Any alloy castable','Large complex cores possible'],
+    cons:['Poor dimensional accuracy','Rough surface — machining almost always required','Porosity risk','Long lead time for complex patterns'],
+    apps:['Machine tool beds','Pump and valve bodies','Engine blocks','Gearbox housings','Impellers'],
+    dfm:['Uniform wall thickness — max:min ratio < 3:1','Draft angle 1–3°','Machining allowance 3–6 mm','Fillets R ≥ 3 mm at all junctions','Avoid sharp risers on thin sections']
+  },
+  {
+    id:'hpdc', name:'High Pressure Die Casting', icon:'💉', cat:'casting', catLabel:'CASTING',
+    desc:'Molten metal injected at high pressure (400–1200 bar) into steel die. High volume aluminium / zinc production.',
+    accuracy:'IT10–IT12 (±0.1–0.3 mm)',
+    roughness:'Ra 0.8–3.2 µm',
+    materials:['Aluminium (most common)','Zinc','Magnesium','Copper alloys (limited)'],
+    machines:['Cold chamber HPDC machine','Hot chamber HPDC','Semi-solid casting (Thixomoulding)'],
+    tooling:'Very High (H13 tool steel die)',
+    volume:'10,000–∞',
+    pros:['Excellent dimensional repeatability','Good surface finish — cosmetic parts possible','Thin walls (1.5 mm Al)','High production rate (200+ shots/hr)'],
+    cons:['Very high tooling cost','Porosity from entrained air — not weldable/HT in standard','Limited alloys','Die life ~100,000 shots for Al'],
+    apps:['Automotive gearbox & engine parts','Electronic housings','Pump bodies','Brackets'],
+    dfm:['Draft 1° min on all walls','Avoid through-cores where possible','Wall uniformity critical','Plan parting line at maximum projection','Ejector pin marks allowance in design']
+  },
+  {
+    id:'invest_cast', name:'Investment Casting', icon:'⚗️', cat:'casting', catLabel:'CASTING',
+    desc:'Wax pattern coated in ceramic shell. Wax melted out, metal poured in. Near-net-shape with excellent finish.',
+    accuracy:'IT8–IT10 (±0.05–0.2 mm)',
+    roughness:'Ra 1.6–6.3 µm',
+    materials:['Stainless Steel','Alloy Steel','Aluminium','Titanium','Inconel','Cobalt alloys'],
+    machines:['Wax injection press','Ceramic shell dipping line','Investment casting furnace','Autoclave for ceramic removal'],
+    tooling:'Medium (wax injection die)',
+    volume:'100–50,000 pcs',
+    pros:['Near-net-shape — minimal machining','Complex internal geometry','Excellent alloy range','Good surface finish directly'],
+    cons:['Higher unit cost than sand casting','Size limited (typically <50 kg)','Lead time 4–8 weeks for tooling','Cannot inspect internal integrity easily'],
+    apps:['Valve bodies','Impellers','Turbine vanes','Medical implants','Firearms components','Jewellery'],
+    dfm:['Wall thickness 1.5–5 mm preferred','Avoid cores for small internal passages (try direct wax)','Allow 0.5–1 mm machining on critical surfaces','Sprue and gate location in non-functional area']
+  },
+  {
+    id:'inj_mould', name:'Injection Moulding', icon:'🧱', cat:'casting', catLabel:'CASTING',
+    desc:'Molten plastic injected into steel mould under pressure. Mass production of complex plastic parts.',
+    accuracy:'IT10–IT12 for plastics',
+    roughness:'Ra 0.4–1.6 µm (from polished mould)',
+    materials:['ABS','PA (Nylon)','POM (Acetal)','PEEK','PC','PP','PPS','Glass-filled grades'],
+    machines:['Toggle clamp injection moulder','Hydraulic injection moulder','Electric injection moulder','Gas-assist IM'],
+    tooling:'Very High (P20/H13 tool steel mould)',
+    volume:'50,000–∞',
+    pros:['Very low unit cost at volume','Complex geometry in one shot','Insert moulding / overmoulding possible','Excellent surface finish from mould'],
+    cons:['Massive tooling investment','Shrinkage and warpage — tight tol needs flow simulation','Sink marks on thick sections','Long design-to-production cycle'],
+    apps:['Consumer products','Gears, cams, housings','Electrical connectors','Pump impellers (PA)','Medical disposables'],
+    dfm:['Uniform wall 1.5–4 mm','Draft 1° min (2–3° textured)','Avoid sharp corners — R ≥ 0.5 mm','Gussets max 60% of wall thickness','No undercuts without lifters/slides']
+  },
+
+  // ── FORMING ──────────────────────────────────────────────
+  {
+    id:'forging', name:'Closed Die Forging', icon:'🔨', cat:'forming', catLabel:'FORMING',
+    desc:'Heated billet compressed between matched dies. Grain flow follows part shape — superior mechanical properties.',
+    accuracy:'IT12–IT13 raw | IT8–IT10 after machining',
+    roughness:'Ra 3.2–12.5 µm (as-forged)',
+    materials:['Carbon Steel','Alloy Steel','Stainless Steel','Aluminium','Titanium','Nickel alloys'],
+    machines:['Mechanical press forging (eccentric)','Hydraulic forging press','Hammer forging (drop/air)','Ring rolling mill'],
+    tooling:'Very High (tool steel dies + trim die)',
+    volume:'5,000–∞',
+    pros:['Excellent mechanical properties — directional grain flow','No porosity','High strength-to-weight','Long service life in fatigue'],
+    cons:['High tooling cost','Flash trimming adds cost','Draft required','Complex internal forms impossible'],
+    apps:['Connecting rods','Crankshafts','Gear blanks','Flanges','Aerospace brackets','Railway wheels'],
+    dfm:['Draft angle 5–7° standard steel, 3–5° aluminium','Parting line at largest cross-section','Fillet R ≥ 3 mm (internal), ≥ 1.5 mm (external)','Machining allowance 1.5–3 mm on critical faces','Avoid extreme thin sections < 6 mm steel']
+  },
+  {
+    id:'sheet_metal', name:'Sheet Metal Forming', icon:'📐', cat:'forming', catLabel:'FORMING',
+    desc:'Sheet blanked, bent, drawn, and formed into 3D shapes. High material utilisation.',
+    accuracy:'±0.1–0.5 mm (bending) | ±0.05 mm (laser cut blanks)',
+    roughness:'Inherits sheet Ra + springback',
+    materials:['CR/HR Steel','Stainless Steel','Aluminium','Copper','Galvanised Steel','Titanium sheet'],
+    machines:['CNC Press brake','Laser cutter (fiber)','Punch press / turret punch','Deep draw hydraulic press','Roll forming machine'],
+    tooling:'Low–Medium (bending tools) to High (deep draw)',
+    volume:'1–∞ (laser cut: 1 pc | stamping: 50,000+)',
+    pros:['High material utilisation','Lightweight structures','Wide range from 1pc to mass production','Low cost for simple shapes'],
+    cons:['Springback — bend angle compensation needed','Minimum bend radius (1–2× material thickness)','Deep drawing limits aspect ratio','Not for complex 3D solid forms'],
+    apps:['Panels, enclosures, brackets','Ductwork','Automotive body panels','Chassis frames','Heat exchangers'],
+    dfm:['Min bend radius = 1× t (steel), 1.5× t (stainless), 0.5× t (aluminium)','Hole-to-edge distance ≥ 1.5× t','Avoid features near bend line','Consistent material thickness — mixing adds cost']
+  },
+  {
+    id:'extrusion', name:'Extrusion (Metal/Plastic)', icon:'➡️', cat:'forming', catLabel:'FORMING',
+    desc:'Material forced through shaped die. Produces constant cross-section profiles of any length.',
+    accuracy:'±0.1–0.5 mm cross-section | cut length ±1–3 mm',
+    roughness:'Ra 0.8–3.2 µm',
+    materials:['Aluminium (most common)','Copper/Brass','Carbon Steel (hot)','Plastics (many grades)','Rubber'],
+    machines:['Aluminium extrusion press (500–5000 T)','Plastic extruder (single/twin screw)','Cold extrusion press','Hydrostatic extrusion'],
+    tooling:'Medium (die cost)',
+    volume:'500–∞ (metal) | 1–∞ (plastic — run to length)',
+    pros:['Extremely cost-effective for long runs','Complex profiles not possible by other means','Near-net-shape cross-section','Good surface finish'],
+    cons:['Constant cross-section only — no variation along length','End effects require trimming','Limited to extrudable alloys','Anisotropic properties'],
+    apps:['Structural aluminium framing','Heat sink profiles','Window/door sections','Tubes and pipes','Electrical bus bars'],
+    dfm:['Design for tongue ratio < 3:1 (thin projection)','Balance die cavity — wall uniformity','Allow 100–200 mm trim at each end','Hollow profiles need mandrel — minimum web thickness 2 mm']
+  },
+  {
+    id:'rolling', name:'Rolling (Plate / Profile)', icon:'🔁', cat:'forming', catLabel:'FORMING',
+    desc:'Material passed between rotating rolls to reduce thickness or form profiles. Most common metalworking process globally.',
+    accuracy:'±0.05–0.3 mm thickness',
+    roughness:'Ra 0.2–3.2 µm',
+    materials:['Carbon Steel','Stainless Steel','Aluminium','Copper','Titanium'],
+    machines:['4-high rolling mill','Reversing cold mill','Profile / section rolling mill','Plate rolling machine (3-roll)','Ring rolling machine'],
+    tooling:'Very High (mill rolls)',
+    volume:'Bulk production',
+    pros:['Highest volume process globally','Excellent mechanical properties (cold work)','Consistent thickness','Wide range of forms'],
+    cons:['Fixed cross-sections','Not for complex parts','High capital investment','Springback in plate bending'],
+    apps:['Plate, sheet, coil, bar, rod, wire','Structural sections (I, H, angle, channel)','Rails','Pipes / tubes'],
+    dfm:['Rolling direction affects anisotropy — load perpendicular to grain for bending','Plate bending: min R = 2–3× t','Ring rolling for flanges and rings — better fibre flow than disc forging']
+  },
+
+  // ── ADDITIVE ─────────────────────────────────────────────
+  {
+    id:'slm', name:'SLM / DMLS (Metal AM)', icon:'🌐', cat:'additive', catLabel:'ADDITIVE',
+    desc:'Laser melts metal powder layer by layer. Builds complex fully-dense metal parts directly from CAD.',
+    accuracy:'±0.05–0.2 mm (post-build); ±0.01 mm after machining',
+    roughness:'Ra 4–20 µm (as-built); 0.4–1.6 µm after machining',
+    materials:['316L Stainless Steel','Ti-6Al-4V','IN718 Inconel','AlSi10Mg','Maraging Steel 300','CoCr','Copper'],
+    machines:['EOS M280/M300','SLM Solutions 500','Trumpf TruPrint','Renishaw RenAM','GE Arcam (EBM)'],
+    tooling:'None',
+    volume:'1–500 pcs (niche)',
+    pros:['Extreme geometric freedom','Internal channels, lattices impossible otherwise','No tooling — direct from CAD','Difficult alloys processable'],
+    cons:['Very high machine + material cost','Slow build rates','Support removal and post-machining required','Residual stress / distortion'],
+    apps:['Aerospace brackets','Medical implants','Conformal cooling inserts','Racing engine parts','Heat exchangers'],
+    dfm:['Orient part to minimise supports','45° self-supporting limit','Hollow sections save material and build time','Min feature: 0.4 mm wall','Design supports as functional features where possible']
+  },
+  {
+    id:'fdm', name:'FDM / FFF (Plastic AM)', icon:'🖨️', cat:'additive', catLabel:'ADDITIVE',
+    desc:'Thermoplastic filament deposited layer by layer. Desk/factory rapid prototyping and functional plastic parts.',
+    accuracy:'±0.2–0.5 mm',
+    roughness:'Ra 5–30 µm (layer lines visible)',
+    materials:['PLA','ABS','PETG','PA (Nylon)','TPU','Carbon-filled PA','PEEK (high-temp FDM)'],
+    machines:['Markforged X7','Stratasys Fortus','Ultimaker S5','Bambu Lab X1 (desktop)','Industrial IDEX systems'],
+    tooling:'None',
+    volume:'1–1000 pcs',
+    pros:['Very low cost entry','Fast iteration — hours from CAD to part','Multi-material possible','Wide material range including PEEK'],
+    cons:['Anisotropic — weak in Z','Poor surface finish without post-processing','Not for precision fits','Limited to thermoplastics (standard)'],
+    apps:['Prototypes','Jigs & fixtures','Test rigs','Low-load functional parts','Packaging inserts'],
+    dfm:['Orient critical surfaces vertical to avoid layer-line weakness','Wall ≥ 1.5 mm (2 perimeters min)','Overhangs < 45° without support','Horizontal holes need teardrops','Avoid unsupported spans > 50 mm']
+  },
+
+  // ── JOINING ──────────────────────────────────────────────
+  {
+    id:'welding', name:'Welding (MIG/TIG/SAW)', icon:'🔥', cat:'joining', catLabel:'JOINING',
+    desc:'Localised melting to join metal parts. Most versatile joining method across all industries.',
+    accuracy:'Joint gap ±0.5–2 mm | distortion management required',
+    roughness:'Weld bead Ra 12–50 µm (pre-grind)',
+    materials:['Carbon Steel (MS)','Stainless Steel','Aluminium','Copper (TIG)','Nickel alloys','Titanium (TIG inert)'],
+    machines:['MIG/MAG welder (GMAW)','TIG welder (GTAW)','SAW — Submerged Arc (heavy)','Plasma arc welder','Laser welder','Friction stir welder (FSW)'],
+    tooling:'Low–Medium (jigs and fixtures)',
+    volume:'1–∞',
+    pros:['Widest joint type range','Strong, permanent joint','Any thickness from 0.5 mm (TIG) to 300+ mm (SAW)','On-site possible'],
+    cons:['Distortion and residual stress','HAZ softening in heat-treated materials','Not for dissimilar metals without care','Inspection required (UT/RT/PT)'],
+    apps:['Fabricated frames and structures','Pressure vessels','Pipe systems','Ship hulls','Crane booms'],
+    dfm:['Symmetric weld sequences to balance distortion','Minimise weld volume — intermittent where possible','Joint access for welder / torch','Post-weld heat treatment for stress relief']
+  },
+  {
+    id:'brazing', name:'Brazing / Soldering', icon:'🕯️', cat:'joining', catLabel:'JOINING',
+    desc:'Filler metal (lower MP than base) drawn into joint by capillary action. Lower heat than welding — no base metal melting.',
+    accuracy:'Joint clearance 0.025–0.15 mm',
+    roughness:'N/A — joint quality',
+    materials:['Copper (most common)','Stainless Steel','Carbide to steel','Aluminium (Al brazing alloy)','Dissimilar metals'],
+    machines:['Torch brazing station','Furnace brazing (atmosphere/vacuum)','Induction brazing','Dip brazing'],
+    tooling:'Low',
+    volume:'1–∞',
+    pros:['Join dissimilar metals','Low distortion','Seal complex assemblies','Carbide brazing standard practice'],
+    cons:['Lower strength than parent metal weld','Requires close clearance — tight fit-up','Flux removal critical','Not for high temp service (filler softens)'],
+    apps:['Carbide tool inserts','Copper heat exchangers','HVAC coils','Hydraulic fittings','Jewellery'],
+    dfm:['Joint clearance: silver braze 0.05–0.15 mm; Cu braze 0.025–0.1 mm','Overlap length = 3× thinner member thickness for full strength','Flux coverage and inert atmosphere for stainless']
+  },
+
+  // ── FINISHING ────────────────────────────────────────────
+  {
+    id:'honing', name:'Honing', icon:'🪣', cat:'finishing', catLabel:'FINISHING',
+    desc:'Abrasive sticks in rotating/reciprocating head enlarge and finish bores. Unique crosshatch pattern for oil retention.',
+    accuracy:'±0.002–0.01 mm bore diameter | IT4–IT6',
+    roughness:'Ra 0.05–0.4 µm',
+    materials:['Hardened Steel','Cast Iron','Aluminium','Ceramics'],
+    machines:['Vertical honing machine','Horizontal honing machine','CNC honing centre'],
+    tooling:'Medium (honing tool per size)',
+    volume:'10–∞',
+    pros:['Corrects bore geometry (roundness, straightness)','Ideal surface for oil film (crosshatch)','Better than grinding for blind bores','Post-hardening final op'],
+    cons:['Only for bores / cylinders','Stock removal 0.01–0.2 mm only','Cannot correct positional errors'],
+    apps:['Engine cylinder bores','Hydraulic cylinders','Gearbox bores','Bearing seats'],
+    dfm:['Allow 0.02–0.1 mm honing stock on bore','Cross-hole intersections must be deburred before honing','Bore length:dia ≥ 1:1 for stability']
+  },
+  {
+    id:'lapping', name:'Lapping / Super-finishing', icon:'✨', cat:'finishing', catLabel:'FINISHING',
+    desc:'Free abrasive paste between part and lapping plate. Achieves sub-micron flatness and mirror finish.',
+    accuracy:'±0.0005–0.005 mm | IT3–IT5',
+    roughness:'Ra 0.006–0.05 µm',
+    materials:['Hardened Steel','Cast Iron','Ceramics','Glass','Carbide'],
+    machines:['Flat lapping machine','Centreless superfinisher','Oscillating stone super-finish'],
+    tooling:'Medium',
+    volume:'10–∞',
+    pros:['Finest possible finish and flatness','Corrects micro-geometry','Gauge block / valve surface standard'],
+    cons:['Very slow — finishing only','Minimal stock removal','Cannot correct macro-geometry errors','Abrasive contamination management'],
+    apps:['Gauge blocks','Valve seats / plugs','Bearing raceways','Optical flats','Precision sealing faces'],
+    dfm:['Provide flat/cylindrical lapping datum','Part must be geometrically correct before lapping — lapping only improves micro-errors','Allow 0.002–0.02 mm stock']
+  },
+  {
+    id:'electroplating', name:'Electroplating / PVD/CVD', icon:'🌈', cat:'finishing', catLabel:'FINISHING',
+    desc:'Controlled deposition of metallic or ceramic coating. Improves corrosion resistance, hardness, or appearance.',
+    accuracy:'Coating thickness ±10–20%',
+    roughness:'Inherits substrate Ra (better substrate = better coating)',
+    materials:['Steel (hard chrome, nickel, zinc)','Aluminium (anodising)','Any conductor for plating'],
+    machines:['Electroplating tank line','PVD chamber (TiN, TiAlN, DLC)','CVD reactor','Anodising tank'],
+    tooling:'Low',
+    volume:'1–∞',
+    pros:['Corrosion and wear protection','Hardness boost (hard chrome 800–1000 HV)','Precise coating thickness control','Cosmetic / electrical conductivity'],
+    cons:['Adds thickness — account in drawing','Wastewater management (hex chrome regulated)','PVD limited to line-of-sight','Complex masking for selective areas'],
+    apps:['Hydraulic rods (hard chrome)','Cutting tools (TiN/TiAlN PVD)','Automotive trim','PCB copper tracks'],
+    dfm:['Specify plating thickness on drawing (e.g. 25 µm Cr)','Blind holes trap plating solution — drain holes','Grind after hard chrome for accuracy','PVD on tools: pre-condition surface Ra < 0.2 µm']
+  }
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — MACHINES
+// ══════════════════════════════════════════════════════════════
+const machines = [
+  { proc:'Turning', name:'CNC Turning Centre (2-axis)', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.01–0.02 mm diameter | IT7–IT8', accLevel:75,
+    body:'Servo-driven 2-axis (X/Z) with C-axis option. Coolant-through tooling. Speeds up to 6000 rpm. Turret with 8–12 stations. Typical bar capacity 65–80 mm. Brands: Mazak QTE, DMG MORI NLX, Haas ST.' },
+  { proc:'Turning', name:'Swiss-type CNC (Sliding Head)', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.005–0.01 mm | IT6–IT7', accLevel:88,
+    body:'Guide bushing supports workpiece near cut zone — eliminates deflection on slender parts. ø3–ø32 mm bar. 7+ axes. 1 million pcs/year small components. Brands: Citizen L20, Star SR-32, Tornos.' },
+  { proc:'Turning', name:'CNC Lathe with Live Tooling', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.01–0.03 mm | IT8–IT9', accLevel:70,
+    body:'Y-axis + live tooling allows milling/drilling without re-chucking. Mori NL2500, Mazak Integrex, DMG CLX. Sub-spindle enables complete part in single setup.' },
+
+  { proc:'Milling', name:'VMC — Vertical Machining Centre', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.005–0.02 mm | IT7–IT9', accLevel:80,
+    body:'Most common CNC milling config. Vertical spindle, 3-axis (X/Y/Z), ATC 20–40 tools. Table size 500–1600 mm. Spindle 8000–15000 rpm. Brands: Haas VF, Mazak VCN, DMG 635V.' },
+  { proc:'Milling', name:'5-Axis CNC Machining Centre', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.003–0.01 mm | IT6–IT7', accLevel:90,
+    body:'A+B or A+C rotary axes enable complex 3D contours in 1–2 setups. Impellers, turbine blades, complex mould cores. Brands: DMG DMU 65, Hermle C42, Mazak Variaxis.' },
+  { proc:'Milling', name:'HMC — Horizontal Machining Centre', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.005–0.015 mm | IT7–IT8', accLevel:82,
+    body:'Horizontal spindle + pallet changer for high-volume prismatic parts. Chips fall clear. 4-face machining per setup with rotary table. Brands: Mazak HCN, Okuma MA, Matsuura.' },
+
+  { proc:'Grinding', name:'Cylindrical Grinder (OD/ID)', badge:'Finishing', badgeCls:'cat-finishing',
+    acc:'±0.002–0.005 mm | IT4–IT6', accLevel:95,
+    body:'Between-centres or chucked. Traverse and plunge grinding. OD up to 1000+ mm. CBN or Al₂O₃ wheels. Coolant critical. Brands: STUDER S33, Kellenberger, Okuma GL7N.' },
+  { proc:'Grinding', name:'Surface Grinder', badge:'Finishing', badgeCls:'cat-finishing',
+    acc:'±0.002–0.005 mm flatness | IT5–IT6', accLevel:93,
+    body:'Reciprocating table with magnetic chuck. Wheel OD 200–400 mm. Used for flat surfaces, slots, thin sections. Brands: Chevalier, Brown & Sharpe, BLOHM Profimat.' },
+  { proc:'Grinding', name:'Centreless Grinder', badge:'Finishing', badgeCls:'cat-finishing',
+    acc:'±0.001–0.003 mm diameter | IT4–IT5', accLevel:97,
+    body:'No centres — part rests on blade between grinding and regulating wheels. Extremely fast cycle for pins, shafts, rollers. Through-feed or in-feed. Brands: Cincinnati, Monza, Mikrosa.' },
+
+  { proc:'EDM', name:'Sinker EDM (Die Sinking)', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.003–0.01 mm | IT5–IT7', accLevel:90,
+    body:'Graphite or copper electrode replicates cavity in workpiece by spark erosion. Any hardness. Mould and die cavities. Brands: Sodick AG60, Mitsubishi EA28, Charmilles Roboform.' },
+  { proc:'EDM', name:'Wire EDM (WEDM)', badge:'Subtractive', badgeCls:'cat-subtractive',
+    acc:'±0.003–0.005 mm | IT5–IT6', accLevel:93,
+    body:'0.1–0.3 mm brass wire cuts 2.5D profiles through workpiece. No cutting force — fragile parts safe. Punch/die sets, profiles in carbide. Brands: Fanuc Robocut, Mitsubishi MX600.' },
+
+  { proc:'Casting', name:'HPDC Machine (Cold Chamber)', badge:'Casting', badgeCls:'cat-casting',
+    acc:'±0.1–0.3 mm | IT10–IT12', accLevel:55,
+    body:'Plunger injects liquid Al/Zn at 400–1200 bar into H13 tool steel die. 100–2000T clamping force. 200–400 shots/hr. Brands: Buhler SC42D, Idra OL-1650, Frech DAK630.' },
+  { proc:'Casting', name:'Low Pressure Die Casting (LPDC)', badge:'Casting', badgeCls:'cat-casting',
+    acc:'±0.2–0.5 mm | IT11–IT12', accLevel:50,
+    body:'Pressurised gas forces molten Al up into die from below — lower velocity, less porosity than HPDC. Wheel rims, structural Al. Brands: Kurtz, Sinto.' },
+
+  { proc:'Forging', name:'Mechanical Press (Eccentric)', badge:'Forming', badgeCls:'cat-forming',
+    acc:'±0.3–1.0 mm as-forged | IT12–IT13', accLevel:40,
+    body:'Eccentric crank converts rotation to reciprocating ram. 100–6000T. Fast stroke rates 20–80/min. For steel and Al forgings. Brands: Schuler, Ajax, Sumitomo.' },
+  { proc:'Forging', name:'Hydraulic Forging Press', badge:'Forming', badgeCls:'cat-forming',
+    acc:'±0.5–2 mm | IT12–IT14', accLevel:35,
+    body:'Slow squeeze-type — better for large complex forgings. 500–80,000T. Titanium and Inconel aerospace forgings. Brands: Danieli, SMS Meer.' },
+  { proc:'Forging', name:'Ring Rolling Mill', badge:'Forming', badgeCls:'cat-forming',
+    acc:'±0.5–2 mm diameter | IT12–IT14', accLevel:35,
+    body:'Reduces ring wall thickness while expanding diameter. Flanges, rings, bearing races. Excellent grain flow. Brands: Wagner, Hüller.' },
+
+  { proc:'Sheet Metal', name:'CNC Press Brake', badge:'Forming', badgeCls:'cat-forming',
+    acc:'±0.1–0.3 mm bend angle/dim | IT11', accLevel:55,
+    body:'CNC-controlled ram and backgauge. 50–1000T. V-die and radius tooling. 3D bending with CNC backgauge. Brands: Trumpf TruBend, Amada HFE, Bystronic Xpert.' },
+  { proc:'Sheet Metal', name:'Fiber Laser Cutter', badge:'Forming', badgeCls:'cat-forming',
+    acc:'±0.05–0.1 mm cut position | IT9–IT10', accLevel:65,
+    body:'1–30 kW fiber laser. Steel 0.5–30 mm, SS 0.5–20 mm, Al 0.5–10 mm. Cut speed >30 m/min on thin sheet. Brands: Trumpf TruLaser, Bystronic ByStar, Mazak Optiplex.' },
+
+  { proc:'AM', name:'EOS M280/M300 (SLM)', badge:'Additive', badgeCls:'cat-additive',
+    acc:'±0.05–0.1 mm | post-machine to ±0.01 mm', accLevel:60,
+    body:'200W or 400W Yb fiber laser. 250×250×325 mm build volume. 20–80 µm layer thickness. 316L, Ti64, IN718, AlSi10Mg. Industry standard for aerospace AM.' },
+  { proc:'AM', name:'Stratasys Fortus 450mc (FDM)', badge:'Additive', badgeCls:'cat-additive',
+    acc:'±0.2–0.5 mm | IT13–IT14', accLevel:30,
+    body:'Industrial FDM. ULTEM 9085, ASA, PC, Nylon. 355×305×305 mm build. Support material soluble. Used for jigs, fixtures, end-use aero interiors.' },
+  { proc:'AM', name:'GE Arcam EBM (Electron Beam)', badge:'Additive', badgeCls:'cat-additive',
+    acc:'±0.2–0.3 mm (as-built)', accLevel:45,
+    body:'Electron beam in vacuum. Ti-6Al-4V and CoCr. No residual stress (hot process ~700°C). Medical implants, aerospace Ti. Larger MRR than laser SLM.' },
+
+  { proc:'Honing', name:'Sunnen ML-3000 Honing Machine', badge:'Finishing', badgeCls:'cat-finishing',
+    acc:'±0.002–0.005 mm bore dia | IT4–IT5', accLevel:94,
+    body:'Stroke control ±0.01 mm. Single/multi-stone. Bore range 10–600 mm. Hydraulic expansion. Engine bores, hydraulic cylinders. Oil-cooled operation.' },
+  { proc:'Lapping', name:'Peter Wolters AC 700 Lapping', badge:'Finishing', badgeCls:'cat-finishing',
+    acc:'±0.0005–0.002 mm flatness | IT3–IT4', accLevel:99,
+    body:'Precision flat lapping. Carrier rings with loose abrasive slurry (diamond, SiC, Al₂O₃). Ra achievable 0.006–0.025 µm. Gauge blocks, valve discs, sealing faces.' },
+
+  { proc:'Welding', name:'TIG Welder (GTAW)', badge:'Joining', badgeCls:'cat-joining',
+    acc:'Joint gap 0.1–2 mm', accLevel:0,
+    body:'Non-consumable tungsten electrode, inert gas shield (Ar/He). Precise control for thin-wall stainless, Ti, Al. Orbital TIG for pipe. Brands: Lincoln Electric TIG 275, Miller Dynasty.' },
+  { proc:'Welding', name:'MIG/MAG Welder (GMAW)', badge:'Joining', badgeCls:'cat-joining',
+    acc:'Joint gap 0.5–3 mm', accLevel:0,
+    body:'Consumable wire electrode, CO₂ or Ar/CO₂ mix. High deposition rate. Carbon steel and stainless. Robotic MIG for high volume. Brands: Fronius TransPuls, Lincoln Powerwave.' },
+  { proc:'Welding', name:'Friction Stir Welder (FSW)', badge:'Joining', badgeCls:'cat-joining',
+    acc:'Joint gap 0–0.3 mm | ±0.5 mm weld seam', accLevel:0,
+    body:'Rotating probe generates frictional heat — no melting. Al, Cu, some steels. Zero porosity, low distortion. Aerospace panels, battery trays. Brands: TWI, HITACHI, MTS.' }
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — MATERIAL MAP
+// ══════════════════════════════════════════════════════════════
+const matMap = {
+  carbon_steel: {
+    name: 'Carbon & Alloy Steel',
+    note: 'Most versatile structural material. Excellent machinability (free-cutting grades), wide forming range, weldable. High-strength grades (4140, 4340) require machining post heat-treat.',
+    processes: [
+      { proc:'CNC Turning / Milling', rating:5, note:'Excellent — benchmark material. Free-cutting 1215/12L14 for high-speed turning.' },
+      { proc:'Sand Casting', rating:4, note:'Carbon steel castings common — fluid steel, good pattern.' },
+      { proc:'Closed Die Forging', rating:5, note:'Classic forging material — 4140, 4340, EN24 standard forge grades.' },
+      { proc:'Grinding', rating:5, note:'Hardened steel: standard application for cylindrical and surface grinding.' },
+      { proc:'Sheet Metal (HR/CR)', rating:5, note:'HR for structural, CR for panels. DX51D galvanised for enclosures.' },
+      { proc:'MIG/TIG Welding', rating:5, note:'ER70S-6 wire, E7018 electrode. Preheat >25 mm thick (> 0.4% C).' },
+      { proc:'Investment Casting', rating:3, note:'Possible but sand/forging usually preferred for steel.' },
+      { proc:'EDM', rating:5, note:'Hardened tool steel — EDM essential for dies and mould work.' },
+      { proc:'Hard Chrome Plating', rating:5, note:'Standard for hydraulic rods, piston rods.' },
+      { proc:'SLM / Metal AM', rating:2, note:'Possible with 316L/Maraging but not mainstream for CS.' }
+    ]
+  },
+  stainless: {
+    name: 'Stainless Steel (304/316/Duplex)',
+    note: 'Work-hardening during machining — requires sharp tools, positive rake, high coolant pressure. 316L preferred for investment casting and AM. Duplex for strength.',
+    processes: [
+      { proc:'CNC Turning / Milling', rating:3, note:'Possible but challenging — work hardens. Sharp uncoated carbide or PVD-coated tools. Low cutting speed.' },
+      { proc:'TIG Welding', rating:5, note:'Excellent — 316L wire for 316 parent. Purge back side for pipe. Low heat input to avoid sensitisation.' },
+      { proc:'Investment Casting', rating:5, note:'CF8M (316 cast equiv) widely investment cast. Valves, pump impellers.' },
+      { proc:'Sand Casting', rating:3, note:'Possible but shrinkage and high pour temperature demanding.' },
+      { proc:'Sheet Metal', rating:4, note:'304/316 sheet — laser cut, press brake. Springback higher than MS.' },
+      { proc:'Grinding', rating:4, note:'Work-hardened stainless responds well to grinding.' },
+      { proc:'Electropolishing', rating:5, note:'Best finish for SS food/pharma — removes micro-burrs, improves corrosion.' },
+      { proc:'SLM / Metal AM', rating:5, note:'316L is the most-printed AM metal — medical, food, chemical.' },
+      { proc:'Forging', rating:3, note:'Austenitic SS forges poorly — low thermal conductivity, work hardening. 17-4PH better.' },
+      { proc:'EDM', rating:4, note:'Good EDM performance. Common for thin-wall parts and complex shapes.' }
+    ]
+  },
+  aluminium: {
+    name: 'Aluminium Alloys (6061/7075/A380)',
+    note: 'Easiest to machine of all metals — 5–10× faster than steel. Excellent for HPDC (A380, A383), forging (6061, 7075), and SLM (AlSi10Mg). Low density, good corrosion resistance.',
+    processes: [
+      { proc:'CNC Turning / Milling', rating:5, note:'Fastest-machining metal. High spindle speeds (15,000–25,000 rpm), HSS or carbide, uncoated preferred.' },
+      { proc:'HPDC', rating:5, note:'A380, ADC12 — most-used HPDC material. Thin walls 1.5 mm achievable.' },
+      { proc:'Sand Casting', rating:5, note:'A356/LM25 excellent castability. Engine heads, gearboxes.' },
+      { proc:'Closed Die Forging', rating:4, note:'6061-T6, 7075 — aerospace structural parts. Low forging temp 350–500°C.' },
+      { proc:'Sheet Metal', rating:5, note:'5052, 5083 for bent sheet. 5754 for marine. Springback: 1.5× t min radius.' },
+      { proc:'Extrusion', rating:5, note:'6063/6061 — dominant extrusion alloys. Complex profiles easy.' },
+      { proc:'Anodising', rating:5, note:'Hard anodise 6061 for wear — 25–75 µm, 250–500 HV. Type II for cosmetic.' },
+      { proc:'TIG/MIG Welding', rating:3, note:'Weldable but HAZ softens T6 temper. 4043/5356 filler. Clean oxide removal essential.' },
+      { proc:'SLM / Metal AM', rating:4, note:'AlSi10Mg popular — good but anisotropic. Post-HT to homogenise.' },
+      { proc:'Grinding', rating:2, note:'Al loads grinding wheel — use open-structure wheel, soluble oil. Not preferred.' }
+    ]
+  },
+  cast_iron: {
+    name: 'Cast Iron (Grey / Ductile / White)',
+    note: 'Grey CI: excellent vibration damping, good machinability, self-lubricating (graphite flakes). Ductile (SG) iron: high toughness. Primary material for machine tool structures.',
+    processes: [
+      { proc:'Sand Casting', rating:5, note:'Natural habitat — grey CI and SG iron sand cast for nearly everything.' },
+      { proc:'CNC Turning / Milling', rating:4, note:'Dry machining possible (graphite acts as lubricant). Abrasive — carbide essential.' },
+      { proc:'Grinding', rating:5, note:'Cylinder bores, brake drums. Standard application.' },
+      { proc:'Honing', rating:5, note:'Cylinder liner honing — creates crosshatch graphite-filled surface for oil retention.' },
+      { proc:'MIG Welding', rating:2, note:'Difficult — preheating 300–600°C essential, high risk of cracking. Ni-rod or Ni-wire.' },
+      { proc:'Forging', rating:1, note:'Not forgeable — brittle, fractures. SG iron borderline.' },
+      { proc:'Sheet Metal', rating:1, note:'Not applicable.' },
+      { proc:'Investment Casting', rating:2, note:'Rare — sand casting preferred.' },
+      { proc:'EDM', rating:3, note:'Possible but graphite inclusions cause uneven erosion.' },
+      { proc:'SLM / Metal AM', rating:1, note:'Not available — CI not processable in standard AM systems.' }
+    ]
+  },
+  copper: {
+    name: 'Copper / Brass / Bronze',
+    note: 'Excellent electrical/thermal conductivity (copper). Brass: best machinability of all metals (360 brass). Bronze: excellent bearing surfaces. Lead-free alloys for potable water.',
+    processes: [
+      { proc:'CNC Turning / Milling', rating:5, note:'C360 free-machining brass: benchmark. High speed, uncoated carbide, minimal coolant. Copper: sticky — sharp tools essential.' },
+      { proc:'Sand Casting', rating:5, note:'Bronze valve bodies, pump casings, propellers — classic sand cast.' },
+      { proc:'Investment Casting', rating:4, note:'Artistic bronze, small valve bodies.' },
+      { proc:'Forging', rating:3, note:'Naval brass, some bronzes — hot forging possible at 700–850°C.' },
+      { proc:'Brazing', rating:5, note:'Cu brazing with BCuP alloys — standard for Cu tube fittings. Capillary joints.' },
+      { proc:'TIG Welding', rating:3, note:'Possible with deoxidised copper, Ar shield. High conductivity requires high preheat.' },
+      { proc:'Sheet Metal', rating:4, note:'Cu and brass sheet — electrical bus bars, heat exchangers.' },
+      { proc:'Electroplating', rating:5, note:'Cu strike coat in plating lines — base for nickel and chrome plating.' },
+      { proc:'Extrusion', rating:4, note:'Brass sections — architectural profiles, electrical bus bars.' },
+      { proc:'SLM / Metal AM', rating:3, note:'Pure copper SLM requires green laser (520 nm) — specialty machines only (EOS Cu, Trumpf TruPrint).' }
+    ]
+  },
+  titanium: {
+    name: 'Titanium / Superalloys (IN718, Inconel)',
+    note: 'Difficult-to-machine — low thermal conductivity, high strength at temperature, work-hardening. Aerospace / medical standard. Requires sharp tools, high pressure coolant, low cutting speed.',
+    processes: [
+      { proc:'CNC Milling (5-axis)', rating:3, note:'Titanium: SFM 30–60 m/min only. Flood coolant mandatory. Short tool life — budget 3–5× vs steel. 5-axis essential for complex parts.' },
+      { proc:'Investment Casting', rating:4, note:'Ti-6Al-4V investment cast in vacuum — aerospace brackets, medical implants.' },
+      { proc:'Closed Die Forging', rating:4, note:'Ti-6Al-4V forging: 900–950°C. Aerospace disc and airframe. High press tonnage.' },
+      { proc:'SLM / Metal AM', rating:5, note:'Ti-6Al-4V and IN718 most common structural AM metals. Near-net-shape reduces machining of expensive billet.' },
+      { proc:'Electron Beam (EBM / Arcam)', rating:5, note:'Ti-6Al-4V EBM: stress-free builds, larger parts, medical implants.' },
+      { proc:'Grinding (CBN)', rating:3, note:'CBN wheel necessary. Titanium — low grinding speed, high coolant. Risk of thermal damage.' },
+      { proc:'EDM', rating:4, note:'Good EDM machinability — bypass low conductivity issue. Complex profiles in Ti possible.' },
+      { proc:'TIG Welding', rating:3, note:'Full inert gas trailing shield essential — oxygen causes embrittlement. Ti welding tent or chamber.' },
+      { proc:'Extrusion', rating:2, note:'Hot extrusion possible (900°C) but dies wear fast. Limited to simple profiles.' },
+      { proc:'Sand Casting', rating:1, note:'Extremely difficult — reacts with most refractories. Vacuum induction melting only.' }
+    ]
+  },
+  plastics: {
+    name: 'Engineering Plastics (PA, PEEK, POM, PC)',
+    note: 'Low density, corrosion resistant, self-lubricating (POM, PA). PEEK: 250°C service, near-metal strength. Glass-filled grades: increased stiffness but more abrasive to tools.',
+    processes: [
+      { proc:'Injection Moulding', rating:5, note:'Primary process for plastics at volume. All thermoplastics. Shrinkage 0.2–2% by material.' },
+      { proc:'CNC Machining', rating:4, note:'POM, PA, PEEK machine excellently. Sharp carbide or HSS, air blast cooling, no coolant for hygroscopic PA.' },
+      { proc:'FDM / Additive', rating:5, note:'PLA, ABS, PA, TPU, PETG, PEEK (high-temp FDM). Prototype to end-use.' },
+      { proc:'Extrusion (plastic)', rating:5, note:'Profiles, sheets, pipes — all major thermoplastics.' },
+      { proc:'Thermoforming', rating:4, note:'Sheet plastic vacuum-formed over male/female tool. ABS, PC, PETG. Panels and covers.' },
+      { proc:'Welding (ultrasonic)', rating:4, note:'Ultrasonic welding for ABS, ABS/PC. Vibration, hot plate, spin welding also.' },
+      { proc:'Casting (polyurethane)', rating:3, note:'PU casting in silicone tools for low-volume functional prototypes.' },
+      { proc:'Grinding', rating:2, note:'Not standard — heat build-up. Coolant risks for hygroscopic materials.' },
+      { proc:'EDM', rating:1, note:'Not applicable — plastics are non-conductive.' },
+      { proc:'Sand Casting', rating:1, note:'Not applicable — thermoplastics solidify before injection.' }
+    ]
+  },
+  ceramics: {
+    name: 'Ceramics / Glass / Carbide',
+    note: 'Extreme hardness, high temp stability, brittle — conventional machining impossible. Diamond tools or special processes. Technical ceramics: Al₂O₃, Si₃N₄, SiC, ZrO₂.',
+    processes: [
+      { proc:'Grinding (diamond wheel)', rating:5, note:'Primary shaping process for technical ceramics. Diamond or CBN wheel, wet grinding.' },
+      { proc:'Lapping (diamond)', rating:5, note:'Final finish on ceramic surfaces. Valve seats, precision flats.' },
+      { proc:'Ultrasonic Machining', rating:4, note:'Abrasive slurry vibrated ultrasonically — drills holes in glass, ceramics.' },
+      { proc:'Laser cutting', rating:3, note:'CO₂ laser for glass; fibre laser limited. Micro-machining of ceramic substrates.' },
+      { proc:'Sintering (powder forming)', rating:5, note:'Green state compaction then sinter — primary forming route for all technical ceramics.' },
+      { proc:'Tape casting / slip casting', rating:4, note:'Thin ceramic sheets (electronics substrates) or complex shapes via slip in plaster mould.' },
+      { proc:'EDM (EDM grinding)', rating:2, note:'Only for conductive ceramics — SiC (Si-infiltrated) is borderline.' },
+      { proc:'CNC Milling', rating:1, note:'Green state ceramics only — pre-sintered, very fragile. Post-sinter only diamond grinding.' },
+      { proc:'Welding', rating:1, note:'Not applicable for ceramics.' },
+      { proc:'SLM / Metal AM', rating:1, note:'Ceramic SLA/binder jetting exists but niche — not standard SLM.' }
+    ]
+  },
+  composites: {
+    name: 'Composites (CFRP / GFRP)',
+    note: 'Carbon / glass fibre reinforced polymer. Highest specific strength. Machining causes delamination and fibre pull-out — specialised tooling required. Joining by bonding or mechanical fastening.',
+    processes: [
+      { proc:'Hand lay-up / Vacuum infusion', rating:5, note:'Primary low-volume process. Wet lay or prepreg. Autoclave cure for aerospace grade.' },
+      { proc:'RTM (Resin Transfer Moulding)', rating:4, note:'Dry fibre in closed mould, resin injected. Better repeatability than hand lay-up.' },
+      { proc:'Compression moulding (SMC/BMC)', rating:4, note:'Short-fibre compound pressed in heated tool. Automotive panels, electrical housings.' },
+      { proc:'CNC Milling (diamond/PCD)', rating:3, note:'Trimming, drilling CFRP. Diamond or PCD tools — abrasive fibres destroy carbide quickly.' },
+      { proc:'Drilling (diamond/specialised)', rating:3, note:'Peel-ply backing, sharp drill, no coolant for thermosetting CFRP. Delamination risk.' },
+      { proc:'Waterjet cutting', rating:4, note:'No heat — good for composites. 4000 bar, garnet abrasive. Delamination risk at entry.' },
+      { proc:'Laser cutting', rating:3, note:'Pulsed fibre laser for thin CFRP sheet. HAZ and fume concern.' },
+      { proc:'Adhesive bonding', rating:5, note:'Structural epoxy bonding — aerospace standard. Surface prep (peel ply, abrade, plasma treat).' },
+      { proc:'Welding', rating:1, note:'Not for thermoset CFRP. Thermoplastic composites (PEEK + CF) can be resistance welded.' },
+      { proc:'Forging', rating:1, note:'Not applicable.' }
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// DATA — MATRIX
+// ══════════════════════════════════════════════════════════════
+const matrixCols = ['Turning','Milling','Grinding','Forging','Sand Cast','HPDC','Inv. Cast','Sheet Metal','Extrusion','SLM/AM','FDM/AM','Welding','Honing','EDM'];
+const matrixRows2 = [
+  'High dimensional accuracy',
+  'Excellent surface finish',
+  'Complex 3D geometry',
+  'High production volume',
+  'Low tooling cost',
+  'Low unit cost (volume)',
+  'Hard materials (>60 HRC)',
+  'Near-net-shape',
+  'Internal features / channels',
+  'No material waste',
+  'Good mechanical properties',
+  'Large part size (>1 m)',
+  'Prototype / 1-off viable',
+  'Thin walls (<2 mm)',
+  'Multiple material types'
+];
+// 5=excellent 3=moderate 1=poor
+const matrixVals = [
+  //Turn Mill Grnd Forg SndC HPDC InvC ShMt Extr SLM  FDM  Weld Honng EDM
+  [  5,   5,   5,   2,   1,   3,   4,   3,   2,   4,   2,   1,   5,   4  ], // accuracy
+  [  4,   3,   5,   1,   1,   3,   3,   2,   3,   2,   1,   1,   5,   3  ], // surface
+  [  3,   5,   2,   2,   5,   4,   5,   3,   1,   5,   5,   3,   2,   4  ], // complex 3D
+  [  5,   4,   5,   4,   3,   5,   3,   5,   5,   1,   2,   5,   4,   2  ], // volume
+  [  5,   5,   4,   1,   5,   1,   3,   3,   3,   5,   5,   4,   3,   3  ], // low tooling
+  [  3,   3,   3,   5,   4,   5,   3,   4,   5,   1,   3,   3,   3,   1  ], // low unit
+  [  3,   3,   5,   3,   1,   1,   1,   1,   1,   4,   1,   1,   5,   5  ], // hard mat
+  [  2,   2,   2,   4,   3,   4,   5,   4,   5,   5,   4,   5,   2,   3  ], // near-net
+  [  3,   4,   2,   1,   4,   3,   4,   1,   1,   5,   4,   2,   4,   4  ], // internal
+  [  1,   1,   1,   4,   3,   4,   4,   3,   5,   5,   4,   5,   1,   1  ], // no waste
+  [  4,   4,   4,   5,   4,   3,   4,   3,   4,   4,   2,   4,   4,   3  ], // mech props
+  [  2,   3,   2,   4,   5,   2,   2,   4,   3,   1,   1,   5,   2,   1  ], // large part
+  [  5,   5,   3,   1,   3,   1,   2,   5,   2,   5,   5,   5,   2,   3  ], // prototype
+  [  3,   4,   3,   1,   3,   5,   4,   5,   5,   4,   4,   3,   1,   3  ], // thin walls
+  [  5,   5,   4,   3,   4,   1,   3,   4,   2,   4,   3,   4,   3,   3  ], // materials
+];
+
+// ══════════════════════════════════════════════════════════════
+// UTILITIES
+// ══════════════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+id+"'"));
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 1 — PROCESS LIBRARY
+// ══════════════════════════════════════════════════════════════
+const categories = [
+  { id:'all', label:'All Processes' },
+  { id:'subtractive', label:'Subtractive' },
+  { id:'casting', label:'Casting / Moulding' },
+  { id:'forming', label:'Forming' },
+  { id:'additive', label:'Additive' },
+  { id:'joining', label:'Joining' },
+  { id:'finishing', label:'Finishing' }
+];
+let activeFilter = 'all';
+let selectedProc = null;
+
+function renderFilterBar(containerId, callback) {
+  const bar = document.getElementById(containerId);
+  bar.innerHTML = categories.map(c => `
+    <button class="filter-btn ${c.id === activeFilter ? 'active-f' : ''}" onclick="${callback}('${c.id}')">${c.label}</button>
+  `).join('');
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  renderFilterBar('filterBar', 'setFilter');
+  renderProcessGrid();
+}
+
+function renderProcessGrid() {
+  const filtered = activeFilter === 'all' ? processes : processes.filter(p => p.cat === activeFilter);
+  document.getElementById('processGrid').innerHTML = filtered.map(p => `
+    <div class="proc-card ${selectedProc === p.id ? 'selected' : ''}" id="pc-${p.id}" onclick="selectProcess('${p.id}')">
+      <div class="pc-check">✓</div>
+      <div class="pc-icon">${p.icon}</div>
+      <div class="pc-name">${p.name}</div>
+      <span class="pc-cat cat-${p.cat}">${p.catLabel}</span>
+      <div class="pc-desc">${p.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectProcess(id) {
+  const detail = document.getElementById('procDetail');
+  if (selectedProc === id) {
+    selectedProc = null;
+    detail.classList.add('hidden');
+    renderProcessGrid();
+    return;
+  }
+  selectedProc = id;
+  renderProcessGrid();
+  const p = processes.find(x => x.id === id);
+  document.getElementById('procDetailTitle').textContent = p.icon + '  ' + p.name + ' — Technical Reference';
+
+  const accColor = p.accuracy.includes('IT4') || p.accuracy.includes('IT5') || p.accuracy.includes('IT6') ? '#2d6a2d' :
+                   p.accuracy.includes('IT7') || p.accuracy.includes('IT8') ? '#1a6496' :
+                   p.accuracy.includes('IT10') || p.accuracy.includes('IT11') ? '#b85c00' : '#888';
+
+  document.getElementById('procDetailContent').innerHTML = `
+    <div class="grid-2">
+      <div>
+        <table class="spec-table">
+          <tr><th colspan="2">Process Parameters</th></tr>
+          <tr><td>Accuracy (IT Grade)</td><td style="color:${accColor};font-weight:600;">${p.accuracy}</td></tr>
+          <tr><td>Surface Roughness</td><td>${p.roughness}</td></tr>
+          <tr><td>Tooling Cost</td><td>${p.tooling}</td></tr>
+          <tr><td>Viable Volume</td><td>${p.volume}</td></tr>
+        </table>
+        <div style="margin-top:14px;">
+          <div class="card-title" style="font-size:12px;border-color:var(--accent3);">🧪 Compatible Materials</div>
+          <div style="font-size:13px;line-height:1.8;color:var(--accent3);">${p.materials.join(' · ')}</div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="card-title" style="font-size:12px;border-color:var(--accent3);">⚙️ Machines / Equipment</div>
+          <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--text-dim);">
+            ${p.machines.map(m => `<li>${m}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div style="margin-bottom:12px;">
+          <div class="card-title" style="font-size:12px;">✅ Advantages</div>
+          <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--green);">
+            ${p.pros.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="card-title" style="font-size:12px;border-color:var(--accent2);">⚠️ Limitations</div>
+          <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--accent2);">
+            ${p.cons.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="card-title" style="font-size:12px;">🏭 Typical Applications</div>
+          <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--accent3);">
+            ${p.apps.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <div class="card-title" style="font-size:12px;">📐 DFM Guidelines</div>
+          <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--text-dim);">
+            ${p.dfm.map(x => `<li>${x}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+  detail.classList.remove('hidden');
+  detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 2 — SMART SELECTOR
+// ══════════════════════════════════════════════════════════════
+function runSelector() {
+  const geom   = document.getElementById('s-geom').value;
+  const vol    = document.getElementById('s-vol').value;
+  const acc    = document.getElementById('s-acc').value;
+  const mat    = document.getElementById('s-mat').value;
+  const finish = document.getElementById('s-finish').value;
+  const waste  = document.getElementById('s-waste').value;
+  const cost   = document.getElementById('s-cost').value;
+
+  const scores = {};
+  processes.forEach(p => scores[p.id] = 0);
+
+  function add(ids, pts) { ids.forEach(id => { if(scores[id]!==undefined) scores[id]+=pts; }); }
+  function pen(ids, pts) { ids.forEach(id => { if(scores[id]!==undefined) scores[id]-=pts; }); }
+
+  // Geometry
+  if(geom==='simple')   { add(['turning','milling','grinding','sheet_metal','extrusion'],3); }
+  if(geom==='moderate') { add(['milling','turning','invest_cast','forging','sheet_metal'],3); }
+  if(geom==='complex')  { add(['milling','invest_cast','sand_cast','hpdc','inj_mould','edm'],4); pen(['turning','extrusion','rolling'],2); }
+  if(geom==='freeform') { add(['slm','fdm','invest_cast','sand_cast'],5); pen(['turning','extrusion','forging'],3); }
+
+  // Volume
+  if(vol==='prototype') { add(['milling','turning','fdm','slm','welding','sheet_metal'],5); pen(['hpdc','inj_mould','forging','broaching'],4); }
+  if(vol==='low')       { add(['milling','turning','sand_cast','invest_cast','fdm','welding'],3); pen(['hpdc','inj_mould','broaching'],3); }
+  if(vol==='medium')    { add(['turning','milling','invest_cast','forging','sheet_metal','extrusion'],3); }
+  if(vol==='high')      { add(['hpdc','inj_mould','forging','extrusion','broaching','rolling'],5); pen(['slm','fdm','invest_cast'],2); }
+
+  // Accuracy
+  if(acc==='rough')  { add(['sand_cast','welding','forging','fdm','rolling'],3); }
+  if(acc==='medium') { add(['turning','milling','hpdc','invest_cast','sheet_metal'],3); }
+  if(acc==='fine')   { add(['turning','milling','edm','invest_cast','drilling'],4); pen(['sand_cast','fdm','welding'],2); }
+  if(acc==='ultra')  { add(['grinding','honing','lapping','turning'],5); pen(['sand_cast','fdm','hpdc','welding','forging'],3); }
+
+  // Material
+  if(mat==='steel')     { add(['turning','milling','forging','grinding','welding','sand_cast'],3); }
+  if(mat==='ss')        { add(['turning','milling','invest_cast','welding','grinding','slm'],3); }
+  if(mat==='alum')      { add(['turning','milling','hpdc','extrusion','forging','sheet_metal'],4); }
+  if(mat==='cast_iron') { add(['sand_cast','turning','milling','grinding','honing'],4); pen(['welding','forging'],2); }
+  if(mat==='copper')    { add(['turning','milling','brazing','sand_cast','sheet_metal'],3); }
+  if(mat==='plastic')   { add(['inj_mould','fdm','milling','extrusion'],5); pen(['forging','welding','sand_cast','grinding'],3); }
+  if(mat==='titanium')  { add(['milling','slm','invest_cast','forging','edm'],4); pen(['sand_cast','hpdc','inj_mould'],4); }
+  if(mat==='ceramic')   { add(['grinding','lapping'],5); pen(['turning','milling','welding','forging'],5); }
+
+  // Surface finish
+  if(finish==='rough')  { add(['sand_cast','welding','forging','fdm'],2); }
+  if(finish==='medium') { add(['turning','milling','hpdc','invest_cast'],2); }
+  if(finish==='fine')   { add(['turning','milling','grinding','edm','honing'],3); }
+  if(finish==='mirror') { add(['grinding','honing','lapping','electroplating'],5); pen(['sand_cast','fdm','forging'],3); }
+
+  // Waste
+  if(waste==='low')  { add(['forging','invest_cast','hpdc','extrusion','rolling','sheet_metal'],2); }
+  if(waste==='no')   { add(['forging','slm','invest_cast','extrusion'],4); pen(['turning','milling','grinding','edm'],2); }
+
+  // Cost
+  if(cost==='low')    { add(['milling','turning','fdm','sand_cast','welding','sheet_metal'],3); pen(['hpdc','inj_mould','slm'],3); }
+  if(cost==='medium') { add(['invest_cast','forging','extrusion'],2); }
+  if(cost==='high')   { add(['hpdc','inj_mould','forging','extrusion'],4); }
+
+  const ranked = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const topId = ranked[0][0];
+  const top = processes.find(p => p.id === topId);
+  const alts = ranked.slice(1,4).map(r => processes.find(p => p.id === r[0])?.name).filter(Boolean);
+
+  document.getElementById('selectorResult').innerHTML = `
+    <div class="rec-box">
+      <div class="rec-title">⭐ Recommended Process</div>
+      <div class="rec-name">${top.icon} ${top.name}</div>
+      <span class="pc-cat cat-${top.cat}" style="display:inline-block;margin-bottom:12px;">${top.catLabel}</span>
+      <div class="rec-reason">
+        <b>Accuracy:</b> ${top.accuracy}<br>
+        <b>Surface:</b> ${top.roughness}<br>
+        <b>Tooling Cost:</b> ${top.tooling}<br>
+        <b>Volume Range:</b> ${top.volume}<br>
+        <b>Compatible Materials:</b> ${top.materials.slice(0,4).join(', ')}<br><br>
+        <b>Key Applications:</b> ${top.apps.slice(0,3).join(' · ')}
+      </div>
+      <div class="rec-alts">▸ Also evaluate: ${alts.join(' · ')}</div>
+    </div>
+    <div class="verdict-box" style="margin-top:12px;border-color:var(--accent3);background:#e8f4fd;">
+      📐 Go to <b>Tab ①</b> and click <b>${top.name}</b> card for full DFM guidelines. Use <b>Tab ③</b> for machine selection.
+    </div>
+  `;
+}
+
+function resetSelector() {
+  ['s-geom','s-vol','s-acc','s-mat','s-finish','s-waste','s-cost'].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+  });
+  document.getElementById('selectorResult').innerHTML = '<p style="color:var(--text-dim);font-size:13px;">Set parameters and click Recommend →</p>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 3 — MACHINES
+// ══════════════════════════════════════════════════════════════
+let machineFilter = 'All';
+
+function renderMachineFilterBar() {
+  const cats = ['All','Turning','Milling','Grinding','EDM','Casting','Forging','Sheet Metal','AM','Honing','Lapping','Welding'];
+  document.getElementById('machineFilterBar').innerHTML = cats.map(c => `
+    <button class="filter-btn ${machineFilter===c?'active-f':''}" onclick="setMachineFilter('${c}')">${c}</button>
+  `).join('');
+}
+
+function setMachineFilter(cat) {
+  machineFilter = cat;
+  renderMachineFilterBar();
+  renderMachines();
+}
+
+function renderMachines() {
+  const filtered = machineFilter === 'All' ? machines : machines.filter(m => m.proc === machineFilter);
+  const accColors = { 99:'#2d6a2d', 97:'#2d6a2d', 95:'#2d6a2d', 94:'#2d6a2d', 93:'#2d6a2d', 90:'#1a6496', 88:'#1a6496', 82:'#1a6496', 80:'#1a6496', 75:'#b85c00', 70:'#b85c00', 65:'#b85c00', 60:'#888', 55:'#888', 50:'#888', 45:'#888', 40:'#888', 35:'#888', 30:'#888', 0:'#bbb' };
+  document.getElementById('machineGrid').innerHTML = filtered.map(m => {
+    const colorKey = Object.keys(accColors).map(Number).sort((a,b)=>b-a).find(k => m.accLevel >= k) || 0;
+    const color = accColors[colorKey] || '#888';
+    const accBarClass = m.accLevel >= 90 ? 'acc-ultra' : m.accLevel >= 75 ? 'acc-high' : m.accLevel >= 50 ? 'acc-medium' : 'acc-low';
+    return `
+      <div class="machine-card">
+        <div class="mc-proc">${m.proc}</div>
+        <div class="mc-name">${m.name}</div>
+        <div class="mc-acc">Accuracy: ${m.acc}</div>
+        ${m.accLevel > 0 ? `
+        <div class="acc-bar-wrap">
+          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px;display:flex;justify-content:space-between;">
+            <span>Precision Level</span><span style="color:${color};font-weight:600;">${m.accLevel}%</span>
+          </div>
+          <div class="acc-bar-bg"><div class="acc-bar-fill ${accBarClass}" style="width:${m.accLevel}%;"></div></div>
+        </div>` : ''}
+        <div class="mc-body">${m.body}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 4 — MATERIAL MAP
+// ══════════════════════════════════════════════════════════════
+function renderMatMap() {
+  const key = document.getElementById('mat-select').value;
+  const data = matMap[key];
+  const dot = v => v===5?'<span class="dot5">●●●●●</span>':v===4?'<span class="dot5">●●●●</span><span class="dot1">●</span>':v===3?'<span class="dot3">●●●</span><span class="dot1">●●</span>':v===2?'<span class="dot3">●●</span><span class="dot1">●●●</span>':'<span class="dot1">●●●●●</span>';
+  const label = v => v===5?'<span style="color:#2d6a2d;font-weight:700;">Excellent</span>':v===4?'<span style="color:#1a6496;font-weight:600;">Very Good</span>':v===3?'<span style="color:#b85c00;">Moderate</span>':v===2?'<span style="color:#888;">Limited</span>':'<span style="color:#ccc;">Not suitable</span>';
+
+  document.getElementById('matMapContent').innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">${data.name}</div>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.7;">${data.note}</p>
+    </div>
+    <table class="spec-table" style="width:100%;">
+      <tr><th>Manufacturing Process</th><th>Suitability</th><th style="width:120px;">Rating</th><th>Key Notes</th></tr>
+      ${data.processes.sort((a,b)=>b.rating-a.rating).map(row => `
+        <tr>
+          <td style="font-weight:600;">${row.proc}</td>
+          <td>${label(row.rating)}</td>
+          <td>${dot(row.rating)}</td>
+          <td style="font-size:12px;color:var(--text-dim);">${row.note}</td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
+// TAB 5 — MATRIX
+// ══════════════════════════════════════════════════════════════
+function renderMatrix() {
+  const dot = v => v===5?'<span class="dot5">●</span>':v===3?'<span class="dot3">◑</span>':'<span class="dot1">○</span>';
+  let html = '<thead><tr><th style="text-align:left;min-width:170px;">Feature / Capability</th>';
+  matrixCols.forEach(c => html += `<th style="font-size:10px;">${c}</th>`);
+  html += '</tr></thead><tbody>';
+  matrixRows2.forEach((row, ri) => {
+    html += `<tr><td class="row-label">${row}</td>`;
+    matrixCols.forEach((_, ci) => html += `<td>${dot(matrixVals[ri][ci])}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('matrixTable').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+renderFilterBar('filterBar', 'setFilter');
+renderProcessGrid();
+renderMachineFilterBar();
+renderMachines();
+renderMatrix();
+renderMatMap();
+</script>
+</body>
+</html>

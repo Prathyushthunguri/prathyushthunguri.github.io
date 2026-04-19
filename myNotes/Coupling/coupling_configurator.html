@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coupling Design Configurator</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f4f4; --panel: #ffffff; --panel2: #f9f9f9; --border: #cccccc;
+    --accent: #cc0000; --accent2: #b85c00; --accent3: #1a6496;
+    --text: #333333; --text-dim: #666666;
+    --green: #2d6a2d; --green-bg: #eaf4ea; --red: #cc0000; --red-bg: #fdecea;
+    --warn-bg: #fff8f2;
+    --font-head: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-body: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+  .top-navbar {
+    position: fixed; top: 0; width: 100%;
+    background: #222; color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px; z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  .navbar-left { font-size: 18px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+  .navbar-left svg { width: 24px; height: 24px; fill: #cc0000; }
+  .navbar-right { display: flex; gap: 8px; }
+  .navbar-right button {
+    background: #444; color: white; border: none;
+    padding: 7px 14px; cursor: pointer; font-size: 13px; border-radius: 3px;
+  }
+  .navbar-right button:hover { background: #cc0000; }
+
+  .container {
+    max-width: 1200px; margin: 72px auto 40px auto;
+    padding: 20px; background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px;
+  }
+  @media(max-width:768px) { .container { margin: 80px 10px 20px; padding: 15px; } }
+
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-bottom: 20px; border-bottom: 2px solid #ccc;
+    padding: 0;
+  }
+  .tab-btn {
+    background: #eee; color: #444; border: 1px solid #ccc;
+    border-bottom: none; padding: 8px 16px; cursor: pointer;
+    font-size: 13px; border-radius: 6px 6px 0 0;
+    font-family: var(--font-body); transition: background 0.2s;
+  }
+  .tab-btn:hover:not(.active) { background: #ddd; color: #222; }
+  .tab-btn.active { background: #fff; color: #222; font-weight: bold; border-bottom: 2px solid #fff; margin-bottom: -2px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; } }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media(max-width:800px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px; font-weight: bold; color: #222;
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+    display: flex; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; margin-bottom: 5px;
+    font-size: 12px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .field label span { color: var(--accent3); margin-left: 4px; font-family: var(--font-mono); font-size: 10px; }
+  .field input, .field select {
+    width: 100%; background: #fff; border: 1px solid #ccc;
+    color: var(--text); font-family: var(--font-mono); font-size: 14px;
+    padding: 8px 10px; border-radius: 4px; outline: none; transition: border-color .2s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent3); box-shadow: 0 0 0 2px rgba(26,100,150,0.1); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 22px; font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: 4px; transition: all .2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #aa0000; }
+  .btn-secondary { background: #eee; color: #444; border: 1px solid #ccc; }
+  .btn-secondary:hover { background: #ddd; color: #222; }
+
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 12px; margin-top: 16px; }
+  .result-item {
+    background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .result-item .r-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .result-item .r-value { font-family: var(--font-mono); font-size: 20px; color: #222; margin-top: 4px; font-weight: bold; }
+  .result-item .r-unit { font-size: 11px; color: var(--text-dim); }
+  .result-item.highlight { border-color: var(--accent); border-left: 4px solid var(--accent); }
+  .result-item.highlight .r-value { color: var(--accent); }
+  .result-item.good { border-color: #b0d4b0; border-left: 4px solid var(--green); }
+  .result-item.good .r-value { color: var(--green); }
+  .result-item.warn { border-color: #ddd09a; border-left: 4px solid var(--accent2); }
+  .result-item.warn .r-value { color: var(--accent2); }
+
+  .verdict-box {
+    margin-top: 16px; padding: 12px 16px;
+    border-radius: 0 4px 4px 0; border-left: 4px solid var(--green);
+    background: var(--green-bg); font-size: 13px; color: var(--text);
+  }
+  .verdict-box.bad { border-color: var(--red); background: var(--red-bg); }
+  .verdict-box.warn { border-color: var(--accent2); background: var(--warn-bg); }
+
+  .formula-box {
+    background: #f2f2f2; border: 1px solid #ddd; border-left: 4px solid var(--accent3);
+    border-radius: 0 4px 4px 0; padding: 12px 16px;
+    font-family: var(--font-mono); font-size: 13px;
+    color: #1a6496; margin-bottom: 16px; line-height: 2;
+  }
+
+  .section-label {
+    font-size: 12px; font-weight: bold; color: #444;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 20px 0 12px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid #ddd; padding-bottom: 6px;
+  }
+
+  .coupling-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 12px; }
+  .coupling-card {
+    background: #fafafa; border: 1px solid var(--border);
+    border-radius: 6px; padding: 16px; cursor: pointer; transition: all .2s;
+    position: relative; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .coupling-card:hover { border-color: #999; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  .coupling-card.selected { border-color: var(--accent); background: #fff5f5; border-left: 4px solid var(--accent); }
+  .coupling-card .cc-icon { font-size: 28px; margin-bottom: 8px; }
+  .coupling-card .cc-name { font-weight: 700; font-size: 14px; color: #222; }
+  .coupling-card .cc-tag {
+    display: inline-block; margin-top: 6px; font-size: 10px; font-weight: bold;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 3px; border: 1px solid #ccc;
+  }
+  .tag-rigid { background: #e8f4fd; color: #1a6496; border-color: #b8d8ee; }
+  .tag-flex { background: var(--green-bg); color: var(--green); border-color: #b0d4b0; }
+  .tag-fluid { background: #fefce8; color: #7a6000; border-color: #ddd09a; }
+  .tag-special { background: #f3f0ff; color: #4a3d8f; border-color: #c8c0f0; }
+  .coupling-card .cc-desc { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; }
+  .coupling-card .cc-check {
+    position: absolute; top: 10px; right: 10px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); display: none; place-items: center;
+    font-size: 11px; color: white;
+  }
+  .coupling-card.selected .cc-check { display: grid; }
+
+  .spec-table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+  .spec-table th { background: #f2f2f2; font-weight: bold; color: var(--accent); padding: 7px 10px; border: 1px solid #ccc; text-align: left; }
+  .spec-table td { border: 1px solid #ccc; padding: 6px 10px; }
+  .spec-table tr:nth-child(even) { background: #fafafa; }
+
+  .make-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 14px; margin-top: 12px; }
+  .make-card {
+    background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: box-shadow .2s;
+  }
+  .make-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .make-card .mk-name { font-weight: 700; font-size: 15px; color: #222; margin-bottom: 4px; }
+  .make-card .mk-origin { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .make-card .mk-spec { font-size: 12px; line-height: 1.7; color: var(--text); }
+  .make-card .mk-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 3px; margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .badge-global { background: #e8f4fd; color: #1a6496; border: 1px solid #b8d8ee; }
+  .badge-india  { background: var(--green-bg); color: var(--green); border: 1px solid #b0d4b0; }
+  .badge-eu     { background: #fefce8; color: #7a6000; border: 1px solid #ddd09a; }
+
+  .theory-section { margin-bottom: 28px; }
+  .theory-section h3 { font-size: 14px; font-weight: bold; color: var(--accent); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+  .theory-section p { font-size: 13px; line-height: 1.8; color: var(--text); margin-bottom: 8px; }
+  .theory-section ul { font-size: 13px; line-height: 1.9; color: var(--text-dim); padding-left: 20px; }
+  .theory-section ul li { margin-bottom: 4px; }
+
+  .selector-q { margin-bottom: 14px; }
+  .selector-q label { font-size: 13px; font-weight: 600; color: #333; display: block; margin-bottom: 6px; }
+  .selector-q select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: #fff; }
+
+  .recommendation-box {
+    margin-top: 20px; padding: 18px; border-radius: 8px;
+    border: 2px solid var(--accent); background: #fff5f5;
+  }
+  .recommendation-box .rec-title { font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 12px; }
+  .rec-coupling { font-size: 22px; font-weight: 700; color: #222; margin-bottom: 6px; }
+  .rec-reason { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+  .rec-alts { font-size: 12px; color: var(--accent3); margin-top: 10px; }
+
+  .criteria-row { margin-bottom: 14px; }
+  .criteria-row .cr-label { font-size: 12px; color: var(--text-dim); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .cr-bar-bg { height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; }
+  .cr-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+  .bar-good { background: #4caf7d; }
+  .bar-warn { background: #b85c00; }
+  .bar-bad { background: #cc0000; }
+
+  .actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .hidden { display: none !important; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f0f0f0; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+  /* SVG coupling diagrams */
+  .coupling-svg-wrap { text-align: center; margin: 12px 0; }
+  .coupling-svg-wrap svg { max-width: 100%; }
+
+  /* detail panel */
+  #couplingDetail { margin-top: 20px; display: none; }
+
+  /* use-case matrix */
+  .matrix-table { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 10px; overflow-x: auto; display: block; }
+  .matrix-table th { background: #222; color: #fff; padding: 8px 10px; border: 1px solid #444; text-align: center; }
+  .matrix-table td { border: 1px solid #ccc; padding: 7px 10px; text-align: center; }
+  .matrix-table td.feat-label { text-align: left; font-weight: 600; color: #333; background: #f9f9f9; }
+  .matrix-table tr:nth-child(even) td:not(.feat-label) { background: #fafafa; }
+  .dot-5 { color: #2d6a2d; font-size: 16px; }
+  .dot-3 { color: #b85c00; font-size: 16px; }
+  .dot-1 { color: #ccc; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    Coupling Design Configurator
+  </div>
+  <div class="navbar-right">
+    <button onclick='location.href = "../secret.html"'>Home</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('types')">① Coupling Types</button>
+    <button class="tab-btn" onclick="switchTab('selector')">② Smart Selector</button>
+    <button class="tab-btn" onclick="switchTab('calc')">③ Torque Calculator</button>
+    <button class="tab-btn" onclick="switchTab('matrix')">④ Use-Case Matrix</button>
+    <button class="tab-btn" onclick="switchTab('makes')">⑤ Manufacturers</button>
+    <button class="tab-btn" onclick="switchTab('theory')">⑥ Theory</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 1 — COUPLING TYPES
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-types">
+    <div class="section-label">Select coupling type to explore</div>
+    <div class="coupling-grid" id="couplingGrid"></div>
+    <div class="card" id="couplingDetail">
+      <div class="card-title" id="detailTitle">Coupling Details</div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 2 — SMART SELECTOR
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-selector">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Application Parameters</div>
+
+        <div class="selector-q">
+          <label>Misalignment Type</label>
+          <select id="s-misalign">
+            <option value="none">None / negligible</option>
+            <option value="angular">Angular only</option>
+            <option value="parallel">Parallel / lateral only</option>
+            <option value="axial">Axial only</option>
+            <option value="combined">Combined (all types)</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Shock / Vibration Level</label>
+          <select id="s-shock">
+            <option value="none">Smooth — no shock</option>
+            <option value="light">Light shock (e.g. centrifugal pumps)</option>
+            <option value="moderate">Moderate shock (e.g. reciprocating pumps)</option>
+            <option value="heavy">Heavy shock (e.g. crushers, presses)</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Torque Transmission</label>
+          <select id="s-torque">
+            <option value="low">Low (&lt;200 N·m)</option>
+            <option value="medium">Medium (200–2000 N·m)</option>
+            <option value="high">High (2–50 kN·m)</option>
+            <option value="veryhigh">Very High (&gt;50 kN·m)</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Speed Range</label>
+          <select id="s-speed">
+            <option value="low">Low (&lt;500 rpm)</option>
+            <option value="medium">Medium (500–3000 rpm)</option>
+            <option value="high">High (3000–10000 rpm)</option>
+            <option value="veryhigh">Very High (&gt;10000 rpm)</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Electrical Isolation Required?</label>
+          <select id="s-iso">
+            <option value="no">No</option>
+            <option value="yes">Yes (stray current protection)</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Torsional Rigidity Needed?</label>
+          <select id="s-torsion">
+            <option value="no">No — some wind-up acceptable</option>
+            <option value="yes">Yes — servo / positioning / synced drives</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Space Constraint</label>
+          <select id="s-space">
+            <option value="normal">Normal</option>
+            <option value="compact">Compact — short axial length</option>
+            <option value="large_bore">Large bore needed</option>
+          </select>
+        </div>
+
+        <div class="selector-q">
+          <label>Environment</label>
+          <select id="s-env">
+            <option value="normal">Indoor / clean</option>
+            <option value="wet">Wet / corrosive</option>
+            <option value="hightemp">High temperature (&gt;120°C)</option>
+            <option value="explosive">ATEX / explosive zone</option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="runSelector()">▶ Recommend Coupling</button>
+          <button class="btn btn-secondary" onclick="resetSelector()">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Recommendation</div>
+        <div id="selectorResult">
+          <p style="color:var(--text-dim); font-size:13px;">Fill parameters and click Recommend →</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 3 — TORQUE CALCULATOR
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-calc">
+
+    <div class="formula-box">
+      T_rated = (P × 9550) / n &nbsp;|&nbsp; T_design = T_rated × K_s × K_a &nbsp;|&nbsp;
+      T_peak = T_design × K_peak &nbsp;|&nbsp; Check: T_design ≤ T_coupling_catalog
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Power & Speed</div>
+        <div class="field">
+          <label>Motor Power P <span>[kW]</span></label>
+          <input type="number" id="c-power" value="15" step="0.5" min="0.1">
+        </div>
+        <div class="field">
+          <label>Operating Speed n <span>[rpm]</span></label>
+          <input type="number" id="c-speed" value="1450" step="10" min="1">
+        </div>
+        <div class="field">
+          <label>Service Factor K_s (driver)</label>
+          <select id="c-ks">
+            <option value="1.0">1.0 — Turbine / motor smooth</option>
+            <option value="1.25">1.25 — AC motor normal start</option>
+            <option value="1.5" selected>1.5 — AC motor heavy start</option>
+            <option value="1.75">1.75 — Multi-cylinder engine</option>
+            <option value="2.0">2.0 — Single-cylinder engine</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Application Factor K_a (driven)</label>
+          <select id="c-ka">
+            <option value="1.0">1.0 — Centrifugal pump / fan</option>
+            <option value="1.25">1.25 — Screw conveyor / agitator</option>
+            <option value="1.5" selected>1.5 — Reciprocating pump</option>
+            <option value="1.75">1.75 — Ball mill / mixer</option>
+            <option value="2.0">2.0 — Jaw crusher / press</option>
+            <option value="2.5">2.5 — Hammers / presses heavy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Peak Load Factor K_peak</label>
+          <select id="c-kp">
+            <option value="1.5">1.5 — Normal startup</option>
+            <option value="2.0" selected>2.0 — Frequent start/stop</option>
+            <option value="2.5">2.5 — Occasional jam / overload</option>
+            <option value="3.0">3.0 — Crash / emergency stop</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Catalog Coupling Rating</div>
+        <div class="field">
+          <label>Coupling Type Selected</label>
+          <select id="c-type">
+            <option value="jaw">Jaw / Spider</option>
+            <option value="disc">Disc</option>
+            <option value="gear">Gear</option>
+            <option value="grid">Grid</option>
+            <option value="fluid">Fluid / Hydrodynamic</option>
+            <option value="tyre">Tyre / Donut</option>
+            <option value="oldham">Oldham</option>
+            <option value="bellows">Bellows</option>
+            <option value="rigid">Rigid Flanged</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Catalog Rated Torque T_catalog <span>[N·m]</span></label>
+          <input type="number" id="c-tcatalog" value="500" step="10" min="1">
+        </div>
+        <div class="field">
+          <label>Bore Diameter d <span>[mm — for shear stress check]</span></label>
+          <input type="number" id="c-bore" value="38" step="1" min="5">
+        </div>
+        <div class="field">
+          <label>Shaft Material Yield Strength S_y <span>[MPa]</span></label>
+          <select id="c-sy">
+            <option value="250">250 — EN8 / 080M40 (Carbon steel)</option>
+            <option value="310">310 — EN24 / 817M40</option>
+            <option value="370" selected>370 — C45 normalized</option>
+            <option value="500">500 — 42CrMo4 (alloy)</option>
+            <option value="700">700 — 42CrMo4 hardened</option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" onclick="calcTorque()">▶ Calculate</button>
+          <button class="btn btn-secondary" onclick="resetCalc()">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="calcResults" class="hidden">
+      <div class="section-label">Calculation Results</div>
+      <div class="result-grid" id="calcResultGrid"></div>
+      <div id="calcChecks" style="margin-top:16px;"></div>
+      <div id="calcVerdict" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 4 — USE-CASE MATRIX
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-matrix">
+    <div class="section-label">Coupling Selection Matrix — at a glance</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">
+      ● = Excellent &nbsp; ◑ = Moderate &nbsp; ○ = Poor / Not suitable
+    </p>
+    <div style="overflow-x:auto;">
+    <table class="matrix-table" id="matrixTable"></table>
+    </div>
+
+    <div class="section-label" style="margin-top:28px;">When to Use Which — Quick Guide</div>
+    <div class="grid-3" id="usecaseCards"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 5 — MANUFACTURERS
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-makes">
+    <div class="section-label">Global & Indian Coupling Manufacturers</div>
+    <div class="make-grid" id="makeGrid"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       TAB 6 — THEORY
+  ════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-theory">
+    <div class="grid-2">
+
+      <div>
+        <div class="theory-section">
+          <h3>🔩 What is a Coupling?</h3>
+          <p>A coupling is a mechanical element that connects two shafts to transmit rotary motion and torque. Unlike gears or belts, couplings are permanent connections (without intentional slip) and must accommodate shaft misalignment arising from manufacturing tolerances, thermal expansion, and settling under load.</p>
+          <ul>
+            <li>Primary function: torque transmission</li>
+            <li>Secondary: misalignment accommodation</li>
+            <li>Tertiary: vibration damping, overload protection, electrical isolation</li>
+          </ul>
+        </div>
+
+        <div class="theory-section">
+          <h3>📐 Types of Misalignment</h3>
+          <ul>
+            <li><b>Angular:</b> Shaft centerlines intersect at an angle. Common cause: soft foot, frame distortion.</li>
+            <li><b>Parallel / Lateral:</b> Shaft centerlines are parallel but offset. Hardest to eliminate by alignment.</li>
+            <li><b>Axial:</b> Relative axial movement (thermal growth). Critical for pumps connected to hot pipes.</li>
+            <li><b>Skew / Compound:</b> Combination of all. Real-world condition.</li>
+          </ul>
+          <div class="formula-box" style="margin-top:10px; font-size:12px;">
+            Angular misalignment: θ [°] &nbsp;|&nbsp; Parallel offset: δ [mm] &nbsp;|&nbsp; Axial: Δx [mm]
+          </div>
+        </div>
+
+        <div class="theory-section">
+          <h3>⚙️ Key Design Parameters</h3>
+          <ul>
+            <li><b>Rated Torque:</b> Continuous duty torque = (P × 9550) / n [N·m]</li>
+            <li><b>Design Torque:</b> Rated × service factor × app factor</li>
+            <li><b>Peak Torque:</b> Startup / jam load — check against max coupling rating</li>
+            <li><b>Torsional Stiffness (K_T):</b> Angular wind-up per N·m — critical for servo drives</li>
+            <li><b>Lateral Stiffness:</b> Reaction force per mm offset — loads bearings</li>
+            <li><b>Damping Factor:</b> Flexible elements dissipate vibration energy (elastomers)</li>
+          </ul>
+        </div>
+
+        <div class="theory-section">
+          <h3>🌡️ Thermal & Environmental</h3>
+          <ul>
+            <li>Elastomers degrade above 90–120°C (NBR), 150–180°C (Hytrel/polyurethane)</li>
+            <li>Gear couplings need oil lubrication — sealed type for clean environments</li>
+            <li>Disc couplings: all-metal, no lubrication, suit high temp and clean rooms</li>
+            <li>ATEX zones: use non-sparking materials, avoid metal-on-metal contact</li>
+            <li>Corrosive environments: SS disc, glass-fibre reinforced spiders</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="theory-section">
+          <h3>📊 Service Factor Guidelines (AGMA / ISO)</h3>
+          <table class="spec-table">
+            <tr><th>Driver</th><th>K_s</th></tr>
+            <tr><td>Electric motor (smooth)</td><td>1.0</td></tr>
+            <tr><td>Electric motor (DOL heavy)</td><td>1.25–1.5</td></tr>
+            <tr><td>Multi-cylinder engine</td><td>1.5–1.75</td></tr>
+            <tr><td>Single-cylinder engine</td><td>2.0–2.5</td></tr>
+            <tr><th>Driven Machine</th><th>K_a</th></tr>
+            <tr><td>Centrifugal pump / fan</td><td>1.0–1.25</td></tr>
+            <tr><td>Screw conveyor / agitator</td><td>1.25–1.5</td></tr>
+            <tr><td>Reciprocating pump</td><td>1.5–1.75</td></tr>
+            <tr><td>Ball mill / grinding</td><td>1.75–2.0</td></tr>
+            <tr><td>Crusher / press</td><td>2.0–2.5</td></tr>
+          </table>
+        </div>
+
+        <div class="theory-section">
+          <h3>🔬 Flexible Element Materials</h3>
+          <table class="spec-table">
+            <tr><th>Material</th><th>Max °C</th><th>Property</th></tr>
+            <tr><td>Nitrile NBR</td><td>100°C</td><td>Oil resistant, good damping</td></tr>
+            <tr><td>Polyurethane PU</td><td>120°C</td><td>High load capacity, wear resistant</td></tr>
+            <tr><td>Hytrel (PU ester)</td><td>150°C</td><td>High flex life, excellent fatigue</td></tr>
+            <tr><td>Neoprene CR</td><td>120°C</td><td>Weather/ozone resistant</td></tr>
+            <tr><td>Spring steel disc</td><td>400°C</td><td>Zero backlash, all-metal</td></tr>
+            <tr><td>Nylon grid</td><td>90°C</td><td>Shock absorb, metallic strength</td></tr>
+          </table>
+        </div>
+
+        <div class="theory-section">
+          <h3>🏗️ Installation & Alignment Best Practices</h3>
+          <ul>
+            <li>Always align shafts before coupling — coupling is NOT an alignment device</li>
+            <li>Soft foot check before alignment: all feet flat within 0.05 mm</li>
+            <li>Dial indicator / laser alignment to ≤0.05 mm TIR parallel, ≤0.05°/100 mm angular</li>
+            <li>Account for thermal growth (DBSE — Distance Between Shaft Ends) for disc/gear</li>
+            <li>Torque hub bolts to spec — over-torquing splits hubs; under-torquing causes fretting</li>
+            <li>Check flex element at every major maintenance (cracks, hardening, set)</li>
+            <li>Balance coupling if > 1500 rpm — especially grid and gear types</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+        apiKey: "AIzaSyAnM5WNhE7bZ0pX8eLnLYeR1XM2G6oPAdU",
+        authDomain: "personal-workspace-d39d0.firebaseapp.com",
+        projectId: "personal-workspace-d39d0",
+        appId: "1:452604878835:web:58eca163a927aa6d16fc86"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location.href = "../login.html"; // Redirect if not logged in
+        }
+        });
+    </script>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────
+const couplings = [
+  {
+    id:'rigid_flanged', name:'Rigid Flanged', icon:'🔩', tag:'rigid', tagLabel:'RIGID',
+    desc:'Two flanges bolted together. Zero misalignment tolerance.',
+    torqueRange:'High to very high (up to 1 MN·m)',
+    speedRange:'Up to 3000 rpm',
+    misalign:'None — shafts must be perfectly aligned',
+    damping:'None',
+    pros:['Maximum torque density','Simple, robust design','Low cost','Easy to inspect and dismantle'],
+    cons:['Zero misalignment tolerance','High bearing loads if misaligned','Rigid — transmits all vibration'],
+    apps:['Ship propeller shafts','Large turbine–generator sets','Mill drives with precision alignment'],
+    svgD: drawRigid,
+    makers:['Rexnord','Bibby Turboflex','Shreecon (India)']
+  },
+  {
+    id:'jaw', name:'Jaw / Spider', icon:'🕷️', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Two hubs with interleaved jaws grip a polyurethane or NBR spider element.',
+    torqueRange:'5–6500 N·m',
+    speedRange:'Up to 8000 rpm',
+    misalign:'Angular ±1°, Parallel 0.3 mm, Axial ±1 mm',
+    damping:'Good (spider shore 92A–98A)',
+    pros:['Fail-safe — operates even with failed spider','No lubrication','Electrically isolating','Compact, low cost'],
+    cons:['Spider wears — periodic replacement','Limited axial float','Not for high shock'],
+    apps:['Pump–motor sets','Compressors','Conveyor drives','Packaging machinery'],
+    svgD: drawJaw,
+    makers:['Lovejoy/Regal','KTR Rotex','Shreecon','Fenner','Renold']
+  },
+  {
+    id:'disc', name:'Disc / Diaphragm', icon:'💿', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Thin metallic disc packs (stainless steel) transmit torque in tension/compression. Zero backlash.',
+    torqueRange:'2–500,000 N·m',
+    speedRange:'Up to 25,000 rpm',
+    misalign:'Angular ±0.5°, Parallel 0.25 mm, Axial ±2 mm',
+    damping:'Low (metal-to-metal)',
+    pros:['Zero backlash — ideal for servo/CNC','No lubrication','High temp capable','Long service life'],
+    cons:['High lateral stiffness loads bearings','Sensitive to corrosion','More expensive than elastomeric'],
+    apps:['Servo drives','High-speed compressors','Gas turbines','CNC machine tools','Precision mixers'],
+    svgD: drawDisc,
+    makers:['KTR Radex-NC','Rexnord Thomas','Altra Bibby','Ruland','Enemac (India)']
+  },
+  {
+    id:'gear', name:'Gear Coupling', icon:'⚙️', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Internally toothed sleeve meshes with externally crowned gear teeth on hubs. High torque capacity.',
+    torqueRange:'500–10,000 kN·m',
+    speedRange:'Up to 6000 rpm',
+    misalign:'Angular ±1.5°, Parallel 0.5–1 mm',
+    damping:'Low',
+    pros:['Highest torque density','Compact for torque transmitted','Good misalignment','Proven heavy industry'],
+    cons:['Needs periodic lubrication (grease/oil)','Sliding contact wears','Sealed type preferred — greased'],
+    apps:['Rolling mills','Large fan drives','Mining haulage','Crane hoists','Large pump shafts'],
+    svgD: drawGear,
+    makers:['Rexnord','Bibby Turboflex','Altra Falk','Renold','Shreecon (India)']
+  },
+  {
+    id:'grid', name:'Grid (Spring Grid)', icon:'🌐', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Sinusoidal spring-steel grid interlocks in grooved hubs — progressive torsional spring rate.',
+    torqueRange:'100–150,000 N·m',
+    speedRange:'Up to 3600 rpm',
+    misalign:'Angular ±0.25°, Parallel 0.4 mm',
+    damping:'Excellent (progressive spring rate)',
+    pros:['Excellent shock absorption — non-linear spring','High overload capacity','Longer life than elastomeric in heavy shock'],
+    cons:['Needs grease lubrication','Two-piece cover for assembly','Heavier than equivalent jaw'],
+    apps:['Crushers','Ball mills','Diesel–pump sets','Industrial compressors','Mining'],
+    svgD: drawGrid,
+    makers:['Rexnord Falk','Lovejoy T10','Bibby Turboflex']
+  },
+  {
+    id:'fluid', name:'Fluid / Hydrodynamic', icon:'💧', tag:'fluid', tagLabel:'FLUID',
+    desc:'Oil-filled vaned impeller transmits torque via hydrodynamic coupling. Soft start, inherent overload slip.',
+    torqueRange:'50–20,000 kN·m',
+    speedRange:'Up to 3000 rpm',
+    misalign:'Low — needs rigid drive train',
+    damping:'Excellent — inherent slip',
+    pros:['Soft starter — protects motor','Inherent overload protection','Torsional vibration isolation','No mechanical wear on flex element'],
+    cons:['Slip losses (2–3%)','Oil leak risk','Heavy and large','Not zero-speed holding'],
+    apps:['Heavy conveyor belt drives','Fan / blower soft start','Crusher primary drives','Mine hoists'],
+    svgD: drawFluid,
+    makers:['Voith','Fluidomat (India)','Fenner Fluid Power','Reuland']
+  },
+  {
+    id:'tyre', name:'Tyre / Donut', icon:'🛞', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Reinforced rubber tyre element clamped between two flanges. High misalignment tolerance.',
+    torqueRange:'10–50,000 N·m',
+    speedRange:'Up to 1500 rpm',
+    misalign:'Angular ±4°, Parallel 3–5 mm, Axial ±5 mm',
+    damping:'Very good',
+    pros:['Highest misalignment of elastomeric types','Good vibration damping','Simple, failsafe','No lubrication'],
+    cons:['Low speed limitation','Tyre replacement requires hub separation','Larger OD for same torque'],
+    apps:['Diesel gensets','Crane drives','Concrete mixers','Rough terrain machinery','Agricultural equipment'],
+    svgD: drawTyre,
+    makers:['Fenner Quadraflex','Shreecon (India)','Baldor Dodge','Lovejoy']
+  },
+  {
+    id:'oldham', name:'Oldham / Slider', icon:'🔲', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Three-piece — two slotted hubs with perpendicular slots gripping a central disc. Pure parallel offset compensation.',
+    torqueRange:'Up to 2000 N·m',
+    speedRange:'Up to 5000 rpm',
+    misalign:'Parallel 0.5–3 mm, Angular negligible',
+    damping:'Low',
+    pros:['Constant velocity — no velocity ripple','Compensates parallel offset well','Zero backlash variants available','Electrically isolating'],
+    cons:['Cannot handle angular misalignment','Sliding wear on disc','Not for high loads'],
+    apps:['Linear actuator feedback','Pump–motor parallel offset','Printing registration','Medical equipment'],
+    svgD: drawOldham,
+    makers:['Ruland','Huco','Enemac','Servoflex']
+  },
+  {
+    id:'bellows', name:'Bellows', icon:'🪗', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Thin-wall metal bellows element. Zero backlash, torsionally stiff, highly flexible angularly and laterally.',
+    torqueRange:'0.05–3000 N·m',
+    speedRange:'Up to 15,000 rpm',
+    misalign:'Angular ±3°, Parallel 0.5 mm, Axial ±2 mm',
+    damping:'Very low (metal)',
+    pros:['Zero backlash','Torsionally very stiff — servo grade','High speed','No lubrication','Compact'],
+    cons:['Low torque capacity','Sensitive to axial overload','Expensive','Cannot handle shock loads'],
+    apps:['Servo motors / encoders','Stepper motor drives','Optical equipment','Medical robotics','High-speed spindles'],
+    svgD: drawBellows,
+    makers:['Ruland','KTR Radex-S','R+W Antriebselemente','Huco Dynatork']
+  },
+  {
+    id:'pin_bush', name:'Pin & Bush', icon:'📌', tag:'flex', tagLabel:'FLEXIBLE',
+    desc:'Steel pins through rubber bushes between two flanged hubs. Workhorse of Indian industry.',
+    torqueRange:'20–50,000 N·m',
+    speedRange:'Up to 3000 rpm',
+    misalign:'Angular ±0.5°, Parallel 0.3 mm, Axial ±3 mm',
+    damping:'Good',
+    pros:['Very robust and proven','Easy bush replacement','Low cost — widely stocked in India','Fail-safe'],
+    cons:['Larger OD than gear coupling','Bush wears — replace periodically','Moderate misalignment only'],
+    apps:['General industry India','Pump sets','Fans','Compressors','Conveyors'],
+    svgD: drawPinBush,
+    makers:['Shreecon','Fenner','Rathi (India)','Lovejoy','Standard Engineers India']
+  },
+  {
+    id:'schmidt', name:'Schmidt Offset', icon:'↔️', tag:'special', tagLabel:'SPECIAL',
+    desc:'Three-disc linkage mechanism. Transmits torque with constant velocity at large parallel offsets — even while running.',
+    torqueRange:'5–50,000 N·m',
+    speedRange:'Up to 3000 rpm',
+    misalign:'Parallel 0–250 mm adjustable',
+    damping:'Very low',
+    pros:['Continuous variable parallel offset while rotating','Constant velocity output','Precise position transmission'],
+    cons:['No angular or axial comp.','Complex, heavy, expensive','For specific offset applications only'],
+    apps:['Printing presses (roll-to-roll)','Paper machines','Packaging lines with moving heads'],
+    svgD: drawSchmidt,
+    makers:['Rexnord Schmidt','Renk AG']
+  },
+  {
+    id:'magneto', name:'Magnetic / Eddy Current', icon:'🧲', tag:'special', tagLabel:'SPECIAL',
+    desc:'Torque transmitted via magnetic field across an air gap — zero mechanical contact between driver and driven.',
+    torqueRange:'5–10,000 N·m',
+    speedRange:'Up to 3000 rpm',
+    misalign:'Up to 10 mm gap adjustment',
+    damping:'Inherent slip damping',
+    pros:['Zero contact — no wear','Vibration isolation','Inherent overload protection','No lubrication','Speed control via gap'],
+    cons:['Slip losses at low gap','Expensive','Heavy (permanent magnets/copper)','Sensitive to temperature'],
+    apps:['Pumps on variable flow duty','ATEX critical drives','Conveyor soft start','Marine drives'],
+    svgD: drawMagnetic,
+    makers:['Magnomatics','KTR EasyFlex Mag','Centa','Zero-Max']
+  }
+];
+
+const makes = [
+  { name:'KTR Kupplungstechnik', origin:'Germany 🇩🇪', badge:'badge-eu',
+    spec:'Market leader in jaw (Rotex), disc (Radex-NC), bellows, and tyre couplings. Strong servo/precision range. Wide bore range. ISO 9001.',
+    speciality:'Rotex jaw spider — industry benchmark for pump–motor sets globally.' },
+  { name:'Rexnord (Thomas/Falk)', origin:'USA 🇺🇸', badge:'badge-global',
+    spec:'Falk grid couplings for heavy industry (crushers, mills). Thomas disc for precision. Rexnord gear for steel/mining. Full heavy-industry range.',
+    speciality:'Falk Steelflex Grid — unmatched in shock-heavy mining/crushing applications.' },
+  { name:'Lovejoy / Regal Beloit', origin:'USA 🇺🇸', badge:'badge-global',
+    spec:'Jaw (L-type), Oldham, tyre, gear couplings. Broad catalog. Strong in HVAC, pump, conveyor. Good India availability.',
+    speciality:'L-jaw series — most widely used jaw coupling globally.' },
+  { name:'Fenner Drives / Fenner India', origin:'UK + India 🇬🇧🇮🇳', badge:'badge-india',
+    spec:'Pin & bush, tyre, grid, gear. Strong Indian manufacturing base (Ludhiana). Rubber products expertise. Widely stocked by Indian distributors.',
+    speciality:'Pin & bush couplings — #1 selling in India for pump-fan sets.' },
+  { name:'Shreecon Engineers', origin:'India 🇮🇳', badge:'badge-india',
+    spec:"India's largest coupling manufacturer (Rajkot). Flanged rigid, pin & bush, jaw, gear, tyre. ISO 9001. Cost-effective with reasonable quality.",
+    speciality:'Widest bore and torque range in Indian manufactured couplings.' },
+  { name:'Rathi Transpower', origin:'India 🇮🇳', badge:'badge-india',
+    spec:'Pin & bush, jaw, gear, tyre, fluid couplings. Manufacturing in Agra. Covers process industry and OEM market.',
+    speciality:'Fluid couplings (Fluidomat brand) — soft starters for conveyors & fans.' },
+  { name:'Bibby Turboflex / Altra', origin:'UK 🇬🇧', badge:'badge-eu',
+    spec:'Gear, disc, tyre, rigid couplings for power generation, marine, and heavy industry. High-torque specialist.',
+    speciality:'Turboflex disc and gear for gas turbine and generator sets.' },
+  { name:'R+W Antriebselemente', origin:'Germany 🇩🇪', badge:'badge-eu',
+    spec:'Bellows, disc, jaw servo couplings for motion control. Premium precision — CNC, robots, semiconductor. Zero backlash.',
+    speciality:'BK bellows — most precise servo coupling for torque sensor shafts.' },
+  { name:'Ruland Manufacturing', origin:'USA 🇺🇸', badge:'badge-global',
+    spec:'Bellows, disc, Oldham, beam, jaw — small-diameter precision couplings. Used in instrumentation, encoders, small servo.',
+    speciality:'Widest selection of small-diameter precision couplings.' },
+  { name:'Voith GmbH', origin:'Germany 🇩🇪', badge:'badge-eu',
+    spec:'Fluid (hydrodynamic) couplings — Turbo coupling. Used in heavy conveyor, mining, fan drives. Also Vorecon variable speed.',
+    speciality:'Hydrodynamic coupling — motor soft start and variable speed for large fans.' },
+  { name:'Renold Couplings', origin:'UK 🇬🇧', badge:'badge-eu',
+    spec:'Gear, grid, jaw, disc — wide industry range. Strong in food, mining, and marine. UK heritage brand.',
+    speciality:'Renold Hi-Tec Gear — precision gear coupling for steel mill roll drives.' },
+  { name:'Enemac GmbH', origin:'Germany 🇩🇪', badge:'badge-eu',
+    spec:'Precision disc, bellows, jaw, Oldham — automation and servo focus. Engineered-to-order capability.',
+    speciality:'EC disc couplings — engineered for dynamic servo with high torsional stiffness.' }
+];
+
+const matrixRows = [
+  'Angular Misalign',
+  'Parallel Misalign',
+  'Axial Tolerance',
+  'Shock Absorption',
+  'High Torque',
+  'High Speed',
+  'Zero Backlash',
+  'No Lubrication',
+  'High Temp (>120°C)',
+  'Low Cost',
+  'Elec. Isolation',
+  'Compact',
+  'Fail-safe'
+];
+
+// 5=excellent, 3=moderate, 1=poor
+const matrixData = {
+  //                  Ang Par Axl Shk HTq HSp ZBk NLu HTemp LCst Iso Cmp FSf
+  'Rigid Flanged':    [ 1,  1,  1,  1,  5,  3,  5,  5,  5,  5,  1,  4,  5 ],
+  'Jaw/Spider':       [ 3,  3,  3,  3,  2,  4,  1,  5,  1,  5,  5,  5,  5 ],
+  'Disc':             [ 3,  3,  4,  1,  5,  5,  5,  5,  5,  2,  1,  4,  3 ],
+  'Gear':             [ 4,  3,  2,  2,  5,  4,  3,  1,  4,  3,  1,  4,  4 ],
+  'Grid':             [ 2,  2,  2,  5,  5,  2,  2,  1,  2,  3,  1,  3,  4 ],
+  'Fluid/Hydro':      [ 1,  1,  1,  5,  5,  2,  1,  3,  2,  2,  1,  1,  5 ],
+  'Tyre/Donut':       [ 5,  5,  5,  4,  2,  2,  1,  5,  1,  4,  5,  2,  4 ],
+  'Oldham':           [ 1,  5,  1,  2,  2,  3,  4,  5,  2,  4,  5,  3,  3 ],
+  'Bellows':          [ 4,  3,  4,  1,  1,  5,  5,  5,  4,  1,  1,  5,  2 ],
+  'Pin & Bush':       [ 2,  2,  3,  4,  4,  3,  1,  5,  2,  5,  5,  3,  5 ],
+  'Magnetic':         [ 3,  3,  5,  5,  3,  3,  2,  5,  3,  1,  5,  2,  5 ],
+};
+
+// ─────────────────────────────────────────────────────────────────
+// SVG DRAW FUNCTIONS (schematic cross-sections)
+// ─────────────────────────────────────────────────────────────────
+function drawRigid() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="30" width="80" height="30" fill="#888" rx="2"/>
+    <rect x="85" y="20" width="30" height="50" fill="#555" rx="2"/>
+    <rect x="145" y="20" width="30" height="50" fill="#555" rx="2"/>
+    <rect x="175" y="30" width="80" height="30" fill="#888" rx="2"/>
+    <line x1="115" y1="35" x2="145" y2="35" stroke="#cc0000" stroke-width="2"/>
+    <line x1="115" y1="55" x2="145" y2="55" stroke="#cc0000" stroke-width="2"/>
+    <line x1="115" y1="40" x2="115" y2="50" stroke="#333" stroke-width="3"/>
+    <line x1="145" y1="40" x2="145" y2="50" stroke="#333" stroke-width="3"/>
+    <circle cx="130" cy="45" r="3" fill="#cc0000"/>
+    <text x="130" y="80" text-anchor="middle" font-size="9" fill="#666">FLANGED RIGID</text>
+  </svg>`;
+}
+function drawJaw() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="25" width="25" height="12" fill="#555" rx="2"/>
+    <rect x="75" y="53" width="25" height="12" fill="#555" rx="2"/>
+    <rect x="75" y="39" width="15" height="12" fill="#555" rx="2"/>
+    <ellipse cx="130" cy="45" rx="22" ry="22" fill="#f90" stroke="#b85c00" stroke-width="1.5"/>
+    <text x="130" y="49" text-anchor="middle" font-size="9" fill="#fff" font-weight="bold">PU</text>
+    <rect x="160" y="25" width="25" height="12" fill="#555" rx="2"/>
+    <rect x="160" y="53" width="25" height="12" fill="#555" rx="2"/>
+    <rect x="170" y="39" width="15" height="12" fill="#555" rx="2"/>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">JAW / SPIDER</text>
+  </svg>`;
+}
+function drawDisc() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="22" width="22" height="46" fill="#555" rx="2"/>
+    <rect x="163" y="22" width="22" height="46" fill="#555" rx="2"/>
+    <line x1="97" y1="30" x2="163" y2="30" stroke="#1a6496" stroke-width="2.5"/>
+    <line x1="97" y1="45" x2="163" y2="45" stroke="#1a6496" stroke-width="2.5"/>
+    <line x1="97" y1="60" x2="163" y2="60" stroke="#1a6496" stroke-width="2.5"/>
+    <circle cx="110" cy="30" r="3" fill="#cc0000"/>
+    <circle cx="150" cy="45" r="3" fill="#cc0000"/>
+    <circle cx="110" cy="60" r="3" fill="#cc0000"/>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">DISC PACK</text>
+  </svg>`;
+}
+function drawGear() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="28" width="20" height="34" fill="#555" rx="1"/>
+    <path d="M95 25 L95 65 Q130 70 165 65 L165 25 Q130 20 95 25Z" fill="#ddd" stroke="#aaa" stroke-width="1"/>
+    <rect x="165" y="28" width="20" height="34" fill="#555" rx="1"/>
+    <path d="M95 25 L165 25" stroke="#888" stroke-width="1" stroke-dasharray="4 2"/>
+    <path d="M95 65 L165 65" stroke="#888" stroke-width="1" stroke-dasharray="4 2"/>
+    <text x="130" y="48" text-anchor="middle" font-size="8" fill="#555">SLEEVE</text>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">GEAR COUPLING</text>
+  </svg>`;
+}
+function drawGrid() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="22" width="22" height="46" fill="#555" rx="2"/>
+    <rect x="163" y="22" width="22" height="46" fill="#555" rx="2"/>
+    <rect x="97" y="22" width="66" height="46" fill="#e8e8e8" stroke="#aaa"/>
+    <path d="M103 22 Q115 38 103 55 Q115 68 103 68" stroke="#b85c00" stroke-width="2" fill="none"/>
+    <path d="M113 22 Q125 38 113 55 Q125 68 113 68" stroke="#b85c00" stroke-width="2" fill="none"/>
+    <path d="M123 22 Q135 38 123 55 Q135 68 123 68" stroke="#b85c00" stroke-width="2" fill="none"/>
+    <path d="M133 22 Q145 38 133 55 Q145 68 133 68" stroke="#b85c00" stroke-width="2" fill="none"/>
+    <path d="M143 22 Q155 38 143 55 Q155 68 143 68" stroke="#b85c00" stroke-width="2" fill="none"/>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">SPRING GRID</text>
+  </svg>`;
+}
+function drawFluid() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="60" height="24" fill="#888" rx="2"/>
+    <ellipse cx="90" cy="45" rx="28" ry="34" fill="#e8f4fd" stroke="#1a6496" stroke-width="2"/>
+    <path d="M70 35 Q90 25 110 35" fill="#1a6496" opacity="0.3"/>
+    <path d="M70 55 Q90 65 110 55" fill="#1a6496" opacity="0.3"/>
+    <text x="90" y="48" text-anchor="middle" font-size="8" fill="#1a6496" font-weight="bold">OIL</text>
+    <ellipse cx="170" cy="45" rx="28" ry="34" fill="#e8f4fd" stroke="#1a6496" stroke-width="2"/>
+    <path d="M150 35 Q170 25 190 35" fill="#1a6496" opacity="0.3"/>
+    <path d="M150 55 Q170 65 190 55" fill="#1a6496" opacity="0.3"/>
+    <rect x="195" y="33" width="60" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">FLUID / HYDRO</text>
+  </svg>`;
+}
+function drawTyre() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="22" width="18" height="46" fill="#555" rx="2"/>
+    <ellipse cx="130" cy="45" rx="35" ry="30" fill="none" stroke="#333" stroke-width="14" opacity="0.8"/>
+    <ellipse cx="130" cy="45" rx="35" ry="30" fill="none" stroke="#666" stroke-width="6"/>
+    <rect x="167" y="22" width="18" height="46" fill="#555" rx="2"/>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">TYRE / DONUT</text>
+  </svg>`;
+}
+function drawOldham() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="65" height="24" fill="#888" rx="2"/>
+    <rect x="70" y="22" width="35" height="46" fill="#555" rx="2"/>
+    <rect x="79" y="43" width="17" height="8" fill="#ccc"/>
+    <rect x="113" y="22" width="35" height="46" fill="#ddd" stroke="#aaa" rx="2"/>
+    <rect x="113" y="29" width="35" height="8" fill="#ccc"/>
+    <rect x="113" y="53" width="35" height="8" fill="#ccc"/>
+    <rect x="148" y="22" width="35" height="46" fill="#555" rx="2"/>
+    <rect x="148" y="43" width="17" height="8" fill="#ccc"/>
+    <rect x="183" y="33" width="72" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">OLDHAM</text>
+  </svg>`;
+}
+function drawBellows() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <rect x="75" y="30" width="15" height="30" fill="#555" rx="2"/>
+    <path d="M90 35 Q100 28 110 35 Q120 42 130 35 Q140 28 150 35 Q160 42 170 35" stroke="#1a6496" stroke-width="2.5" fill="none"/>
+    <path d="M90 55 Q100 62 110 55 Q120 48 130 55 Q140 62 150 55 Q160 48 170 55" stroke="#1a6496" stroke-width="2.5" fill="none"/>
+    <rect x="170" y="30" width="15" height="30" fill="#555" rx="2"/>
+    <rect x="185" y="33" width="70" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">BELLOWS</text>
+  </svg>`;
+}
+function drawPinBush() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="68" height="24" fill="#888" rx="2"/>
+    <rect x="73" y="20" width="28" height="50" fill="#555" rx="2"/>
+    <circle cx="110" cy="35" r="7" fill="#f90" stroke="#b85c00" stroke-width="1.5"/>
+    <circle cx="110" cy="55" r="7" fill="#f90" stroke="#b85c00" stroke-width="1.5"/>
+    <line x1="110" y1="35" x2="150" y2="35" stroke="#444" stroke-width="3"/>
+    <line x1="110" y1="55" x2="150" y2="55" stroke="#444" stroke-width="3"/>
+    <circle cx="150" cy="35" r="7" fill="#f90" stroke="#b85c00" stroke-width="1.5"/>
+    <circle cx="150" cy="55" r="7" fill="#f90" stroke="#b85c00" stroke-width="1.5"/>
+    <rect x="159" y="20" width="28" height="50" fill="#555" rx="2"/>
+    <rect x="187" y="33" width="68" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">PIN &amp; BUSH</text>
+  </svg>`;
+}
+function drawSchmidt() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="38" width="55" height="14" fill="#888" rx="2"/>
+    <circle cx="75" cy="45" r="18" fill="none" stroke="#555" stroke-width="10"/>
+    <circle cx="130" cy="40" r="18" fill="none" stroke="#1a6496" stroke-width="6"/>
+    <circle cx="185" cy="45" r="18" fill="none" stroke="#555" stroke-width="10"/>
+    <line x1="75" y1="45" x2="130" y2="40" stroke="#cc0000" stroke-width="2"/>
+    <line x1="130" y1="40" x2="185" y2="45" stroke="#cc0000" stroke-width="2"/>
+    <rect x="200" y="38" width="55" height="14" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">SCHMIDT OFFSET</text>
+  </svg>`;
+}
+function drawMagnetic() {
+  return `<svg viewBox="0 0 260 90" width="260" height="90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="5" y="33" width="68" height="24" fill="#888" rx="2"/>
+    <rect x="73" y="20" width="30" height="50" fill="#555" rx="2"/>
+    <rect x="103" y="28" width="22" height="34" fill="#cc0000" rx="2" opacity="0.7"/>
+    <rect x="135" y="28" width="22" height="34" fill="#1a6496" rx="2" opacity="0.7"/>
+    <line x1="125" y1="30" x2="135" y2="30" stroke="#f90" stroke-width="2" stroke-dasharray="3 2"/>
+    <line x1="125" y1="45" x2="135" y2="45" stroke="#f90" stroke-width="3" stroke-dasharray="3 2"/>
+    <line x1="125" y1="60" x2="135" y2="60" stroke="#f90" stroke-width="2" stroke-dasharray="3 2"/>
+    <text x="130" y="24" text-anchor="middle" font-size="8" fill="#b85c00">AIR GAP</text>
+    <rect x="157" y="20" width="30" height="50" fill="#555" rx="2"/>
+    <rect x="187" y="33" width="68" height="24" fill="#888" rx="2"/>
+    <text x="130" y="82" text-anchor="middle" font-size="9" fill="#666">MAGNETIC</text>
+  </svg>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB SWITCHING
+// ─────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes(`'${id}'`));
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`tab-${id}`).classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1 — RENDER COUPLING CARDS
+// ─────────────────────────────────────────────────────────────────
+function renderCouplings() {
+  const grid = document.getElementById('couplingGrid');
+  grid.innerHTML = couplings.map(c => `
+    <div class="coupling-card" id="cc-${c.id}" onclick="selectCoupling('${c.id}')">
+      <div class="cc-check">✓</div>
+      <div class="cc-icon">${c.icon}</div>
+      <div class="cc-name">${c.name}</div>
+      <span class="cc-tag tag-${c.tag}">${c.tagLabel}</span>
+      <div class="cc-desc">${c.desc}</div>
+    </div>
+  `).join('');
+}
+
+let selectedCoupling = null;
+function selectCoupling(id) {
+  document.querySelectorAll('.coupling-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('cc-' + id);
+  const detail = document.getElementById('couplingDetail');
+  if (selectedCoupling === id) {
+    selectedCoupling = null;
+    detail.style.display = 'none';
+    return;
+  }
+  selectedCoupling = id;
+  card.classList.add('selected');
+  detail.style.display = 'block';
+  const c = couplings.find(x => x.id === id);
+  document.getElementById('detailTitle').textContent = c.icon + '  ' + c.name + ' Coupling — Technical Detail';
+  document.getElementById('detailContent').innerHTML = `
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div>
+        <div class="coupling-svg-wrap">${c.svgD()}</div>
+        <table class="spec-table">
+          <tr><th colspan="2">Key Parameters</th></tr>
+          <tr><td>Torque Range</td><td>${c.torqueRange}</td></tr>
+          <tr><td>Speed Range</td><td>${c.speedRange}</td></tr>
+          <tr><td>Misalignment</td><td>${c.misalign}</td></tr>
+          <tr><td>Damping</td><td>${c.damping}</td></tr>
+        </table>
+      </div>
+      <div>
+        <div style="margin-bottom:12px;">
+          <div class="card-title" style="font-size:12px;">✅ Advantages</div>
+          <ul style="font-size:13px; line-height:1.9; padding-left:18px; color:var(--green);">
+            ${c.pros.map(p => `<li>${p}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="card-title" style="font-size:12px; border-color:var(--accent2);">⚠️ Limitations</div>
+          <ul style="font-size:13px; line-height:1.9; padding-left:18px; color:var(--accent2);">
+            ${c.cons.map(p => `<li>${p}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <div class="card-title" style="font-size:12px; border-color:var(--accent3);">🏭 Typical Applications</div>
+          <ul style="font-size:13px; line-height:1.9; padding-left:18px; color:var(--accent3);">
+            ${c.apps.map(a => `<li>${a}</li>`).join('')}
+          </ul>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="card-title" style="font-size:12px;">🏷️ Key Manufacturers</div>
+          <div style="font-size:13px; color:var(--text-dim);">${c.makers.join(' &nbsp;·&nbsp; ')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2 — SMART SELECTOR
+// ─────────────────────────────────────────────────────────────────
+function runSelector() {
+  const misalign = document.getElementById('s-misalign').value;
+  const shock    = document.getElementById('s-shock').value;
+  const torque   = document.getElementById('s-torque').value;
+  const speed    = document.getElementById('s-speed').value;
+  const iso      = document.getElementById('s-iso').value;
+  const torsion  = document.getElementById('s-torsion').value;
+  const space    = document.getElementById('s-space').value;
+  const env      = document.getElementById('s-env').value;
+
+  let scores = {};
+  couplings.forEach(c => scores[c.id] = 0);
+
+  // Misalignment
+  if (misalign === 'none') { add(['rigid_flanged','disc','bellows'], 3); }
+  if (misalign === 'angular') { add(['gear','tyre','jaw','pin_bush'], 4); add(['disc','bellows'], 2); }
+  if (misalign === 'parallel') { add(['tyre','oldham','schmidt'], 5); add(['jaw','pin_bush'], 2); }
+  if (misalign === 'axial') { add(['tyre','bellows','disc','gear'], 4); add(['jaw','pin_bush'], 2); }
+  if (misalign === 'combined') { add(['tyre','gear'], 5); add(['jaw','pin_bush'], 3); add(['fluid','magneto'], 2); }
+
+  // Shock
+  if (shock === 'none') { add(['rigid_flanged','disc','bellows','oldham'], 3); }
+  if (shock === 'light') { add(['jaw','pin_bush','tyre'], 3); }
+  if (shock === 'moderate') { add(['grid','pin_bush','tyre','fluid'], 4); add(['jaw'], 2); }
+  if (shock === 'heavy') { add(['grid','fluid','magneto'], 5); add(['tyre','pin_bush'], 3); }
+
+  // Torque
+  if (torque === 'low') { add(['jaw','bellows','oldham','disc'], 3); }
+  if (torque === 'medium') { add(['jaw','disc','gear','pin_bush','tyre'], 3); }
+  if (torque === 'high') { add(['gear','grid','rigid_flanged','fluid'], 4); }
+  if (torque === 'veryhigh') { add(['gear','fluid','rigid_flanged','grid'], 5); }
+
+  // Speed
+  if (speed === 'low') { add(['tyre','fluid','gear','grid','rigid_flanged'], 2); }
+  if (speed === 'medium') { add(['jaw','disc','pin_bush','gear'], 3); }
+  if (speed === 'high') { add(['disc','bellows','jaw'], 4); add(['gear'], 2); }
+  if (speed === 'veryhigh') { add(['disc','bellows'], 5); }
+
+  // Isolation
+  if (iso === 'yes') { add(['jaw','tyre','pin_bush','oldham','magneto'], 4); penalize(['rigid_flanged','gear','disc','bellows','grid'], 3); }
+
+  // Torsion
+  if (torsion === 'yes') { add(['disc','bellows','rigid_flanged'], 4); penalize(['jaw','tyre','pin_bush','fluid','magneto','grid'], 3); }
+
+  // Space
+  if (space === 'compact') { add(['jaw','disc','bellows','oldham'], 2); }
+  if (space === 'large_bore') { add(['gear','grid','fluid','rigid_flanged'], 2); }
+
+  // Env
+  if (env === 'hightemp') { add(['disc','gear','rigid_flanged','bellows'], 3); penalize(['jaw','tyre','pin_bush'], 3); }
+  if (env === 'wet') { add(['tyre','pin_bush'], 2); penalize(['grid','gear'], 2); }
+  if (env === 'explosive') { add(['magneto','tyre','pin_bush'], 3); penalize(['rigid_flanged'], 2); }
+
+  function add(ids, pts) { ids.forEach(id => { if(scores[id] !== undefined) scores[id] += pts; }); }
+  function penalize(ids, pts) { ids.forEach(id => { if(scores[id] !== undefined) scores[id] -= pts; }); }
+
+  const ranked = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+  const top = ranked[0][0];
+  const topC = couplings.find(c => c.id === top);
+  const alts = ranked.slice(1,3).map(r => couplings.find(c => c.id === r[0])?.name).filter(Boolean);
+
+  document.getElementById('selectorResult').innerHTML = `
+    <div class="recommendation-box">
+      <div class="rec-title">⭐ Recommended Coupling</div>
+      <div class="rec-coupling">${topC.icon} ${topC.name}</div>
+      <span class="cc-tag tag-${topC.tag}" style="display:inline-block;margin-bottom:10px;">${topC.tagLabel}</span>
+      <div class="rec-reason">
+        <b>Torque range:</b> ${topC.torqueRange}<br>
+        <b>Speed range:</b> ${topC.speedRange}<br>
+        <b>Misalignment:</b> ${topC.misalign}<br>
+        <b>Damping:</b> ${topC.damping}<br><br>
+        <b>Top applications:</b> ${topC.apps.slice(0,3).join(', ')}
+      </div>
+      <div class="rec-alts">▸ Also consider: ${alts.join(', ')}</div>
+    </div>
+    <div class="verdict-box" style="margin-top:12px; border-color:var(--accent3); background:#e8f4fd;">
+      📐 Always verify: design torque ≤ catalog rating of selected coupling size. Go to <b>Tab ③</b> to calculate.
+    </div>
+  `;
+}
+
+function resetSelector() {
+  ['s-misalign','s-shock','s-torque','s-speed','s-iso','s-torsion','s-space','s-env']
+    .forEach(id => document.getElementById(id).selectedIndex = 0);
+  document.getElementById('selectorResult').innerHTML = '<p style="color:var(--text-dim); font-size:13px;">Fill parameters and click Recommend →</p>';
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3 — TORQUE CALCULATOR
+// ─────────────────────────────────────────────────────────────────
+function calcTorque() {
+  const P    = parseFloat(document.getElementById('c-power').value);
+  const n    = parseFloat(document.getElementById('c-speed').value);
+  const Ks   = parseFloat(document.getElementById('c-ks').value);
+  const Ka   = parseFloat(document.getElementById('c-ka').value);
+  const Kp   = parseFloat(document.getElementById('c-kp').value);
+  const Tcat = parseFloat(document.getElementById('c-tcatalog').value);
+  const d    = parseFloat(document.getElementById('c-bore').value);
+  const Sy   = parseFloat(document.getElementById('c-sy').value);
+
+  if (!P||!n||!Tcat||!d) return;
+
+  const T_rated  = (P * 9550) / n;
+  const T_design = T_rated * Ks * Ka;
+  const T_peak   = T_design * Kp;
+  const util     = (T_design / Tcat) * 100;
+  const util_peak = (T_peak / Tcat) * 100;
+
+  // Shaft shear stress check (solid shaft)
+  const r = d / 2; // mm
+  const Zp = Math.PI * Math.pow(d, 3) / 16; // mm^3 polar section modulus
+  const tau_design = (T_design * 1000) / Zp; // N/mm² = MPa  (T in N·m → × 1000 → N·mm)
+  const tau_peak   = (T_peak * 1000) / Zp;
+  const tau_allow  = Sy * 0.577 / 2; // Von Mises / 2 for some factor of safety ≈ 0.289 Sy
+
+  const ok_design = T_design <= Tcat;
+  const ok_peak   = T_peak <= Tcat * 1.5;
+  const ok_shear  = tau_design <= tau_allow;
+
+  document.getElementById('calcResults').classList.remove('hidden');
+  document.getElementById('calcResultGrid').innerHTML = `
+    <div class="result-item good">
+      <div class="r-label">Rated Torque T_rated</div>
+      <div class="r-value">${T_rated.toFixed(1)}</div>
+      <div class="r-unit">N·m</div>
+    </div>
+    <div class="result-item ${ok_design?'good':'highlight'}">
+      <div class="r-label">Design Torque T_design</div>
+      <div class="r-value">${T_design.toFixed(1)}</div>
+      <div class="r-unit">N·m = T_rated × ${Ks} × ${Ka}</div>
+    </div>
+    <div class="result-item ${ok_peak?'warn':'highlight'}">
+      <div class="r-label">Peak Torque T_peak</div>
+      <div class="r-value">${T_peak.toFixed(1)}</div>
+      <div class="r-unit">N·m = T_design × ${Kp}</div>
+    </div>
+    <div class="result-item ${ok_design?'good':'highlight'}">
+      <div class="r-label">Catalog Utilization</div>
+      <div class="r-value">${util.toFixed(1)}</div>
+      <div class="r-unit">%  of ${Tcat} N·m catalog</div>
+    </div>
+    <div class="result-item ${ok_shear?'good':'highlight'}">
+      <div class="r-label">Shaft Shear Stress τ</div>
+      <div class="r-value">${tau_design.toFixed(1)}</div>
+      <div class="r-unit">MPa (allow: ${tau_allow.toFixed(0)} MPa)</div>
+    </div>
+    <div class="result-item">
+      <div class="r-label">Safety Factor (catalog)</div>
+      <div class="r-value">${(Tcat / T_design).toFixed(2)}</div>
+      <div class="r-unit">T_catalog / T_design</div>
+    </div>
+  `;
+
+  function pct(v, mx) { return Math.min(100, (v/mx)*100).toFixed(0); }
+
+  document.getElementById('calcChecks').innerHTML = `
+    <div class="section-label">Design Checks</div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>T_design ≤ T_catalog (continuous duty)</span>
+        <span style="color:${ok_design?'var(--green)':'var(--red)'};">${T_design.toFixed(0)} N·m ${ok_design?'≤':'>'} ${Tcat} N·m &nbsp; ${ok_design?'✓':'✗ OVERLOADED'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${ok_design?'bar-good':'bar-bad'}" style="width:${pct(T_design, Tcat*1.2)}%;"></div></div>
+    </div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>T_peak ≤ 1.5 × T_catalog (momentary peak)</span>
+        <span style="color:${ok_peak?'var(--green)':'var(--red)'};">${T_peak.toFixed(0)} N·m ${ok_peak?'≤':'>'} ${(Tcat*1.5).toFixed(0)} N·m &nbsp; ${ok_peak?'✓':'✗ PEAK OVERLOADED'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${ok_peak?'bar-warn':'bar-bad'}" style="width:${pct(T_peak, Tcat*1.5*1.2)}%;"></div></div>
+    </div>
+    <div class="criteria-row">
+      <div class="cr-label">
+        <span>Shaft shear stress τ ≤ 0.289 Sy (Von Mises, SF≈2)</span>
+        <span style="color:${ok_shear?'var(--green)':'var(--red)'};">${tau_design.toFixed(1)} MPa ${ok_shear?'≤':'>'} ${tau_allow.toFixed(0)} MPa &nbsp; ${ok_shear?'✓':'✗ SHAFT OVERSTRESSED'}</span>
+      </div>
+      <div class="cr-bar-bg"><div class="cr-bar-fill ${ok_shear?'bar-good':'bar-bad'}" style="width:${pct(tau_design, tau_allow*1.2)}%;"></div></div>
+    </div>
+  `;
+
+  const allOk = ok_design && ok_peak && ok_shear;
+  const issues = [];
+  if (!ok_design) issues.push('Design torque exceeds catalog rating — select next larger coupling size');
+  if (!ok_peak)   issues.push('Peak torque too high — use higher K_p rated coupling or add torque limiter');
+  if (!ok_shear)  issues.push('Shaft shear stress too high — increase bore diameter or use higher strength material');
+
+  document.getElementById('calcVerdict').innerHTML = `
+    <div class="verdict-box ${allOk?'':'bad'}">
+      ${allOk
+        ? `✅ All checks pass. Coupling rated for duty. Safety factor = ${(Tcat/T_design).toFixed(2)}× on design torque.`
+        : '⚠️ Design issues:<br>' + issues.map(i => `• ${i}`).join('<br>')
+      }
+    </div>
+    <div class="verdict-box" style="margin-top:10px; border-color:var(--accent3); background:#e8f4fd;">
+      📐 Note: Always cross-verify bore capacity, keyway effect (Kt≈1.3–2), and coupling catalog misalignment rating against actual installed alignment.
+    </div>
+  `;
+}
+
+function resetCalc() {
+  document.getElementById('calcResults').classList.add('hidden');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4 — USE-CASE MATRIX
+// ─────────────────────────────────────────────────────────────────
+function renderMatrix() {
+  const cnames = Object.keys(matrixData);
+  const dot = v => v === 5 ? '<span class="dot-5">●</span>' : v === 3 ? '<span class="dot-3">◑</span>' : '<span class="dot-1">○</span>';
+
+  let html = '<thead><tr><th>Feature</th>' + cnames.map(n => `<th style="font-size:10px;">${n}</th>`).join('') + '</tr></thead><tbody>';
+  matrixRows.forEach((row, ri) => {
+    html += `<tr><td class="feat-label">${row}</td>`;
+    cnames.forEach(cn => {
+      html += `<td>${dot(matrixData[cn][ri])}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('matrixTable').innerHTML = html;
+
+  // Use-case cards
+  const usecases = [
+    { icon:'⚡', title:'Servo / CNC / Encoder', best:'Bellows or Disc', why:'Zero backlash, torsionally stiff. Any windup causes position error.' },
+    { icon:'🔥', title:'High Temp / Clean Room', best:'Disc or Gear', why:'All-metal — no elastomers to degrade. Disc needs no lubrication.' },
+    { icon:'💥', title:'Heavy Shock (Crusher / Mill)', best:'Grid or Fluid', why:'Progressive spring rate of grid absorbs impulse. Fluid provides inherent slip protection.' },
+    { icon:'🔄', title:'Diesel-Gen / Reciprocating', best:'Tyre or Pin & Bush', why:'High angular misalignment tolerance + good vibration damping to isolate torque pulses.' },
+    { icon:'🏭', title:'General Indian Industry', best:'Pin & Bush or Jaw', why:'Widest availability, low cost, proven reliability, maintainable anywhere in India.' },
+    { icon:'📦', title:'Large Parallel Offset', best:'Oldham or Schmidt', why:'Constant velocity transmission at lateral offset — other couplings create velocity ripple.' },
+    { icon:'⚓', title:'Large / Mine / Mill Drives', best:'Gear Coupling', why:'Highest torque density, proven in steel/mining globally, accessible gear for inspection.' },
+    { icon:'🧲', title:'ATEX / Variable Speed', best:'Magnetic Coupling', why:'Zero mechanical contact — no sparks, inherent overload slip, variable speed via gap.' },
+    { icon:'🚢', title:'Ship / Turbine Shaft', best:'Rigid Flanged', why:'Perfect alignment achievable in controlled assembly. Max torque density, simplest.' }
+  ];
+
+  document.getElementById('usecaseCards').innerHTML = usecases.map(u => `
+    <div class="card" style="padding:16px;">
+      <div style="font-size:22px; margin-bottom:8px;">${u.icon}</div>
+      <div style="font-size:13px; font-weight:700; color:#222; margin-bottom:6px;">${u.title}</div>
+      <div style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:6px;">▸ ${u.best}</div>
+      <div style="font-size:12px; color:var(--text-dim); line-height:1.6;">${u.why}</div>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 5 — MANUFACTURERS
+// ─────────────────────────────────────────────────────────────────
+function renderMakes() {
+  document.getElementById('makeGrid').innerHTML = makes.map(m => `
+    <div class="make-card">
+      <div class="mk-name">${m.name}</div>
+      <div class="mk-origin">${m.origin}</div>
+      <span class="mk-badge ${m.badge}">${m.badge === 'badge-india' ? 'Indian Make' : m.badge === 'badge-eu' ? 'European' : 'Global'}</span>
+      <div class="mk-spec">${m.spec}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--accent3); border-top:1px solid #eee; padding-top:8px;">
+        ⭐ ${m.speciality}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────
+renderCouplings();
+renderMatrix();
+renderMakes();
+</script>
+</body>
+</html>
