@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solid Edge Command Reference</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f4f4f4; --panel:#ffffff; --panel2:#f9f9f9; --border:#cccccc;
+  --accent:#cc0000; --accent2:#b85c00; --accent3:#1a6496;
+  --text:#333333; --text-dim:#666666;
+  --green:#2d6a2d; --green-bg:#eaf4ea; --red:#cc0000; --red-bg:#fdecea; --warn-bg:#fff8f2;
+  --font-body:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  --font-mono:'Courier New',Courier,monospace;
+  --se:#005EB8;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+
+.top-navbar {
+  position:fixed; top:0; width:100%; background:#222; color:#fff;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 20px; z-index:1000; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.navbar-left { font-size:18px; font-weight:bold; display:flex; align-items:center; gap:10px; }
+.navbar-left .se-badge { background:#005EB8; color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:3px; letter-spacing:1px; }
+.navbar-right button { background:#444; color:#fff; border:none; padding:7px 14px; cursor:pointer; font-size:13px; border-radius:3px; }
+.navbar-right button:hover { background:#005EB8; }
+
+.container { max-width:1280px; margin:72px auto 40px; padding:20px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.1); border-radius:12px; }
+@media(max-width:768px){.container{margin:80px 10px 20px;padding:15px;}}
+
+.tabs { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:20px; border-bottom:2px solid #ccc; padding:0; }
+.tab-btn { background:#eee; color:#444; border:1px solid #ccc; border-bottom:none; padding:8px 14px; cursor:pointer; font-size:13px; border-radius:6px 6px 0 0; font-family:var(--font-body); transition:background .2s; }
+.tab-btn:hover:not(.active){background:#ddd;color:#222;}
+.tab-btn.active{background:#fff;color:#222;font-weight:bold;border-bottom:2px solid #fff;margin-bottom:-2px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+.card-title{font-size:13px;font-weight:bold;color:#222;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--accent);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px;}
+
+.section-label{font-size:12px;font-weight:bold;color:#444;text-transform:uppercase;letter-spacing:1px;margin:20px 0 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #ddd;padding-bottom:6px;}
+
+.search-bar{display:flex;gap:10px;margin-bottom:16px;}
+.search-bar input{flex:1;padding:10px 14px;border:1px solid #ccc;border-radius:4px;font-size:14px;font-family:var(--font-body);outline:none;}
+.search-bar input:focus{border-color:var(--se);box-shadow:0 0 0 2px rgba(0,94,184,0.1);}
+
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.filter-btn{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;border:1px solid #ccc;background:#fff;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.3px;}
+.filter-btn:hover{border-color:#999;}
+.filter-btn.active-f{background:#222;color:#fff;border-color:#222;}
+
+/* Command cards */
+.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.cmd-card{background:#fafafa;border:1px solid var(--border);border-radius:6px;padding:16px;cursor:pointer;transition:all .2s;position:relative;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.cmd-card:hover{border-color:#999;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.12);}
+.cmd-card.selected{border-color:var(--se);background:#f0f5ff;border-left:4px solid var(--se);}
+.cmd-card .cc-cmd{font-family:var(--font-body);font-size:14px;font-weight:700;color:var(--se);margin-bottom:4px;}
+.cmd-card .cc-ribbon{font-size:11px;color:var(--text-dim);margin-bottom:6px;}
+.cmd-card .cc-desc{font-size:12px;color:var(--text-dim);line-height:1.5;}
+.cmd-card .cc-cat{display:inline-block;margin-top:8px;font-size:10px;font-weight:bold;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid #ccc;}
+.cmd-card .cc-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;background:var(--se);display:none;place-items:center;font-size:11px;color:#fff;}
+.cmd-card.selected .cc-check{display:grid;}
+
+/* Category colours */
+.cat-sketch{background:#e8f4fd;color:#1a6496;border-color:#b8d8ee;}
+.cat-part{background:#fdecea;color:#9b2c2c;border-color:#f0b8b8;}
+.cat-assembly{background:#fefce8;color:#7a6000;border-color:#ddd09a;}
+.cat-drawing{background:var(--green-bg);color:var(--green);border-color:#b0d4b0;}
+.cat-sheetmetal{background:#f3f0ff;color:#4a3d8f;border-color:#c8c0f0;}
+.cat-surface{background:#fff0f6;color:#862e6e;border-color:#e8b4d4;}
+.cat-simulate{background:#fff8f2;color:#7a3500;border-color:#f0c8a0;}
+.cat-manage{background:#f5f5f5;color:#555;border-color:#bbb;}
+
+/* Detail panel */
+#cmdDetail{margin-top:20px;display:none;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr;}}
+
+.prompt-step{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;padding:10px 14px;background:#f9f9f9;border:1px solid #e8e8e8;border-radius:6px;border-left:3px solid var(--se);}
+.step-num{min-width:24px;height:24px;border-radius:50%;background:var(--se);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-content{flex:1;}
+.step-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-dim);margin-bottom:3px;}
+.step-text{font-size:13px;color:var(--text);}
+.step-input{display:inline-block;background:#fff;border:1px solid #ccc;border-radius:3px;padding:2px 8px;font-family:var(--font-mono);font-size:13px;color:var(--se);font-weight:700;margin-top:2px;}
+
+.option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.opt-pill{padding:3px 10px;border-radius:3px;font-size:11px;font-weight:700;background:#e8f4fd;color:#1a6496;border:1px solid #b8d8ee;cursor:default;}
+.opt-pill.key{background:#222;color:#fff;border-color:#222;}
+
+.spec-table{border-collapse:collapse;width:100%;font-size:13px;margin-top:10px;}
+.spec-table th{background:#f2f2f2;font-weight:bold;color:var(--accent);padding:7px 10px;border:1px solid #ccc;text-align:left;}
+.spec-table td{border:1px solid #ccc;padding:6px 10px;}
+.spec-table tr:nth-child(even){background:#fafafa;}
+.spec-table .sv-name{font-family:var(--font-mono);color:var(--se);font-weight:700;}
+.spec-table .sv-val{font-family:var(--font-mono);color:var(--accent2);}
+
+.qref-table{border-collapse:collapse;width:100%;font-size:13px;}
+.qref-table th{background:#222;color:#fff;padding:8px 12px;border:1px solid #444;text-align:left;font-size:12px;}
+.qref-table td{border:1px solid #ddd;padding:7px 12px;}
+.qref-table tr:nth-child(even){background:#fafafa;}
+.qref-table .cmd-mono{font-weight:700;color:var(--se);font-size:14px;}
+.qref-table .ribbon-mono{font-size:11px;color:var(--accent2);}
+
+.tip-box{background:#f2f2f2;border:1px solid #ddd;border-left:4px solid var(--se);border-radius:0 4px 4px 0;padding:10px 14px;font-size:13px;color:var(--se);margin-bottom:12px;line-height:1.8;}
+
+.wf-step{padding:16px 18px;border-radius:6px;border:1px solid var(--border);background:#fafafa;margin-bottom:12px;border-left:4px solid var(--se);}
+.wf-step .wf-num{font-size:11px;font-weight:700;color:var(--se);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.wf-step .wf-title{font-size:14px;font-weight:700;color:#222;margin-bottom:6px;}
+.wf-step .wf-body{font-size:13px;color:var(--text-dim);line-height:1.7;}
+
+.rec-box{margin-top:20px;padding:18px;border-radius:8px;border:2px solid var(--se);background:#f0f5ff;}
+.rec-box .rec-title{font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;color:var(--se);margin-bottom:12px;}
+.rec-name{font-size:20px;font-weight:700;color:#222;margin-bottom:6px;}
+
+.field{margin-bottom:14px;}
+.field label{display:block;margin-bottom:5px;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.field select,.field input{width:100%;background:#fff;border:1px solid #ccc;color:var(--text);font-family:var(--font-body);font-size:13px;padding:8px 10px;border-radius:4px;outline:none;}
+.field select:focus,.field input:focus{border-color:var(--se);}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;font-family:var(--font-body);font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:4px;transition:all .2s;}
+.btn-primary{background:var(--se);color:#fff;}
+.btn-primary:hover{background:#004a99;}
+.btn-secondary{background:#eee;color:#444;border:1px solid #ccc;}
+.btn-secondary:hover{background:#ddd;}
+
+.env-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase;margin-bottom:6px;}
+.env-part{background:#fdecea;color:#9b2c2c;border:1px solid #f0b8b8;}
+.env-asm{background:#fefce8;color:#7a6000;border:1px solid #ddd09a;}
+.env-drw{background:var(--green-bg);color:var(--green);border:1px solid #b0d4b0;}
+.env-skt{background:#e8f4fd;color:#1a6496;border:1px solid #b8d8ee;}
+.env-smt{background:#f3f0ff;color:#4a3d8f;border:1px solid #c8c0f0;}
+.env-all{background:#f5f5f5;color:#555;border:1px solid #bbb;}
+
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:#f0f0f0;}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<nav class="top-navbar">
+  <div class="navbar-left">
+    <span class="se-badge">Solid Edge</span>
+    Command Reference &amp; Workflow Guide
+  </div>
+  <div class="navbar-right">
+    <button onclick="window.print()">🖨 Print</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('library')">① Command Library</button>
+    <button class="tab-btn" onclick="switchTab('quickref')">② Quick Reference</button>
+    <button class="tab-btn" onclick="switchTab('workflows')">③ Workflows</button>
+    <button class="tab-btn" onclick="switchTab('settings')">④ Options &amp; Settings</button>
+    <button class="tab-btn" onclick="switchTab('shortcuts')">⑤ Shortcuts &amp; Mouse</button>
+    <button class="tab-btn" onclick="switchTab('tips')">⑥ Tips &amp; Best Practices</button>
+  </div>
+
+  <!-- ═══ TAB 1 — COMMAND LIBRARY ════════════════════════════ -->
+  <div class="tab-panel active" id="tab-library">
+    <div class="tip-box">Solid Edge uses a <strong>Ribbon UI</strong>. Commands are accessed via Tab → Group → Button. Keyboard shortcuts and right-click menus are faster for frequent commands. Environment (Part / Assembly / Drawing / Sheet Metal) determines available commands.</div>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="🔍  Search command name, ribbon path, or description…" oninput="filterCommands()">
+    </div>
+    <div class="filter-bar" id="catFilterBar"></div>
+    <div class="cmd-grid" id="cmdGrid"></div>
+    <div class="card" id="cmdDetail" style="margin-top:20px;display:none;">
+      <div class="card-title" id="cmdDetailTitle">Command Detail</div>
+      <div id="cmdDetailContent"></div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2 — QUICK REFERENCE ════════════════════════════ -->
+  <div class="tab-panel" id="tab-quickref">
+    <div class="search-bar">
+      <input type="text" id="qrefSearch" placeholder="🔍  Filter…" oninput="filterQref()">
+    </div>
+    <div class="filter-bar" id="qrefFilterBar"></div>
+    <div style="overflow-x:auto;">
+      <table class="qref-table">
+        <thead><tr><th>Command</th><th>Environment</th><th>Ribbon Path</th><th>Shortcut</th><th>Category</th><th>Description</th></tr></thead>
+        <tbody id="qrefBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3 — WORKFLOWS ═══════════════════════════════════ -->
+  <div class="tab-panel" id="tab-workflows">
+    <div class="section-label">Solid Edge Workflows — Step by Step</div>
+    <div class="field" style="max-width:440px;margin-bottom:20px;">
+      <label>Select Workflow</label>
+      <select id="wfSelect" onchange="renderWorkflow()">
+        <option value="new_part">Model a Part from Scratch (Synchronous)</option>
+        <option value="new_part_ordered">Model a Part (Ordered / History-based)</option>
+        <option value="assembly">Build an Assembly — Bottom-Up</option>
+        <option value="assembly_topdown">Top-Down Assembly Design</option>
+        <option value="drawing_views">Create an Engineering Drawing</option>
+        <option value="sheetmetal">Sheet Metal Part — Flange &amp; Form</option>
+        <option value="pattern">Feature Patterns — Linear &amp; Circular</option>
+        <option value="draft">Add Draft Angles for Moulding</option>
+        <option value="variables">Using Variables and Formulas</option>
+        <option value="configurations">Part Configurations (Families of Parts)</option>
+        <option value="import_step">Import STEP / IGES and Work with Foreign Data</option>
+        <option value="simulate">Basic Simulation Setup (Femap/SE Simulation)</option>
+      </select>
+    </div>
+    <div id="workflowContent"></div>
+  </div>
+
+  <!-- ═══ TAB 4 — SETTINGS ════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="tip-box">Solid Edge Options: File → Solid Edge Options &nbsp;|&nbsp; Per-file settings: File → Properties &nbsp;|&nbsp; Model-level variables: Tools → Variables</div>
+    <div class="search-bar">
+      <input type="text" id="settingsSearch" placeholder="🔍  Search settings…" oninput="filterSettings()">
+    </div>
+    <div class="filter-bar" id="settingsFilterBar"></div>
+    <div style="overflow-x:auto;margin-top:4px;">
+      <table class="spec-table" id="settingsTable">
+        <thead><tr><th>Setting / Option</th><th>Location</th><th>Category</th><th>Default</th><th>Description &amp; Recommended Value</th></tr></thead>
+        <tbody id="settingsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 5 — SHORTCUTS ═══════════════════════════════════ -->
+  <div class="tab-panel" id="tab-shortcuts">
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">⌨️ General Keyboard Shortcuts</div>
+        <table class="spec-table">
+          <tr><th>Key</th><th>Action</th></tr>
+          <tr><td class="sv-name">Ctrl+Z</td><td>Undo</td></tr>
+          <tr><td class="sv-name">Ctrl+Y</td><td>Redo</td></tr>
+          <tr><td class="sv-name">Ctrl+S</td><td>Save</td></tr>
+          <tr><td class="sv-name">Ctrl+C</td><td>Copy</td></tr>
+          <tr><td class="sv-name">Ctrl+V</td><td>Paste</td></tr>
+          <tr><td class="sv-name">Ctrl+X</td><td>Cut</td></tr>
+          <tr><td class="sv-name">Ctrl+A</td><td>Select All</td></tr>
+          <tr><td class="sv-name">Delete</td><td>Delete selected</td></tr>
+          <tr><td class="sv-name">Esc</td><td>Cancel / deselect</td></tr>
+          <tr><td class="sv-name">Enter</td><td>Accept / confirm current operation</td></tr>
+          <tr><td class="sv-name">F1</td><td>Help</td></tr>
+          <tr><td class="sv-name">F2</td><td>Rename selected in PathFinder</td></tr>
+          <tr><td class="sv-name">F3</td><td>Toggle Relationship handles (sketch)</td></tr>
+          <tr><td class="sv-name">F4</td><td>Open Variables table</td></tr>
+          <tr><td class="sv-name">F5</td><td>Refresh / update display</td></tr>
+          <tr><td class="sv-name">F6</td><td>Fit all / Zoom to fit</td></tr>
+          <tr><td class="sv-name">F8</td><td>Toggle shading on/off</td></tr>
+          <tr><td class="sv-name">F9</td><td>Toggle IntelliSketch on/off</td></tr>
+          <tr><td class="sv-name">Ctrl+F</td><td>Find in PathFinder</td></tr>
+          <tr><td class="sv-name">Ctrl+1</td><td>Isometric view</td></tr>
+          <tr><td class="sv-name">Ctrl+2</td><td>Front view (Dimetric)</td></tr>
+          <tr><td class="sv-name">Ctrl+3</td><td>Right view</td></tr>
+          <tr><td class="sv-name">Ctrl+4</td><td>Top view</td></tr>
+          <tr><td class="sv-name">Ctrl+5</td><td>Left view</td></tr>
+          <tr><td class="sv-name">Ctrl+6</td><td>Bottom view</td></tr>
+          <tr><td class="sv-name">Ctrl+7</td><td>Back view</td></tr>
+          <tr><td class="sv-name">Ctrl+8</td><td>Rotate to Normal (normal to face)</td></tr>
+          <tr><td class="sv-name">Ctrl+D</td><td>Activate Design Intent (Synchronous)</td></tr>
+          <tr><td class="sv-name">Ctrl+L</td><td>Live Rules on/off (Synchronous)</td></tr>
+          <tr><td class="sv-name">Ctrl+Shift+H</td><td>Hide selected</td></tr>
+          <tr><td class="sv-name">Ctrl+Shift+S</td><td>Show selected</td></tr>
+          <tr><td class="sv-name">Ctrl+Shift+A</td><td>Show All</td></tr>
+          <tr><td class="sv-name">Alt+Enter</td><td>Properties of selected entity</td></tr>
+          <tr><td class="sv-name">Spacebar</td><td>Radial menu (QuickPick wheel)</td></tr>
+          <tr><td class="sv-name">Tab</td><td>Next handle / field in dialog</td></tr>
+          <tr><td class="sv-name">Ctrl+Tab</td><td>Switch between open documents</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">🖱️ Mouse Shortcuts</div>
+          <table class="spec-table">
+            <tr><th>Action</th><th>Result</th></tr>
+            <tr><td>Scroll wheel forward/back</td><td>Zoom in / out at cursor</td></tr>
+            <tr><td>Middle button + drag</td><td>Pan</td></tr>
+            <tr><td>Middle button click</td><td>Fit all (double-click middle)</td></tr>
+            <tr><td>Shift + middle drag</td><td>Zoom window</td></tr>
+            <tr><td>Ctrl + middle drag</td><td>Rotate / orbit 3D model</td></tr>
+            <tr><td>Left click</td><td>Select entity</td></tr>
+            <tr><td>Ctrl + left click</td><td>Add to selection</td></tr>
+            <tr><td>Shift + left click</td><td>Range select (in lists)</td></tr>
+            <tr><td>Left drag (L→R)</td><td>Window select (fully inside)</td></tr>
+            <tr><td>Left drag (R→L)</td><td>Crossing select (intersecting)</td></tr>
+            <tr><td>Right click (empty)</td><td>Context menu with recent commands</td></tr>
+            <tr><td>Right click (entity)</td><td>Entity-specific context menu</td></tr>
+            <tr><td>Double left click face</td><td>Activate face for Synchronous edit</td></tr>
+            <tr><td>Double left click feature</td><td>Edit feature dialog (Ordered)</td></tr>
+            <tr><td>Spacebar (or right hold)</td><td>QuickPick radial menu</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Sketch Shortcuts</div>
+          <table class="spec-table">
+            <tr><th>Key</th><th>Action in Sketch</th></tr>
+            <tr><td class="sv-name">L</td><td>Line tool</td></tr>
+            <tr><td class="sv-name">C</td><td>Circle by centre</td></tr>
+            <tr><td class="sv-name">A</td><td>Arc tool</td></tr>
+            <tr><td class="sv-name">R</td><td>Rectangle (2-point)</td></tr>
+            <tr><td class="sv-name">T</td><td>Trim</td></tr>
+            <tr><td class="sv-name">X</td><td>Extend</td></tr>
+            <tr><td class="sv-name">F</td><td>Fillet (sketch)</td></tr>
+            <tr><td class="sv-name">O</td><td>Offset</td></tr>
+            <tr><td class="sv-name">M</td><td>Move (sketch elements)</td></tr>
+            <tr><td class="sv-name">S</td><td>Smart Dimension</td></tr>
+            <tr><td class="sv-name">P</td><td>Point tool</td></tr>
+            <tr><td class="sv-name">Ctrl+G</td><td>Close region check</td></tr>
+            <tr><td class="sv-name">Ctrl+Q</td><td>Fully Constrain sketch</td></tr>
+            <tr><td class="sv-name">F9</td><td>Toggle IntelliSketch</td></tr>
+            <tr><td class="sv-name">F3</td><td>Show/hide relationship handles</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 IntelliSketch Relationship Indicators</div>
+      <table class="qref-table">
+        <thead><tr><th>Symbol / Colour</th><th>Relationship</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Yellow lock icon</td><td>Fixed</td><td>Element position is locked to ground</td></tr>
+          <tr><td>Blue dot</td><td>Coincident</td><td>Point on point or point on curve</td></tr>
+          <tr><td>Horizontal line indicator</td><td>Horizontal</td><td>Line is constrained horizontal</td></tr>
+          <tr><td>Vertical line indicator</td><td>Vertical</td><td>Line is constrained vertical</td></tr>
+          <tr><td>Right angle symbol</td><td>Perpendicular</td><td>Two lines at 90°</td></tr>
+          <tr><td>Equal length markers</td><td>Equal</td><td>Two elements same length/radius</td></tr>
+          <tr><td>Parallel arrows</td><td>Parallel</td><td>Two lines are parallel</td></tr>
+          <tr><td>Tangent T</td><td>Tangent</td><td>Line/arc tangent to arc/circle</td></tr>
+          <tr><td>Midpoint mark</td><td>Midpoint</td><td>Point constrained to midpoint of line</td></tr>
+          <tr><td>Concentric circles</td><td>Concentric</td><td>Two arcs/circles share centre</td></tr>
+          <tr><td>Symmetric arrows</td><td>Symmetric</td><td>Elements are mirror of each other about axis</td></tr>
+          <tr><td class="sv-val">Red elements</td><td>Over-constrained</td><td>Too many constraints — remove one</td></tr>
+          <tr><td style="color:#2d6a2d;">Green elements</td><td>Fully constrained</td><td>All degrees of freedom resolved</td></tr>
+          <tr><td style="color:#888;">Grey elements</td><td>Under-constrained</td><td>Missing constraints — add dimensions or relationships</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 6 — TIPS & BEST PRACTICES ═══════════════════════ -->
+  <div class="tab-panel" id="tab-tips">
+    <div class="grid-2">
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">⚡ Productivity Tips</div>
+          <div id="tipsContent"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📐 Part Modelling Best Practices</div>
+          <table class="spec-table">
+            <tr><th>Practice</th><th>Why</th></tr>
+            <tr><td>Use Variables for all critical dimensions</td><td>Drive design changes from one table — no hunting for dimensions</td></tr>
+            <tr><td>Name features in PathFinder</td><td>BOSS_MOUNTING, HOLE_M10 — readable model tree, easier to edit</td></tr>
+            <tr><td>Sketch on reference planes, not faces</td><td>Face-based sketches fail if face is deleted. Plane-based sketches are robust</td></tr>
+            <tr><td>Fully constrain every sketch</td><td>Under-constrained sketches move unexpectedly. Green = fully constrained</td></tr>
+            <tr><td>Use symmetric constraints</td><td>Half-profile + symmetric = one change updates both sides</td></tr>
+            <tr><td>Apply fillets and chamfers last</td><td>Downstream features respect topology — add dressup after all cut/boss features</td></tr>
+            <tr><td>Use Part Families for variants</td><td>One master part drives length/width variants — no duplicate files</td></tr>
+            <tr><td>Save templates (.par/.psm/.asm)</td><td>Company standard materials, units, title block properties saved in template</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-title">🔗 Assembly Best Practices</div>
+          <table class="spec-table">
+            <tr><th>Practice</th><th>Why</th></tr>
+            <tr><td>Ground one component per assembly</td><td>Grounded part = fixed reference. All others relative to it</td></tr>
+            <tr><td>Use Mate / Planar Align / Axial Align</td><td>Kinematic relationships — only constrain DOF you intend to remove</td></tr>
+            <tr><td>Avoid over-constraining components</td><td>Too many mates = redundancy → assembly solve issues</td></tr>
+            <tr><td>Use sub-assemblies</td><td>Group related parts → performance, reuse, and change management</td></tr>
+            <tr><td>Assembly Sections for review</td><td>Section through assembly without cutting parts — review internal fit</td></tr>
+            <tr><td>Simplify heavy assemblies</td><td>Simplify/Substitute references for large hardware (fasteners, bearings) — saves memory</td></tr>
+            <tr><td>Check Interference Detection</td><td>Run before releasing — catch physical clashes</td></tr>
+            <tr><td>Use Explode for documentation</td><td>Exploded view in Drawing for assembly/service documentation</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">🚨 Common Mistakes &amp; Fixes</div>
+          <div id="mistakesContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA — COMMANDS
+// ══════════════════════════════════════════════════════════════
+const commands = [
+
+// ── SKETCH ───────────────────────────────────────────────────
+{ id:'sk_line', cmd:'Line', ribbon:'Home → Draw → Line', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Draw straight line segments in a sketch.',
+  fullDesc:'Creates one or more connected straight line segments in the active sketch. IntelliSketch provides automatic constraints as you draw.',
+  steps:[
+    {label:'Activate sketch',input:'Sketch plane',action:'Select a reference plane or planar face → click Sketch on ribbon (or Home → Sketch)'},
+    {label:'Activate Line',input:'Home → Draw → Line (or L)',action:'Click Line on ribbon or press L shortcut'},
+    {label:'First point',input:'click or type',action:'Click start point on canvas — IntelliSketch shows alignment hints. Or type exact X,Y in dynamic input box'},
+    {label:'Next points',input:'click repeatedly',action:'Each click adds a connected segment. Length and angle shown dynamically — type to lock value'},
+    {label:'Lock length',input:'type number + Tab',action:'Type length (e.g. 100) then Tab to switch to angle field — press Enter to confirm'},
+    {label:'Close or end',input:'Right-click or Esc',action:'Right-click → Close to close the loop back to start. Esc to end open chain'},
+  ],
+  options:[{key:'Horizontal/Vertical',desc:'IntelliSketch snaps to H/V — orange alignment lines show'},{key:'Right-click',desc:'Context menu: Close, Accept, Cancel'}],
+  tips:['IntelliSketch auto-adds H/V/Tangent constraints as you draw — watch the indicators','Type exact values in the coordinate boxes at bottom of screen','Hold Shift to temporarily disable IntelliSketch snapping','After drawing: add Smart Dimensions (S key) to fully constrain'],
+  related:['Smart Dimension','Rectangle','Circle','Trim','Extrude']
+},
+
+{ id:'sk_circle', cmd:'Circle by Centre', ribbon:'Home → Draw → Circle', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Draw a circle by picking centre and radius point.',
+  fullDesc:'Creates a circle in the active sketch. Defined by centre point and radius. Can also use 3-point circle for construction.',
+  steps:[
+    {label:'Activate',input:'C or ribbon',action:'Press C or Home → Draw → Circle by Centre'},
+    {label:'Centre point',input:'click',action:'Click centre of circle. Snap to origin, existing points, or type coordinates'},
+    {label:'Radius',input:'click or type',action:'Drag out to desired radius — click to place. Or type radius value in dynamic input then Enter'},
+    {label:'Add dimension',input:'S',action:'Press S → click circle → type diameter/radius value to fully constrain'},
+  ],
+  options:[{key:'3-Point Circle',desc:'Defines circle by 3 points on circumference — from ribbon dropdown'},{key:'By Tangent',desc:'Circle tangent to 2 or 3 existing elements'}],
+  tips:['For concentric circles: snap centre to existing circle centre — Coincident auto-added','Diameter vs radius: Smart Dimension defaults to diameter for circles','Construction circle: right-click after placing → Properties → Construction'],
+  related:['Arc','Smart Dimension','Extrude','Line']
+},
+
+{ id:'sk_arc', cmd:'Arc', ribbon:'Home → Draw → Arc', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Draw an arc — tangent from last point, or by centre and endpoints.',
+  fullDesc:'Multiple arc methods: tangent continuation arc (most common), 3-point arc, centre-endpoints arc, arc by tangent.',
+  steps:[
+    {label:'Activate',input:'A or ribbon',action:'Press A or Home → Draw → Arc'},
+    {label:'Default: Tangent arc',input:'click after line',action:'After drawing a line segment: without clicking elsewhere, an arc is ready at the endpoint. Move cursor to set arc direction'},
+    {label:'3-Point arc',input:'ribbon dropdown',action:'Home → Draw → Arc dropdown → Arc by 3 Points → pick start, mid-arc point, end'},
+    {label:'Centre arc',input:'ribbon dropdown',action:'Arc by Centre → pick centre → pick start angle → pick end angle / sweep'},
+  ],
+  options:[{key:'Tangent',desc:'Arc tangent to last drawn element'},{key:'3-Point',desc:'Define by start, on-arc, end'},{key:'Centre',desc:'Define by centre + angular span'}],
+  tips:['Tangent arc is the fastest for profiles — seamless transition from line to arc','For slot ends: line + tangent arc + line = fully joined profile','Fillet in sketch: use Sketch Fillet (F key) instead of arc for consistent radius'],
+  related:['Line','Fillet (Sketch)','Smart Dimension','Circle']
+},
+
+{ id:'sk_rect', cmd:'Rectangle', ribbon:'Home → Draw → Rectangle', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Draw a 2-corner rectangle as a closed sketch profile.',
+  fullDesc:'Draws a closed rectangular profile (4 lines + H/V/Equal constraints). Fastest for rectangular pads and pockets.',
+  steps:[
+    {label:'Activate',input:'R or ribbon',action:'Press R or Home → Draw → Rectangle by 2 Points'},
+    {label:'First corner',input:'click',action:'Click first corner — snap to origin or existing point'},
+    {label:'Opposite corner',input:'click or type',action:'Drag to size — type width + Tab + height + Enter for exact dimensions. Or click second corner then add Smart Dimensions'},
+  ],
+  options:[{key:'2-Point',desc:'Two diagonal corners — most common'},{key:'3-Point',desc:'Define by two sides (for angled rectangles)'},{key:'By Centre',desc:'Centre point + half-width + half-height'}],
+  tips:['Add width/height Smart Dimensions to fully constrain','Use symmetric constraint about origin centrelines for centred features','Rectangle gives 4 lines with H/V auto-applied — faster than drawing 4 separate lines'],
+  related:['Line','Smart Dimension','Extrude']
+},
+
+{ id:'sk_sdim', cmd:'Smart Dimension', ribbon:'Home → Dimension → Smart Dimension', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Add driving dimensions to sketch elements — locks size and position.',
+  fullDesc:'Intelligent dimension tool that auto-detects dimension type from what you select: linear, diameter, radius, angular. These are driving dimensions that control geometry.',
+  steps:[
+    {label:'Activate',input:'S or ribbon',action:'Press S or Home → Dimension → Smart Dimension'},
+    {label:'Select element',input:'click',action:'Click a line (length), circle (diameter), arc (radius), or two lines (distance/angle)'},
+    {label:'Place dimension',input:'click',action:'Click to place the dimension text location'},
+    {label:'Type value',input:'type + Enter',action:'Type the desired dimension value in the dialog → Enter to apply. Geometry moves to match'},
+    {label:'Reference dim',input:'checkbox',action:'Check "Reference" in dialog to make a driven (non-driving) dimension — shown in parentheses'},
+  ],
+  options:[{key:'Linear',desc:'Automatic H, V, or aligned from picked points'},{key:'Diameter',desc:'Click circle → shows Ø dimension'},{key:'Angular',desc:'Click two non-parallel lines'},{key:'Radial',desc:'Click arc'}],
+  tips:['Yellow dimension = under-constrained (driving but sketch not fully solved)','Blue dimension = fully constrained','Modify: double-click any dimension to edit value','Use formulas in dimension values: type "=variable_name" or expressions like "L/2"'],
+  related:['Line','Circle','Variables','IntelliSketch']
+},
+
+{ id:'sk_trim', cmd:'Trim (Sketch)', ribbon:'Home → Draw → Trim', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Remove sketch segments beyond intersection points.',
+  fullDesc:'Trims sketch elements at their intersections. Click-to-remove the unwanted portion. Supports trim, extend, and split operations.',
+  steps:[
+    {label:'Activate',input:'T or ribbon',action:'Press T or Home → Draw → Trim'},
+    {label:'Click to trim',input:'click segment',action:'Click the portion of a line/arc/circle you want to REMOVE — everything between intersections'},
+    {label:'Power Trim (drag)',input:'drag across',action:'Hold left button and drag a fence through multiple segments to trim all at once'},
+    {label:'End',input:'Esc or right-click',action:'Escape to end'},
+  ],
+  options:[{key:'Power Trim',desc:'Drag to trim multiple segments'},{key:'Extend',desc:'X key — extend element to nearest intersection'},{key:'Split',desc:'Splits element at a point without removing'}],
+  tips:['Trim + Extend together in one command area (T/X toggle)','For cleaning intersecting rectangles or overlapping profiles','Trim does not work on construction geometry by default'],
+  related:['Extend','Line','Fillet (Sketch)','Break']
+},
+
+{ id:'sk_intellisketch', cmd:'IntelliSketch', ribbon:'Tools → IntelliSketch Settings', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Automatic constraint detection and snapping engine during sketch drawing.',
+  fullDesc:'IntelliSketch is the inference engine that detects and applies relationships automatically as you draw. Orange alignment lines, coloured snap indicators, and automatic constraint symbols guide drawing.',
+  steps:[
+    {label:'Toggle',input:'F9',action:'F9 toggles IntelliSketch on/off. On by default.'},
+    {label:'Configure',input:'Tools → IntelliSketch',action:'Set which relationships are auto-detected: Horizontal, Vertical, Tangent, Perpendicular, Parallel, Equal, etc.'},
+    {label:'Temporary disable',input:'Hold Alt',action:'Hold Alt while drawing to temporarily suppress IntelliSketch for that point'},
+    {label:'Relationship handles',input:'F3',action:'F3 shows/hides relationship constraint icons on sketch elements'},
+  ],
+  options:[{key:'Snap to grid',desc:'Configurable grid snap spacing'},{key:'Snap to key points',desc:'Endpoints, midpoints, centre points'},{key:'Relationship inference',desc:'H/V/Tangent/Perpendicular auto-applied as you draw'}],
+  tips:['Watch the orange alignment lines — they show what will be snapped before you click','Too many auto-constraints causing issues? Disable specific ones in Tools → IntelliSketch Settings','F3 to see all constraint handles — review before closing sketch'],
+  related:['Line','Smart Dimension','Sketch Relationships']
+},
+
+{ id:'sk_offset', cmd:'Offset (Sketch)', ribbon:'Home → Draw → Offset', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Create a parallel copy of selected sketch elements at a set distance.',
+  fullDesc:'Offsets lines, arcs, circles, or chains of elements at a specified distance. Maintains relationships. Used for wall thickness, flanges, and clearance profiles.',
+  steps:[
+    {label:'Activate',input:'O or ribbon',action:'Press O or Home → Draw → Offset'},
+    {label:'Select elements',input:'click or chain',action:'Click elements to offset. Click chain selector to pick connected chains automatically'},
+    {label:'Set distance',input:'type',action:'Type offset distance in the input field'},
+    {label:'Direction',input:'click side',action:'Click on the side you want the offset to appear'},
+    {label:'Accept',input:'right-click Accept',action:'Right-click → Accept to finish'},
+  ],
+  options:[{key:'Cap ends',desc:'Close the open ends of offset chains with arcs or lines'},{key:'Both sides',desc:'Offset in both directions simultaneously (for symmetric flanges)'}],
+  tips:['Use to create wall thickness profiles in one step from outer boundary','Offset a full closed profile → instant pocket/pad pair','Works on both full circles and partial arcs'],
+  related:['Trim','Rectangle','Shell']
+},
+
+{ id:'sk_mirror', cmd:'Mirror (Sketch)', ribbon:'Home → Draw → Mirror', env:['Part','Sketch'], cat:'sketch', catLabel:'SKETCH',
+  envLabels:['Part','Sketch'],
+  desc:'Mirror sketch elements about a centreline.',
+  fullDesc:'Creates a mirrored copy of selected sketch elements about a selected axis (line or construction line). Adds symmetric relationship automatically.',
+  steps:[
+    {label:'Activate',input:'ribbon',action:'Home → Draw → Mirror'},
+    {label:'Select elements',input:'click / window',action:'Select elements to mirror'},
+    {label:'Select axis',input:'click line',action:'Click the line or construction line to mirror about'},
+    {label:'Accept',input:'right-click Accept',action:'Mirrored copies created with Symmetric constraints'},
+  ],
+  options:[{key:'Symmetric constraint',desc:'Added automatically — moving original updates mirror live'}],
+  tips:['Draw half-profile about a centreline → Mirror → instant symmetric sketch','Construction line as axis: right-click line → Construction → use as mirror axis','Mirror + Symmetric: editing one side automatically updates the other'],
+  related:['Symmetric (Relationship)','Line','Smart Dimension']
+},
+
+// ── PART (FEATURES) ───────────────────────────────────────────
+{ id:'pt_extrude', cmd:'Extrude', ribbon:'Home → Solids → Extrude', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Extrude a closed sketch profile into a 3D solid feature.',
+  fullDesc:'The most fundamental feature in Solid Edge. Pushes a 2D sketch profile into a 3D solid. Can add (Protrusion) or remove (Cutout) material. Includes symmetric, from-to, and draft options.',
+  steps:[
+    {label:'Have closed sketch',input:'Sketch',action:'Ensure sketch is fully closed and fully constrained (green). Close sketch region must be visible.'},
+    {label:'Activate',input:'Home → Solids → Extrude',action:'Click Extrude on ribbon. Command bar appears at top.'},
+    {label:'Select profile',input:'click profile',action:'Click inside the closed sketch region (it highlights). For multiple regions: click each.'},
+    {label:'Set direction',input:'arrow handle',action:'Arrow shows extrusion direction. Click arrow to flip. Or drag handle to set depth.'},
+    {label:'Set extent',input:'type distance',action:'Type distance in the command bar (e.g. 50 mm) → Enter. Or drag the arrow handle.'},
+    {label:'Extent type',input:'dropdown',action:'Options: Finite (fixed depth), Through All, To Next, From-To, Symmetric. Select from dropdown.'},
+    {label:'Draft angle',input:'Draft option',action:'Enable Draft in command bar → type draft angle (positive=tapers inward, negative=flares).'},
+    {label:'Accept',input:'click Accept or Enter',action:'Click Accept tick or press Enter to create feature.'},
+  ],
+  options:[{key:'Protrusion',desc:'Adds material — default for first feature'},{key:'Cutout',desc:'Removes material — for holes, slots, pockets'},{key:'Symmetric',desc:'Extrudes equally in both directions from sketch plane'},{key:'Through All',desc:'Cuts through entire part regardless of depth'},{key:'To Next',desc:'Extrudes to the next face it encounters'},{key:'From-To',desc:'Starts and ends at specified faces'}],
+  tips:['Synchronous: drag any face directly without entering feature dialog — no sketch needed','Ordered: edit sketch by double-clicking feature in PathFinder → change dims → Accept','Thin Wall: enable Thin option for hollow extrusions (for sheet-like parts)','Symmetric is fastest for centred features: half-depth each side'],
+  related:['Revolve','Sketch','Extrude Cutout','Draft','Shell']
+},
+
+{ id:'pt_revolve', cmd:'Revolve', ribbon:'Home → Solids → Revolve', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Revolve a sketch profile around an axis to create a solid of revolution.',
+  fullDesc:'Creates axisymmetric solids by rotating a 2D profile about a defined axis line. Used for shafts, turned parts, vessels, rings.',
+  steps:[
+    {label:'Prepare sketch',input:'Sketch',action:'Draw the half cross-section profile on one side of the axis. Include the axis as a construction line or use an existing edge.'},
+    {label:'Activate',input:'Home → Solids → Revolve',action:'Click Revolve on ribbon'},
+    {label:'Select profile',input:'click profile',action:'Click inside the closed profile region'},
+    {label:'Select axis',input:'click line',action:'Click the axis of revolution (construction line or existing edge)'},
+    {label:'Set angle',input:'type or drag',action:'Type revolution angle (360 for full, 270 for 3/4 etc.) → Enter'},
+    {label:'Accept',input:'Enter or Accept',action:'Click Accept'},
+  ],
+  options:[{key:'Full (360°)',desc:'Complete solid of revolution'},{key:'Partial',desc:'Specify angular extent'},{key:'Symmetric',desc:'Revolve equal amounts on each side of sketch plane'},{key:'Cutout',desc:'Subtract material by revolution (annular groove)'}],
+  tips:['Profile must stay on one side of the axis — crossing axis = self-intersecting solid','Use a centreline (construction line) as axis for clarity','Combine with Cut Revolve to machine grooves and undercuts on turned parts','MASSPROP equivalent: Tools → Physical Properties after creation'],
+  related:['Extrude','Sketch','Shell','Draft']
+},
+
+{ id:'pt_hole', cmd:'Hole', ribbon:'Home → Solids → Hole', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Place standard holes: drilled, counterbored, countersunk, tapped.',
+  fullDesc:'Intelligent hole tool with pre-configured standards. Supports: simple, counterbore, countersink, spotface, tapped holes. Linked to standard fastener libraries.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Hole',action:'Click Hole on ribbon — Hole Options dialog opens'},
+    {label:'Hole type',input:'dialog',action:'Select type: Simple / Counterbore / Countersink / Spotface / Tapered / Threaded'},
+    {label:'Dimensions',input:'dialog',action:'Enter diameter, depth (Through / Blind / To Next), counterbore Ø and depth if applicable'},
+    {label:'Thread',input:'Thread tab',action:'Enable Thread → select standard (ISO Metric, UNC, UNF) → select size (M10, M12 etc.) → specify depth'},
+    {label:'Placement',input:'OK then click faces',action:'Click OK → click the face where hole goes → position with Smart Dimension or snap to edge'},
+    {label:'Accept',input:'right-click Accept',action:'Right-click → Accept when position set'},
+  ],
+  options:[{key:'Simple',desc:'Basic drilled hole'},{key:'Counterbore',desc:'Wider bore at top for socket head screws'},{key:'Countersink',desc:'Angled chamfer at top for flat/oval head screws'},{key:'Through All',desc:'Depth: cut through entire part'},{key:'Blind',desc:'Depth: specified finite depth'},{key:'Thread',desc:'Add helix thread callout (display only — not modelled)'}],
+  tips:['Thread in SE is a cosmetic annotation (display) — not modelled solid thread helix','Hole table in Drawing: holes with tags auto-populate a hole table on drawings','Pattern: use Pattern After Placing for bolt circle holes','Dimension position by Smart Dimension from edges — do NOT rely on visual placement'],
+  related:['Extrude (Cutout)','Pattern','Thread','Chamfer']
+},
+
+{ id:'pt_fillet', cmd:'Round (Fillet)', ribbon:'Home → Solids → Round', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Add a constant or variable radius fillet to one or more edges.',
+  fullDesc:'Rounds selected edges with a tangent arc of specified radius. Solid Edge uses "Round" for blending edges. Supports constant, variable, and face blend options.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Round',action:'Click Round on ribbon'},
+    {label:'Select edges',input:'click edges',action:'Click edges to round. Ctrl+click for multiple. Or click a face to round all edges of that face.'},
+    {label:'Set radius',input:'type in command bar',action:'Type radius value in the command bar → Enter'},
+    {label:'Preview',input:'auto',action:'Preview shows in model — drag radius handle to adjust live'},
+    {label:'Accept',input:'Accept or Enter',action:'Click Accept to apply'},
+  ],
+  options:[{key:'Constant',desc:'Single radius for all selected edges'},{key:'Variable',desc:'Different radii at different vertices along edge'},{key:'Tangent Propagation',desc:'Auto-extends to tangentially connected edges'},{key:'Face Blend',desc:'Smooth transition between two faces'}],
+  tips:['Apply rounds LAST — after all cuts, holes, and major features','Small radius first rule: if two rounds meet, apply smaller one first','Synchronous: select edge → drag blue handle → type radius — no dialog','Fillet fails? Check for short edges or zero-length geometry first'],
+  related:['Chamfer','Draft','Extrude']
+},
+
+{ id:'pt_chamfer', cmd:'Chamfer', ribbon:'Home → Solids → Chamfer', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Apply a planar bevel to one or more edges.',
+  fullDesc:'Creates an angled cut at selected edges. Two methods: equal setback (distance × distance) or angle + distance.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Chamfer',action:'Click Chamfer on ribbon'},
+    {label:'Select edges',input:'click',action:'Click edges to chamfer. Ctrl+click multiple.'},
+    {label:'Set distance',input:'type',action:'Type chamfer distance in command bar. For asymmetric: set D1 and D2 separately.'},
+    {label:'Method',input:'dropdown',action:'Equal Offset (D×D) or Offset/Angle (D + angle). 45° = equal distances.'},
+    {label:'Accept',input:'Accept',action:'Click Accept'},
+  ],
+  options:[{key:'Equal Offset',desc:'Same distance on both faces'},{key:'Offset and Angle',desc:'Distance on one face + angle'},{key:'Tangent Propagation',desc:'Continue to connected edges'}],
+  tips:['2×45° standard chamfer: Equal Offset, distance = 2 mm','Chamfer edges last — same as rounds','Use for draft-assist on moulded parts where sharp edges needed at parting line'],
+  related:['Round (Fillet)','Draft','Extrude']
+},
+
+{ id:'pt_shell', cmd:'Shell', ribbon:'Home → Solids → Shell', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Hollow out a solid by removing one or more faces and offsetting remaining faces inward.',
+  fullDesc:'Converts a solid part into a thin-walled shell. Select faces to open (remove), set wall thickness — remaining faces offset inward.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Shell',action:'Click Shell on ribbon'},
+    {label:'Open faces',input:'click faces',action:'Click faces to be REMOVED (the openings). Ctrl+click multiple open faces.'},
+    {label:'Wall thickness',input:'type',action:'Type wall thickness in command bar (e.g. 3 for 3 mm)'},
+    {label:'Variable thickness',input:'More button',action:'Click More → assign different thicknesses to individual faces'},
+    {label:'Accept',input:'Accept',action:'Click Accept'},
+  ],
+  options:[{key:'Inward',desc:'Default: shell inward from outer surface'},{key:'Outward',desc:'Shell outward — part grows outward'},{key:'Both',desc:'Equal offset both directions (centred on original face)'},{key:'Variable',desc:'Different wall thickness per face'}],
+  tips:['Shell before rounds/chamfers if possible — thin-wall geometry + fillet can fail','For containers/housings: extrude solid block → Shell (remove top face) → add features','Shell radius: keep wall thickness < min feature radius to avoid geometry conflicts','Check internal radius vs wall thickness: if R < t, inner face gets zero/negative radius'],
+  related:['Extrude','Round (Fillet)','Thin Wall']
+},
+
+{ id:'pt_draft', cmd:'Draft', ribbon:'Home → Solids → Draft', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Apply a draft angle to faces for mould release.',
+  fullDesc:'Tilts selected faces relative to a neutral plane (parting line) to allow part ejection from mould or die.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Draft',action:'Click Draft on ribbon'},
+    {label:'Select faces',input:'click faces',action:'Click faces to draft. Or click "By parting line" for automatic face detection'},
+    {label:'Draft plane',input:'click plane',action:'Select the neutral plane or parting surface — faces draft away from this'},
+    {label:'Angle',input:'type',action:'Type draft angle (typically 1–3° for plastic, 3–5° for die casting)'},
+    {label:'Direction',input:'arrow',action:'Check arrow direction — positive = outward taper (correct for mould release)'},
+    {label:'Accept',input:'Accept',action:'Accept to apply'},
+  ],
+  options:[{key:'From parting line',desc:'Automatic — applies to faces on both sides of parting plane'},{key:'From fixed plane',desc:'All selected faces draft from one reference plane'},{key:'Tangent to faces',desc:'Propagates draft through tangent face chains'}],
+  tips:['Draft check: View → Display → Draft Analysis shows OK/undercut with colour coding','Apply draft before shell — shell on drafted faces maintains consistent wall thickness','1° minimum for smooth plastic surfaces; 3° for textured surfaces; 5°+ for sand casting'],
+  related:['Extrude','Shell','Round (Fillet)']
+},
+
+{ id:'pt_pattern', cmd:'Pattern', ribbon:'Home → Solids → Pattern', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Create rectangular, circular, or along-curve patterns of features.',
+  fullDesc:'Duplicates features in a regular pattern. Pattern types: Linear (rectangular grid), Circular (around an axis), Curve-driven (along a path), Fill (fill a region).',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Pattern',action:'Click Pattern on ribbon → select pattern type from dropdown: Linear / Circular / Curve-based / Fill'},
+    {label:'Select features',input:'click in PathFinder',action:'Click features to pattern in PathFinder or on model. Ctrl+click for multiple features'},
+    {label:'Linear: set direction',input:'click edge or axis',action:'Click an edge or reference axis for X direction. Set count and spacing. Repeat for Y direction.'},
+    {label:'Circular: set axis',input:'click axis',action:'Click circular edge or reference axis as rotation axis. Set count and angle span (360° = full circle)'},
+    {label:'Count and spacing',input:'type values',action:'Enter count (number of instances) and pitch (spacing between centres)'},
+    {label:'Accept',input:'Accept',action:'Click Accept'},
+  ],
+  options:[{key:'Linear',desc:'X/Y grid array of features'},{key:'Circular',desc:'Angular array around an axis — for bolt circles'},{key:'Pattern Table',desc:'Individually position each instance'},{key:'Fill',desc:'Fill a face or region with pattern'},{key:'Suppress instances',desc:'Click individual instances to suppress from pattern'}],
+  tips:['Bolt circles: Circular pattern → select Hole feature → pick cylindrical axis → 360° / n holes','Suppress individual instances: click instance in Pattern dialog to exclude (for partial patterns)','Edit count/spacing: double-click pattern in PathFinder','Pattern of patterns: valid — nest linear and circular for complex grids'],
+  related:['Hole','Mirror (Part)','Extrude']
+},
+
+{ id:'pt_mirror', cmd:'Mirror (Part)', ribbon:'Home → Solids → Mirror', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Mirror features or the entire part body about a plane.',
+  fullDesc:'Creates mirrored copies of selected features or the entire body. Mirror plane is a reference plane, planar face, or construction plane.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Mirror',action:'Click Mirror on ribbon → choose Mirror Feature or Mirror Part'},
+    {label:'Select features',input:'click',action:'Select features to mirror in PathFinder or on model'},
+    {label:'Mirror plane',input:'click plane',action:'Click a reference plane, construction plane, or planar face as mirror plane'},
+    {label:'Accept',input:'Accept',action:'Click Accept'},
+  ],
+  options:[{key:'Mirror Feature',desc:'Mirror selected features only'},{key:'Mirror Part Body',desc:'Mirror entire solid body (for symmetric parts)'}],
+  tips:['Draw half-part → Mirror Part Body = complete symmetric part with half the features to manage','Mirror + Pattern together: pattern a feature on one half → mirror the pattern','Mirror result is independent — changes to original do NOT update mirror by default in Ordered mode (use Symmetric relationship in Synchronous)'],
+  related:['Pattern','Extrude','Reference Plane']
+},
+
+{ id:'pt_vars', cmd:'Variables', ribbon:'Tools → Variables (F4)', env:['Part','Assembly'], cat:'part', catLabel:'PART',
+  envLabels:['Part','Assembly'],
+  desc:'Define and manage parametric variables — drive dimensions with named values and formulas.',
+  fullDesc:'Variables table (F4) shows all named dimensions and user variables. Variables can be linked to sketch dimensions, feature parameters, and assembly constraints. Supports formulas and expressions.',
+  steps:[
+    {label:'Open',input:'F4 or Tools → Variables',action:'Press F4 — Variables table opens showing all named dimensions'},
+    {label:'Name a dimension',input:'right-click dim',action:'In sketch or feature: right-click a dimension → click the variable name field → type a name (e.g. LENGTH, BORE_DIA, WALL_THK)'},
+    {label:'Create variable',input:'Add Row button',action:'In Variables table: click Add → type name → type value → Enter. Now usable in any dimension'},
+    {label:'Use variable in dim',input:'= then name',action:'When setting a dimension value: type = then variable name (e.g. =LENGTH) → dimension is driven by variable'},
+    {label:'Formula',input:'= expression',action:'Type formula: =LENGTH*0.5 or =BORE_DIA+CLEARANCE or =IF(TYPE=1,25,50)'},
+    {label:'Link to Excel',input:'Tools → Variables → Import',action:'Import variable values from an Excel sheet — design tables driving part families'},
+  ],
+  options:[{key:'Part Variables',desc:'Scoped to current part'},{key:'Assembly Variables',desc:'Linked across assembly components'},{key:'Excel Link',desc:'Drive variables from external spreadsheet'}],
+  tips:['Name key variables before dimensioning: LENGTH, WIDTH, HEIGHT, WALL, BORE etc.','Use formulas to enforce design rules: INNER_DIA = OUTER_DIA - 2*WALL_THK','Part Families: different variable values per configuration → family of parts from one model','Grayed-out variables are read-only (driven by a feature constraint)'],
+  related:['Smart Dimension','Part Families','Assembly Constraints']
+},
+
+{ id:'pt_refplane', cmd:'Reference Plane', ribbon:'Home → Planes → More Planes', env:['Part','Assembly'], cat:'part', catLabel:'PART',
+  envLabels:['Part','Assembly'],
+  desc:'Create construction planes for sketching on angled or offset surfaces.',
+  fullDesc:'Reference planes are infinite construction planes for locating sketches and features. Types: parallel offset, angled, through 3 points, normal to curve, at midpoint.',
+  steps:[
+    {label:'Base planes',input:'PathFinder',action:'Base XY, XZ, YZ planes shown in PathFinder. Click to select, click again to sketch on them.'},
+    {label:'Parallel offset plane',input:'Home → Planes → Coincident Plane with Offset',action:'Select face or plane → drag offset arrow → type distance → Accept'},
+    {label:'Angled plane',input:'Home → Planes → Angled Plane',action:'Select edge as rotation axis → type angle from reference plane → Accept'},
+    {label:'Midplane',input:'Home → Planes → Midplane',action:'Select two parallel faces → plane created at midpoint'},
+    {label:'3-Point plane',input:'Home → Planes → Plane by 3 Points',action:'Pick 3 non-collinear points → plane defined through them'},
+  ],
+  options:[{key:'Coincident',desc:'At face/plane location'},{key:'Offset',desc:'Parallel at distance'},{key:'Angled',desc:'Rotated from reference'},{key:'Midplane',desc:'Between two parallel surfaces'},{key:'Normal to curve',desc:'Perpendicular to a curve at a point'},{key:'By 3 Points',desc:'Defined by 3 space points'}],
+  tips:['Rename planes in PathFinder: right-click → Rename → e.g. "PARTING_PLANE", "SECTION_DATUM"','Hide unused planes: right-click → Hide — reduces visual clutter','For 3D features on angled faces: create a plane at that angle, sketch on it, extrude perpendicular to plane'],
+  related:['Sketch','Extrude','Mirror (Part)']
+},
+
+{ id:'pt_sync', cmd:'Synchronous Modelling', ribbon:'View → Model → Synchronous', env:['Part'], cat:'part', catLabel:'PART',
+  envLabels:['Part'],
+  desc:'Direct push/pull editing of faces and features without history dependency.',
+  fullDesc:'Synchronous Technology allows direct 3D editing: select a face and drag to resize. No history, no sketch re-editing. Rules (parallel, coplanar, symmetric) maintained via Live Rules.',
+  steps:[
+    {label:'Switch to Synchronous',input:'View → Model → Synchronous',action:'Or start a new .par file in Synchronous mode'},
+    {label:'Select a face',input:'click face',action:'Click any face — blue steering wheel (3D Move) appears'},
+    {label:'Move face',input:'drag axis',action:'Drag the appropriate axis on the 3D Move handle to push/pull the face'},
+    {label:'Type exact value',input:'type distance',action:'After clicking an axis: type distance value directly → Enter to apply'},
+    {label:'Live Rules',input:'Ctrl+L',action:'Ctrl+L toggles Live Rules — rules maintain coplanar, parallel, symmetric relationships during edits'},
+    {label:'Design Intent',input:'Ctrl+D',action:'Ctrl+D opens Design Intent panel to set persistent rules before editing'},
+  ],
+  options:[{key:'3D Move',desc:'6-DOF steering wheel for face manipulation'},{key:'Live Rules',desc:'Auto-enforced geometric rules during edit'},{key:'Design Intent',desc:'Manually specify rules (lock symmetry, dimensions etc.)'},{key:'Dimension Drive',desc:'Type dimension on face → drives size directly'}],
+  tips:['Synchronous is fastest for design changes: click face → type new value → done','Mixing: a model can have both Synchronous and Ordered features','Import STEP/IGES → Synchronous can directly edit geometry without history','Live Rules warning: may apply unintended rules — review Design Intent before making large changes'],
+  related:['Extrude','Live Rules','Sketch','3D Move']
+},
+
+// ── ASSEMBLY ──────────────────────────────────────────────────
+{ id:'asm_place', cmd:'Place Component', ribbon:'Home → Component → Place', env:['Assembly'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly'],
+  desc:'Insert a part or sub-assembly into the assembly.',
+  fullDesc:'Adds a component file (.par, .psm, .asm) to the assembly. First placement can be grounded or float. Subsequent placements are constrained.',
+  steps:[
+    {label:'Activate',input:'Home → Component → Place',action:'Click Place from Home ribbon — file browser opens'},
+    {label:'Select file',input:'browse',action:'Browse to .par / .psm / .asm file → click Open'},
+    {label:'Place',input:'click in viewport',action:'Click to place component in assembly space. First placed = prompted to Ground or Float'},
+    {label:'Ground first component',input:'Yes',action:'Ground = fixes position in space. Right-click in PathFinder → Ground if not prompted'},
+    {label:'Multiple instances',input:'click again',action:'Click more times to place additional instances. Right-click → Done when finished'},
+    {label:'Constrain',input:'Assemble command',action:'Use Assemble (A key) to add mate, align, axial align relationships after placing'},
+  ],
+  options:[{key:'Ground',desc:'First component — fix in space as assembly origin'},{key:'Float',desc:'Unconstrained — move freely until relationships added'},{key:'Drag to place',desc:'Drag directly from Windows Explorer or library'}],
+  tips:['Ground only ONE component per assembly as your reference — all others constrained relative to it','If file is not found on open: right-click in PathFinder → Find Referenced Files','Use sub-assemblies to group functional units before placing in main assembly'],
+  related:['Ground','Assemble (Relationships)','PathFinder','Pattern (Assembly)']
+},
+
+{ id:'asm_mate', cmd:'Assemble (Mate/Align)', ribbon:'Home → Relate → Assemble (A)', env:['Assembly'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly'],
+  desc:'Add geometric relationships (mate, align, axial align) between components.',
+  fullDesc:'The primary tool for constraining assembly components. Mate = faces touching. Planar Align = faces parallel same direction. Axial Align = axes collinear.',
+  steps:[
+    {label:'Activate',input:'A or Home → Relate → Assemble',action:'Press A or click Assemble on ribbon — command toolbar appears'},
+    {label:'Relationship type',input:'toolbar button',action:'Select relationship type: Mate, Planar Align, Axial Align, Insert, Ball (6DOF), Angle, Gear, Cam, Linear...'},
+    {label:'Select face/edge on part 1',input:'click',action:'Click the face, edge, or axis on the first part (highlighted in yellow/orange)'},
+    {label:'Select face/edge on part 2',input:'click',action:'Click the matching face, edge, or axis on the second part — relationship previews'},
+    {label:'Offset',input:'type value',action:'For Mate/Align: type an offset value if faces should not be flush (e.g. 5 mm gap)'},
+    {label:'Accept',input:'right-click Accept',action:'Right-click → Accept. Component snaps to constraint.'},
+    {label:'Add more',input:'continue',action:'Continue adding relationships until degrees of freedom = 0 (fully constrained = shown in PathFinder)'},
+  ],
+  options:[{key:'Mate',desc:'Faces touch — face normals point toward each other'},{key:'Planar Align',desc:'Faces coplanar, normals same direction (flush or offset)'},{key:'Axial Align',desc:'Axes collinear — for shafts in bores'},{key:'Insert',desc:'Axial align + mate combined — for bolts in holes'},{key:'Angle',desc:'Angle between faces'},{key:'Ball',desc:'Point-to-point — allows all rotation'},{key:'Gear',desc:'Simulates gear ratio coupling'}],
+  tips:['Insert relationship = Mate + Axial Align in one click — fastest for bolts/pins in holes','Check DOF: fully constrained = 0 DOF (no move/rotate freedoms remaining)','Kinematic assemblies: leave one rotation free for moving parts','Relationship status in PathFinder: tick = satisfied, red = conflict'],
+  related:['Place Component','Ground','Interference Detection','PathFinder']
+},
+
+{ id:'asm_ground', cmd:'Ground', ribbon:'Right-click PathFinder → Ground', env:['Assembly'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly'],
+  desc:'Fix a component to the assembly origin — removes all degrees of freedom.',
+  fullDesc:'Grounded components are fixed in space. The grounded component defines the assembly coordinate system. All other components are positioned relative to it.',
+  steps:[
+    {label:'Select component',input:'click in PathFinder',action:'Click the component name in PathFinder (usually the base frame or chassis)'},
+    {label:'Ground',input:'right-click → Ground',action:'Right-click in PathFinder → Ground → component gets anchor icon'},
+  ],
+  options:[{key:'Unground',desc:'Right-click → Unground to restore freedom'}],
+  tips:['Only ONE component should be grounded in a well-structured assembly','Grounding wrong component causes awkward constraint chains','For multi-body assemblies: sub-assembly base part should be grounded within sub-asm'],
+  related:['Place Component','Assemble (Relationships)']
+},
+
+{ id:'asm_interference', cmd:'Interference Detection', ribbon:'Inspect → Clearance Analysis → Interference Detection', env:['Assembly'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly'],
+  desc:'Find overlapping volumes between assembly components.',
+  fullDesc:'Checks all or selected components for physical intersection. Reports volume of interference and highlights clashing pairs.',
+  steps:[
+    {label:'Activate',input:'Inspect → Clearance Analysis → Interference Detection',action:'Click on Inspect tab → Interference Detection'},
+    {label:'Select components',input:'All or select',action:'Check All Components or select specific pairs/groups to check'},
+    {label:'Run',input:'Calculate button',action:'Click Calculate — results appear in dialog listing all interfering pairs'},
+    {label:'Review',input:'click pair',action:'Click each pair in results → model highlights and zooms to interference volume'},
+    {label:'Save report',input:'Report button',action:'Export interference report to HTML or text file'},
+  ],
+  options:[{key:'All pairs',desc:'Check every component against every other'},{key:'Selected subset',desc:'Check only specified components'},{key:'Clearance check',desc:'Find components within a minimum clearance distance'}],
+  tips:['Run before every major release — catch design clashes before manufacturing','Speed: limit to subsystem pairs for large assemblies — checking all is slow','Fasteners: exclude standard hardware from check if fastener holes are correct','Clearance check: set minimum gap (e.g. 0.5 mm) to catch near-misses too'],
+  related:['Place Component','Assemble (Relationships)','Physical Properties']
+},
+
+{ id:'asm_explode', cmd:'Explode', ribbon:'Home → Display → Explode', env:['Assembly'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly'],
+  desc:'Create exploded view of assembly for documentation.',
+  fullDesc:'Moves components apart along their constraint axes to show assembly structure. Saved as explode configuration for use in drawings.',
+  steps:[
+    {label:'Activate',input:'Home → Display → Explode → New',action:'Click Explode dropdown → New Explosion → Automatic or Manual'},
+    {label:'Automatic',input:'Auto Explode',action:'Click Auto Explode → set explode distance → SE distributes components along constraint axes automatically'},
+    {label:'Manual',input:'drag components',action:'Drag individual components along their axes to desired explode position'},
+    {label:'Add trail lines',input:'Explode → Edit Trails',action:'Add assembly trail lines (dotted explosion lines) between exploded positions'},
+    {label:'Save configuration',input:'name it',action:'Name the explode configuration (e.g. EXPLODE-1) — reusable in drawings'},
+    {label:'Use in drawing',input:'Drawing → Exploded view',action:'In Drawing environment: View Wizard → select explode configuration → creates exploded drawing view'},
+  ],
+  options:[{key:'Automatic',desc:'SE calculates positions along constraint axes'},{key:'Manual',desc:'Drag each component independently'},{key:'Trail lines',desc:'Dotted lines showing component path'}],
+  tips:['Name configurations: EXP_STEP1, EXP_STEP2 for assembly instruction sequences','Collapse: switch back to non-exploded view for analysis','Draft views linked to explosion configurations update when you modify the explosion'],
+  related:['Drawing Views','Place Component','Assemble (Relationships)']
+},
+
+{ id:'asm_bom', cmd:'Parts List (BOM)', ribbon:'Drawing → Table → Parts List', env:['Assembly','Drawing'], cat:'assembly', catLabel:'ASSEMBLY',
+  envLabels:['Assembly','Drawing'],
+  desc:'Generate a Bill of Materials from assembly structure.',
+  fullDesc:'Auto-generates a structured BOM table from assembly component data. Reads part number, description, quantity, material from part properties. Linked to assembly — updates automatically.',
+  steps:[
+    {label:'Populate part properties',input:'File → Properties',action:'In each part file: File → Properties → fill Summary tab: Description, Part Number, Material, Finish'},
+    {label:'Open Drawing',input:'Drawing env',action:'Open or create Drawing (.dft) linked to the assembly'},
+    {label:'Activate',input:'Drawing → Table → Parts List',action:'Click Parts List on ribbon — Parts List Options dialog opens'},
+    {label:'Configure',input:'dialog',action:'Set columns: Item, Part Number, Description, Quantity, Material. Set sort order.'},
+    {label:'Place',input:'click on sheet',action:'Click to place table on drawing sheet — auto-populated from assembly'},
+    {label:'Balloon',input:'Annotation → Balloon',action:'Add balloons to drawing views — numbers linked to BOM item numbers automatically'},
+  ],
+  options:[{key:'Flat BOM',desc:'All parts at same level (no sub-assembly grouping)'},{key:'Indented BOM',desc:'Shows assembly hierarchy with sub-asm groups'},{key:'Custom columns',desc:'Add any property as a column'}],
+  tips:['Populate ALL part properties before generating BOM — missing data = blank cells','Item balloon auto-matches BOM numbers — place balloons after BOM is placed','Edit BOM: double-click to open — changes saved back to assembly properties','Export to Excel: right-click BOM → Export to CSV/Excel for procurement'],
+  related:['Parts List (BOM)','Drawing Views','Balloon','Part Properties']
+},
+
+// ── DRAWING ───────────────────────────────────────────────────
+{ id:'dw_viewwiz', cmd:'View Wizard', ribbon:'Home → View → View Wizard', env:['Drawing'], cat:'drawing', catLabel:'DRAWING',
+  envLabels:['Drawing'],
+  desc:'Create principal views (Front, Top, Right, Isometric) from a part or assembly.',
+  fullDesc:'View Wizard is the standard starting point for engineering drawings. Select part/assembly → choose principal views → set scale → place on sheet.',
+  steps:[
+    {label:'Open Drawing',input:'New Drawing (.dft)',action:'Create new drawing from template → select sheet size (A4, A3, A1 etc.)'},
+    {label:'Activate',input:'Home → View → View Wizard',action:'Click View Wizard — opens selection dialog'},
+    {label:'Select model',input:'browse or select',action:'Select the part or assembly for which views are needed. Browse to .par/.asm file.'},
+    {label:'Select view types',input:'checkboxes',action:'Check: Front, Top, Right (standard 3-view), Isometric (optional). Preview shows layout.'},
+    {label:'Scale',input:'type scale',action:'Set drawing scale (e.g. 1:2, 1:5, 1:1, 2:1). Apply to all or per view.'},
+    {label:'Place',input:'click on sheet',action:'Click on sheet to place the front view — other views automatically align. Click to finalize positions.'},
+    {label:'Named view',input:'named view option',action:'For specific orientations: Named View option → select saved view from model → place as view'},
+  ],
+  options:[{key:'Primary view',desc:'Base view — all others align to it'},{key:'Projection angle',desc:'First angle (ISO/EU) or Third angle (ANSI/US)'},{key:'Scale',desc:'Set per drawing or per individual view'},{key:'Section',desc:'Add section view directly in wizard'},{key:'Broken',desc:'Broken view for long parts'}],
+  tips:['First angle vs Third angle: set in Drawing Options → View Projection. ISO = first angle.','Lock view to model: view auto-updates when part changes','Scale: set in view properties (right-click view → Properties) to change after placement','Title block: fill via File → Properties (drawing) → auto-populates linked fields'],
+  related:['Section View','Auxiliary View','Smart Dimension (Drawing)','Parts List']
+},
+
+{ id:'dw_section', cmd:'Section View', ribbon:'Home → View → Section View', env:['Drawing'], cat:'drawing', catLabel:'DRAWING',
+  envLabels:['Drawing'],
+  desc:'Create a full, half, or offset section view through the model.',
+  fullDesc:'Projects a cut view based on a section line drawn on a parent view. Supports full, half, offset (stepped), aligned, and revolved section views.',
+  steps:[
+    {label:'Activate',input:'Home → View → Section View',action:'Click Section View on ribbon — or right-click existing view → Add Section View'},
+    {label:'Section type',input:'dropdown',action:'Select type: Full / Half / Offset / Aligned / Revolved'},
+    {label:'Draw section line',input:'draw on parent view',action:'Click on the parent view to draw the section cutting plane line. Full: one horizontal or vertical line. Offset: draw stepped line through features.'},
+    {label:'Direction arrow',input:'click side',action:'Click on the side the section projects toward (which side you are looking from)'},
+    {label:'Place section view',input:'click on sheet',action:'Click where on the sheet to place the section view — aligns with cutting plane direction'},
+    {label:'Label',input:'auto',action:'Section label (A-A, B-B etc.) auto-generated on the cutting plane and section view'},
+  ],
+  options:[{key:'Full Section',desc:'Single cutting plane through entire part'},{key:'Half Section',desc:'Cuts through one symmetry half'},{key:'Offset Section',desc:'Stepped cutting plane through multiple features'},{key:'Aligned',desc:'Rotates angled features into section plane'},{key:'Partial Section',desc:'Section only through part of the view (bounded box)'}],
+  tips:['Section hatch: automatically applied — change pattern per face material in part properties','Remove hatch on thin features: select hatch area → Properties → change/remove',' Section label: modify label prefix in Drawing Options → Section View → label format','Offset section: critical for showing multiple holes not in a single plane'],
+  related:['View Wizard','Auxiliary View','Detail View','Hatch']
+},
+
+{ id:'dw_dim', cmd:'Smart Dimension (Drawing)', ribbon:'Home → Dimension → Smart Dimension', env:['Drawing'], cat:'drawing', catLabel:'DRAWING',
+  envLabels:['Drawing'],
+  desc:'Place reference dimensions on drawing views — driven by model.',
+  fullDesc:'Retrieves model dimensions onto the drawing. Dimensions are reference (driven by model) — changing them here does NOT change the model. Use Retrieve Dimensions to auto-populate.',
+  steps:[
+    {label:'Retrieve dimensions',input:'Home → Dimension → Retrieve',action:'Click Retrieve → click a view → all sketch/feature dimensions appear. Drag to desired positions.'},
+    {label:'Smart Dimension',input:'ribbon or S key',action:'Click Smart Dimension → click geometry in drawing view → click to place → dimension shown'},
+    {label:'Dimension type',input:'auto-detect',action:'Click line = linear. Click circle = diameter. Click two lines = angle or distance. Click arc = radius.'},
+    {label:'Tolerance',input:'right-click → Properties',action:'Right-click dimension → Properties → Tolerance tab → set type: bilateral ±, limits, fit/ISO tolerance'},
+    {label:'Prefix/Suffix',input:'Properties',action:'Add prefix (Ø, R, M) or suffix (mm, °) in Dimension Properties → Text tab'},
+  ],
+  options:[{key:'Retrieve',desc:'Auto-pull all model dimensions to drawing'},{key:'Smart Dim',desc:'Manual placement of individual dimensions'},{key:'Baseline',desc:'Chain from common baseline'},{key:'Driven',desc:'Ref dim — shows value but cannot drive model'}],
+  tips:['Retrieve Dimensions is fastest — pulls all defined model dims, then clean up unwanted ones','Dimensions on drawing are driven by model — cannot override in drawing (unlike AutoCAD)','ISO tolerance: Properties → Tolerance → ISO type → select fit class (H7, f7, k6 etc.)','GD&T Feature Control Frame: Annotation → Feature Control Frame on ribbon'],
+  related:['View Wizard','GD&T / Feature Control Frame','Surface Finish','Parts List']
+},
+
+{ id:'dw_annot', cmd:'Annotations (GD&T, Surface Finish, Weld)', ribbon:'Home → Annotation', env:['Drawing'], cat:'drawing', catLabel:'DRAWING',
+  envLabels:['Drawing'],
+  desc:'Add GD&T feature control frames, surface finish symbols, and weld annotations.',
+  fullDesc:'Comprehensive annotation tools: Feature Control Frame (GD&T), Surface Texture (Ra/Rz), Weld Symbol, Datum, Centerline, and custom notes.',
+  steps:[
+    {label:'Feature Control Frame',input:'Home → Annotation → Feature Control Frame',action:'Click FCF → draw leader to feature → dialog opens → set tolerance type, value, datum references → OK'},
+    {label:'Surface Texture',input:'Home → Annotation → Surface Texture',action:'Click Surface Texture → click surface edge → dialog → set Ra/Rz value, process notation → OK'},
+    {label:'Datum Feature',input:'Home → Annotation → Datum Feature Symbol',action:'Click Datum → click surface → type datum letter (A, B, C) → place'},
+    {label:'Weld Symbol',input:'Home → Annotation → Weld Symbol',action:'Click Weld Symbol → draw leader to joint → weld symbol dialog → configure joint type, size, process'},
+    {label:'Centreline',input:'Home → Annotation → Centerline',action:'Click Centerline → click two parallel edges or one circular feature → centreline drawn automatically'},
+  ],
+  options:[{key:'GD&T',desc:'Full ASME Y14.5 / ISO 1101 feature control frames'},{key:'Surface Texture',desc:'Ra, Rz, Rmax values with machining process notation'},{key:'Weld',desc:'ISO 2553 weld symbols'},{key:'Datum',desc:'Datum reference frame letters'}],
+  tips:['Centreline for holes: click Centerline → click circle in view — auto-draws cross centreline','GD&T all-around: use "All Around" option in FCF for continuous features','Surface texture: \\/ symbol for material removal required; ○ for no removal','Check ISO vs ASME standard: set in Tools → Options → Drawing Standards'],
+  related:['Smart Dimension (Drawing)','View Wizard','Notes']
+},
+
+{ id:'dw_template', cmd:'Drawing Template', ribbon:'File → New → From Template', env:['Drawing'], cat:'drawing', catLabel:'DRAWING',
+  envLabels:['Drawing'],
+  desc:'Create and use drawing templates with pre-configured title blocks, border, and standards.',
+  fullDesc:'Templates (.dft files) contain sheet setup, title block (with attribute fields), standards settings (projection angle, dimension style, text style). Creating company templates saves setup time.',
+  steps:[
+    {label:'Create new template',input:'File → New → Drawing',action:'Create new .dft file with blank sheet'},
+    {label:'Set up sheet',input:'Sheet Setup',action:'Right-click sheet tab → Sheet Setup → set paper size, projection angle (1st/3rd), drawing standard (ISO/ANSI)'},
+    {label:'Place border and title block',input:'Home → Sheet → Background Sheet',action:'Open Background Sheet → insert title block block or draw border → add property fields (File Properties auto-fill)'},
+    {label:'Link properties to title block',input:'Property Text',action:'In title block: insert Property Text fields → link to File Properties (Title, Part Number, Drawn By, Date, Scale)'},
+    {label:'Save as template',input:'File → Save As → .dft',action:'Save the file to the template folder. New drawings: File → New → select this template.'},
+  ],
+  options:[{key:'Property Text',desc:'Auto-filled from File → Properties — no manual typing'},{key:'Multiple sheet sizes',desc:'One template file can contain multiple background sheets (A1, A2, A3, A4)'},{key:'Revision block',desc:'Include revision table block in template'}],
+  tips:['Property Text: double-click inserts field linked to drawing/part properties — never type manually','Set default scale in Sheet Setup — all new views default to this','Company logo: place as picture object in background sheet','Layers for drawing: Dimensions, Annotations, Centrelines, Border — set in template'],
+  related:['View Wizard','Parts List','Properties']
+},
+
+// ── SHEET METAL ───────────────────────────────────────────────
+{ id:'sm_tab', cmd:'Tab', ribbon:'Home → Solids → Tab', env:['Sheet Metal'], cat:'sheetmetal', catLabel:'SHEET METAL',
+  envLabels:['Sheet Metal'],
+  desc:'Create the base flat sheet metal feature from a sketch profile.',
+  fullDesc:'Tab is the first feature in a Sheet Metal part — equivalent to Extrude but creates a thin flat sheet at the material thickness. Thickness defined in Material Table.',
+  steps:[
+    {label:'New Sheet Metal file',input:'File → New → Sheet Metal (.psm)',action:'Create new .psm file — Sheet Metal environment loads automatically'},
+    {label:'Set material/thickness',input:'Tools → Material Table',action:'Tools → Material Table → select material → set Thickness (e.g. 2 mm), Bend Radius (e.g. 2 mm), K-Factor (e.g. 0.44)'},
+    {label:'Sketch profile',input:'Sketch plane',action:'Click base plane → Sketch → draw the flat outline (any closed profile)'},
+    {label:'Activate Tab',input:'Home → Solids → Tab',action:'Close sketch → click Tab on ribbon → select profile → Accept'},
+    {label:'Direction',input:'arrow',action:'Check material goes in correct direction (above/below sketch plane) → Accept'},
+  ],
+  options:[{key:'Symmetric',desc:'Tab extends equally both sides of sketch plane'},{key:'From sketch',desc:'Profile defines exact flat blank shape'}],
+  tips:['Thickness is defined ONCE in Material Table — do not extrude with thickness as dimension','K-Factor controls bend allowance calculation — get from material supplier or standard tables','Bend table: can import custom bend allowance tables for precise flat pattern development'],
+  related:['Flange','Bend','Flat Pattern','Contour Flange']
+},
+
+{ id:'sm_flange', cmd:'Flange', ribbon:'Home → Solids → Flange', env:['Sheet Metal'], cat:'sheetmetal', catLabel:'SHEET METAL',
+  envLabels:['Sheet Metal'],
+  desc:'Add a bent flange to an existing sheet metal edge.',
+  fullDesc:'Creates a flange (bent tab) at a selected edge of the sheet metal part. Set angle, length, material side, and relief type.',
+  steps:[
+    {label:'Activate',input:'Home → Solids → Flange',action:'Click Flange on ribbon'},
+    {label:'Select edge',input:'click edge',action:'Click the edge of the Tab or existing flange where new flange will be added'},
+    {label:'Angle',input:'type angle',action:'Type bend angle (90 = right angle, 45 = half-angle). Positive = up from current face.'},
+    {label:'Length',input:'type length',action:'Type flange length (measured from bend line to edge of flange)'},
+    {label:'Material side',input:'option',action:'Material Inside = flange bends from inside of bend radius. Outside = outside. Bend line placement affects blank size.'},
+    {label:'Relief',input:'option',action:'Corner relief type: rectangular, round, or none. Prevents tearing at corner junctions.'},
+    {label:'Accept',input:'Accept',action:'Accept — flange created. Flat Pattern updates automatically.'},
+  ],
+  options:[{key:'Angle',desc:'Bend angle from source face'},{key:'Length',desc:'Flange leg length'},{key:'Material Side',desc:'Inside / Outside / Midplane — affects flat pattern development'},{key:'Relief',desc:'Corner cut type at flange ends'},{key:'Multiple edges',desc:'Apply same flange to multiple edges simultaneously'}],
+  tips:['Flange adds material — check flat pattern blank size does not exceed raw material sheet','Tuck / Open hem: Flange at 180° (set angle=180) creates a hem','Relief slots: always use relief to prevent corner cracking in formed parts','Miter: corner between adjacent flanges auto-mitred — adjust miter gap if needed'],
+  related:['Tab','Contour Flange','Flat Pattern','Bend']
+},
+
+{ id:'sm_flatpat', cmd:'Flat Pattern', ribbon:'Home → Flat Pattern → Flat Pattern', env:['Sheet Metal'], cat:'sheetmetal', catLabel:'SHEET METAL',
+  envLabels:['Sheet Metal'],
+  desc:'Unfold a sheet metal part to its flat blank for laser/plasma cutting.',
+  fullDesc:'Flat Pattern calculates and displays the flat (unfolded) state of the sheet metal part. Uses K-Factor and bend tables to compute bend allowances. Export for cutting.',
+  steps:[
+    {label:'Activate',input:'Home → Flat Pattern → Flat Pattern',action:'Click Flat Pattern — model unfolds to flat state in same window'},
+    {label:'Orientation',input:'Flat Pattern tab',action:'Switch to Flat Pattern view in PathFinder. Reorient if needed.'},
+    {label:'Dimensions',input:'check dimensions',action:'Flat pattern shows true blank dimensions. Check against available sheet sizes.'},
+    {label:'Export DXF',input:'File → Export → DXF',action:'File → Export → DXF/DWG → Flat Pattern → save. Send to laser/plasma cutting machine.'},
+    {label:'To drawing',input:'View Wizard in Drawing',action:'In Drawing → View Wizard → select Flat Pattern view → place on sheet with flat pattern dimensions'},
+    {label:'Unfold partially',input:'PathFinder',action:'Right-click a Bend in PathFinder → Rolled Back To Here → shows part-unfolded state'},
+  ],
+  options:[{key:'K-Factor',desc:'Set in Material Table — controls bend allowance calculation'},{key:'Bend table',desc:'Import manufacturer-specific bend data for accuracy'},{key:'DXF export',desc:'For CNC cutting'}],
+  tips:['Always verify flat pattern against known blank size before production','K-Factor 0.44 is typical for steel; 0.3–0.4 for aluminium depending on alloy','Bend allowance = K × (PI/180) × angle × (radius + K × thickness)','Grain direction: set in Flat Pattern → Grain Direction arrow for anisotropic materials'],
+  related:['Tab','Flange','Bend','Material Table']
+},
+
+{ id:'sm_formtool', cmd:'Dimple / Form Tool', ribbon:'Home → Solids → Dimple / Drawn Cutout', env:['Sheet Metal'], cat:'sheetmetal', catLabel:'SHEET METAL',
+  envLabels:['Sheet Metal'],
+  desc:'Create embossed dimples, louvers, and formed features in sheet metal.',
+  fullDesc:'Sheet metal formed features that do not involve bending: dimples (punched depressions), louvers, drawn cutouts, lances. Defined by sketch profile + depth.',
+  steps:[
+    {label:'Sketch the form footprint',input:'Sketch',action:'Sketch the outer profile of the form tool (circle for dimple, slot for louver) on the sheet metal face'},
+    {label:'Activate Dimple',input:'Home → Solids → Dimple',action:'Click Dimple → select sketch profile → set depth and direction → Accept'},
+    {label:'Drawn Cutout',input:'Home → Solids → Drawn Cutout',action:'Profile + depth creates an extruded hole with drawn walls (not a simple punch)'},
+    {label:'Lance',input:'Home → Solids → Lance',action:'A single-line cut that bends up — for tabs, vents'},
+  ],
+  options:[{key:'Dimple depth',desc:'Distance punched form projects from sheet surface'},{key:'Angle',desc:'Wall angle of drawn form'},{key:'Include in flat pattern',desc:'Flat pattern shows dimple flattened outline for blank planning'}],
+  tips:['Dimples in flat pattern: shown as sketch only (not unformed) — note on drawing that forming is post-cut','Check material stretch: deep dimples may require ductile material (annealed aluminium, deep-draw steel)','Louvers: check airflow standards for louver size and pitch'],
+  related:['Tab','Flange','Flat Pattern']
+},
+
+// ── SURFACE ───────────────────────────────────────────────────
+{ id:'sf_extrudesurf', cmd:'Extruded Surface', ribbon:'Surfacing → Surfaces → Extruded Surface', env:['Part'], cat:'surface', catLabel:'SURFACE',
+  envLabels:['Part'],
+  desc:'Extrude an open or closed sketch profile to create a surface body.',
+  fullDesc:'Creates a surface (zero-thickness body) by extruding a profile. Used for complex geometry, split planes, and trim/thicken operations.',
+  steps:[
+    {label:'Switch to Surfacing',input:'View → Model → Surfacing',action:'Or use Surfacing tab on ribbon'},
+    {label:'Sketch open profile',input:'Sketch',action:'Sketch an open or closed profile on a plane. Open profiles create surfaces (not solids).'},
+    {label:'Activate',input:'Surfacing → Surfaces → Extruded Surface',action:'Click Extruded Surface → select profile → set depth direction → Accept'},
+    {label:'Trim with surface',input:'Surfacing → Solids → Trim',action:'Use surface to trim solid geometry — cuts solid where surface intersects'},
+    {label:'Thicken',input:'Surfacing → Solids → Thicken',action:'Convert surface to solid by adding material thickness: Surfacing → Thicken → type thickness'},
+  ],
+  options:[{key:'Open profile',desc:'Creates open surface (no caps)'},{key:'Closed profile',desc:'Creates closed surface body'},{key:'Trim',desc:'Use surface to split/trim solid features'},{key:'Thicken',desc:'Convert surface to solid'}],
+  tips:['Surface modelling: typically used for complex outer shapes then converted to solid','Stitching surfaces: multiple surfaces → Stitch → creates closed surface body → Thicken to solid','Use surfaces as construction geometry for Split, Trim, or Copy-Paste special'],
+  related:['Thicken','Trim','Lofted Surface','Swept Surface']
+},
+
+{ id:'sf_loft', cmd:'Lofted Surface / Solid', ribbon:'Home → Solids → Loft', env:['Part'], cat:'surface', catLabel:'SURFACE',
+  envLabels:['Part'],
+  desc:'Blend between two or more profiles to create a smooth solid or surface.',
+  fullDesc:'Loft transitions smoothly between cross-section profiles. Supports guide curves for additional shape control. Creates complex transitional geometry.',
+  steps:[
+    {label:'Prepare profiles',input:'Sketch',action:'Draw profile sketches on different parallel (or non-parallel) planes. Each profile is a cross-section.'},
+    {label:'Activate',input:'Home → Solids → Loft',action:'Click Loft on ribbon'},
+    {label:'Select profiles',input:'click in order',action:'Click profiles in order from first to last cross-section. Order defines loft direction.'},
+    {label:'Guide curves',input:'optional',action:'Add guide curves (Ctrl+click paths): lines/curves connecting profiles to control shape between sections'},
+    {label:'Tangent matching',input:'option',action:'Set start and end conditions: none, tangent to face, curvature continuous'},
+    {label:'Accept',input:'Accept',action:'Loft solid or surface created'},
+  ],
+  options:[{key:'Solid',desc:'Closed profiles → solid loft'},{key:'Surface',desc:'Open profiles → surface loft'},{key:'Guide curves',desc:'Path curves controlling side shape'},{key:'End conditions',desc:'Tangent or curvature matching at ends'},{key:'Closed loft',desc:'First and last profile connect — for toroids'}],
+  tips:['Profiles must have same number of vertices for clean loft — add matching points if needed','Guide curves must intersect each profile — snap to profile vertices','Loft fails? Check profile orientations — drag start point markers to same relative position on all profiles','Use for: intake manifolds, car bodies, aircraft fairings, freeform enclosures'],
+  related:['Swept Solid','Extruded Surface','Sketch','Reference Plane']
+},
+
+{ id:'sf_sweep', cmd:'Swept Solid / Surface', ribbon:'Home → Solids → Sweep', env:['Part'], cat:'surface', catLabel:'SURFACE',
+  envLabels:['Part'],
+  desc:'Sweep a profile along a path to create a solid or surface.',
+  fullDesc:'Extrudes a 2D profile along a 3D path. Creates complex tubular and channel shapes: pipes, rails, handles, wiring conduits.',
+  steps:[
+    {label:'Draw path',input:'Sketch on plane',action:'Draw the sweep path (line, arc, spline, helix) on a plane'},
+    {label:'Draw profile',input:'Sketch perpendicular to path',action:'Create a sketch plane at the start of the path (Normal to Curve plane at start point) → draw cross-section profile'},
+    {label:'Activate',input:'Home → Solids → Sweep',action:'Click Sweep → select profile → select path → Accept'},
+    {label:'Orientation',input:'option',action:'Profile follows path: Guide (maintains orientation) or Free (rotates with path curvature)'},
+  ],
+  options:[{key:'Single path',desc:'Profile swept along one curve'},{key:'Guide curves',desc:'Additional curves to control section variation'},{key:'Twist',desc:'Profile rotates along path by specified angle'},{key:'Cutout',desc:'Sweep removes material (channel, groove)'}],
+  tips:['Path and profile must not self-intersect — check for tight curves relative to profile size','Normal-to-Curve plane: create sketch plane at path start → profile always perpendicular to path','For pipes: circle profile + helical path = spring/helix solid','Sweep with guide curves: 3D rail sweep for complex industrial design'],
+  related:['Lofted Solid','Extruded Surface','Helix']
+},
+
+// ── MANAGE ────────────────────────────────────────────────────
+{ id:'mg_pathfinder', cmd:'PathFinder', ribbon:'Sidebar — always visible', env:['Part','Assembly','Drawing'], cat:'manage', catLabel:'MANAGE',
+  envLabels:['Part','Assembly','Drawing'],
+  desc:'Model tree showing all features, components, and history in the current document.',
+  fullDesc:'PathFinder is Solid Edge\'s model tree. Shows feature history (Ordered), feature status, assembly structure, and drawing views. Right-click for context operations on any item.',
+  steps:[
+    {label:'Show PathFinder',input:'Ctrl+Shift+P or View → PathFinder',action:'PathFinder panel docks on left side by default'},
+    {label:'Reorder features',input:'drag in PathFinder',action:'Drag feature names up/down in PathFinder to reorder history (Ordered mode only)'},
+    {label:'Edit feature',input:'double-click',action:'Double-click a feature to re-enter its dialog and edit parameters'},
+    {label:'Suppress feature',input:'right-click → Suppress',action:'Suppressed features removed from model temporarily — greyed in tree'},
+    {label:'Rename',input:'F2',action:'Click item → F2 to rename. Use meaningful names: BORE_MAIN, FLANGE_TOP, BOSS_MOUNT'},
+    {label:'Roll back',input:'right-click → Rollback',action:'Roll back to a specific step in history to insert features at that point'},
+  ],
+  options:[{key:'Suppress',desc:'Temporarily remove feature from model'},{key:'Rollback',desc:'Return to historical state — insert new features here'},{key:'Show/Hide',desc:'Toggle visibility of planes, sketches, reference geometry'},{key:'Delete',desc:'Permanently remove feature (may invalidate dependents)'}],
+  tips:['Clean PathFinder names = clean model communication — always rename features','Ordered: if a dependent feature fails after editing parent, look in PathFinder for red warning icon','Assembly: component status icons show fully constrained (tick), unconstrained (open), interference (red)','Group features: Ctrl+click multiple → right-click → Group → cleaner tree'],
+  related:['Variables','Reference Plane','Suppress','Reorder']
+},
+
+{ id:'mg_properties', cmd:'File Properties', ribbon:'File → Properties', env:['Part','Assembly','Drawing'], cat:'manage', catLabel:'MANAGE',
+  envLabels:['Part','Assembly','Drawing'],
+  desc:'Set document metadata: Part Number, Description, Material, Revision, Author.',
+  fullDesc:'File Properties stores document-level metadata that feeds into drawing title blocks, BOM tables, PDM/PLM systems. Always fill in before creating drawings.',
+  steps:[
+    {label:'Activate',input:'File → Properties',action:'Click File menu → Properties → multiple tabs'},
+    {label:'Summary tab',input:'fill fields',action:'Title, Subject, Author, Keywords, Comments — general document info'},
+    {label:'Project tab',input:'fill fields',action:'Part Number, Description, Revision, Status — critical for BOM and title block'},
+    {label:'Custom tab',input:'add fields',action:'Add custom fields: Material, Finish, Treatment, Weight Class etc. — appear in BOM if configured'},
+    {label:'Link to drawing',input:'Property Text',action:'In Drawing: Property Text fields auto-pull from these File Properties → title block auto-fills'},
+  ],
+  options:[{key:'Summary',desc:'Basic document info'},{key:'Project',desc:'Engineering metadata (PN, Revision, Status)'},{key:'Custom',desc:'User-defined fields for company-specific data'}],
+  tips:['Fill properties BEFORE creating the drawing — title block auto-populates','Revision: maintain in Properties — drawing title block revision field links here','Part Number format: match company numbering system — used in BOM and file naming'],
+  related:['Parts List (BOM)','Drawing Template','File Naming']
+},
+
+{ id:'mg_template', cmd:'Document Templates', ribbon:'File → New → From Template', env:['Part','Assembly','Drawing'], cat:'manage', catLabel:'MANAGE',
+  envLabels:['Part','Assembly','Drawing'],
+  desc:'Create and use part, assembly, and drawing templates for company standards.',
+  fullDesc:'Templates (.par, .asm, .dft) pre-configure: units, material, draft standard, text style, dimension style, layer setup. New files inherit all settings from template.',
+  steps:[
+    {label:'Create part template',input:'New part file',action:'Create new .par → set all standards → save to template folder (Tools → Options → File Locations → Templates)'},
+    {label:'Set units',input:'File → Properties or Tools → Options',action:'Set: Millimetres or Inches. Set precision, drawing standard (ISO/ANSI/DIN).'},
+    {label:'Set material',input:'Tools → Material Table',action:'Set default material (e.g. EN 10025 S275 Steel) — feeds physical properties and BOM'},
+    {label:'Drawing standard',input:'Tools → Options → Drawing',action:'ISO 2768 tolerances, projection angle (1st/3rd), dimension style'},
+    {label:'Save as template',input:'Save to template folder',action:'File → Save As → navigate to SE template folder → save as .par/.asm/.dft'},
+    {label:'Use template',input:'File → New',action:'File → New → select template → new file inherits all settings'},
+  ],
+  options:[{key:'Part template (.par)',desc:'Units, material, reference planes'},{key:'Assembly template (.asm)',desc:'Units, display settings'},{key:'Drawing template (.dft)',desc:'Sheet size, title block, standards, layers'}],
+  tips:['Create separate templates: e.g. SE-PART-MM-ISO.par and SE-PART-INCH-ANSI.par','Distribute templates via shared network folder — all users use same standards','Include blank variable table with company standard variables (LENGTH, WIDTH, BORE) in part template'],
+  related:['File Properties','Variables','Drawing Template']
+},
+
+{ id:'mg_partfamily', cmd:'Part Families (Configurations)', ribbon:'Tools → Part Families', env:['Part','Sheet Metal'], cat:'manage', catLabel:'MANAGE',
+  envLabels:['Part','Sheet Metal'],
+  desc:'Create a family of related parts from one master model using variable tables.',
+  fullDesc:'Part Families (formerly configurations) allow a single .par file to represent multiple variants (e.g. M10, M12, M16 bolts). Each row in the family table is a separate member with different variable values.',
+  steps:[
+    {label:'Set up variables',input:'F4 → Variables',action:'Define variables for all dimensions that vary between family members: DIA, LENGTH, HEAD_H etc.'},
+    {label:'Open Part Families',input:'Tools → Part Families',action:'Click Tools → Part Families (or Part Configurations in some versions) → dialog opens'},
+    {label:'Add members',input:'Add button',action:'Click Add → name the member (e.g. M10x30, M12x40) → Enter variable values for that variant'},
+    {label:'Active member',input:'double-click',action:'Double-click a member row to activate it — model updates to that variant'},
+    {label:'Drawing',input:'Drawing → all members',action:'Drawing can show all family members in one multi-sheet document or reference specific active member'},
+  ],
+  options:[{key:'Active member',desc:'Currently displayed variant'},{key:'Excel link',desc:'Import family table from Excel spreadsheet'},{key:'Mass properties per member',desc:'Each member has independent physical properties'}],
+  tips:['Use for: standard fasteners, tube sizes, bracket widths — any family of similar parts','Excel link: maintain large families in Excel → import → much faster than manual entry','Part number per member: each member can have unique part number in File Properties → BOM gets correct PN'],
+  related:['Variables','File Properties','BOM']
+},
+
+{ id:'mg_import', cmd:'Import STEP / IGES / DWG', ribbon:'File → Open (foreign formats)', env:['Part','Assembly'], cat:'manage', catLabel:'MANAGE',
+  envLabels:['Part','Assembly'],
+  desc:'Import foreign CAD data (STEP, IGES, Parasolid, DWG/DXF) into Solid Edge.',
+  fullDesc:'Solid Edge can open most neutral CAD formats. Imported geometry becomes synchronous solid bodies which can be edited directly. DWG/DXF imports as 2D drawing data or 3D geometry.',
+  steps:[
+    {label:'Open STEP/IGES',input:'File → Open',action:'File → Open → change file type filter to .stp/.step or .igs/.iges → select file → Open'},
+    {label:'Translation options',input:'dialog',action:'Translation options dialog: set units (check source file units), stitching tolerance, solid/surface import'},
+    {label:'Repair',input:'Inspect → Geometry',action:'After import: Inspect → Geometry Check → fix any bad faces, open shells, or small edges'},
+    {label:'Edit synchronously',input:'Click faces',action:'Imported STEP opens as Synchronous body — click any face → drag to resize/move directly'},
+    {label:'DWG import',input:'File → Open → .dwg',action:'Opens in Drafting environment (2D). Use Insert → AutoCAD File to bring into Drawing sheet.'},
+    {label:'Export STEP',input:'File → Save As → .stp',action:'File → Save As → STEP → set STEP version (AP214 most compatible) → options for units → Save'},
+  ],
+  options:[{key:'STEP AP203/AP214',desc:'Most common neutral format — full geometry'},{key:'IGES',desc:'Older neutral format — surface and wireframe'},{key:'Parasolid',desc:'Native Siemens kernel — best fidelity'},{key:'JT',desc:'Siemens visualization format'},{key:'DWG/DXF',desc:'AutoCAD drawing format'}],
+  tips:['STEP AP214: best choice for exchange — includes colour, layer info, assembly structure','After STEP import: run geometry check to find bad edges before designing around import','Synchronous on imported: no history needed — just grab and push faces to adapt geometry','For large assemblies: STEP imports as one body — need STEP AP242 for assembly structure'],
+  related:['Synchronous Modelling','Repair Geometry','Export']
+},
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — SETTINGS
+// ══════════════════════════════════════════════════════════════
+const settings = [
+  {name:'Units',loc:'File → Properties → General',cat:'Units',def:'mm',desc:'Set to mm for metric engineering. Solid Edge uses document-level units — set in template for consistency. Cannot change units after drawing on a file without rescaling.'},
+  {name:'Projection Angle',loc:'Tools → Options → Drawing → View Projection',cat:'Drawing',def:'First Angle',desc:'First Angle (ISO / European) or Third Angle (ANSI / US). First = view is placed behind the projection plane. Set per drawing template.'},
+  {name:'Drawing Standard',loc:'Tools → Options → Drawing → Standards',cat:'Drawing',def:'ISO',desc:'ISO 2768, ANSI, DIN, JIS. Controls default tolerances, surface texture symbols, GD&T symbol style. Match your industry/customer standard.'},
+  {name:'K-Factor',loc:'Tools → Material Table → Bend Options',cat:'Sheet Metal',def:'0.44',desc:'Bend allowance factor: 0=inner radius, 1=outer radius. Typical: 0.44 (mild steel), 0.38–0.42 (aluminium). Get from material spec or bend test. Affects flat pattern accuracy.'},
+  {name:'Bend Radius',loc:'Tools → Material Table → Bend Options',cat:'Sheet Metal',def:'T (1× thickness)',desc:'Default inner bend radius. Set to minimum bend radius for material/thickness combination. For 2 mm steel: 2 mm radius typical.'},
+  {name:'IntelliSketch',loc:'Tools → IntelliSketch Settings',cat:'Sketch',def:'All On',desc:'Configure which relationships IntelliSketch auto-detects: H/V/Tangent/Perpendicular/Equal/Parallel. Disable specific ones if they cause unwanted constraints.'},
+  {name:'Live Rules',loc:'Ctrl+L or View → Live Rules',cat:'Synchronous',def:'On',desc:'Synchronous modelling: Live Rules enforce geometric relationships during face edits. Disable specific rules in the Live Rules window before editing to prevent unintended propagation.'},
+  {name:'Snap to Grid',loc:'Tools → IntelliSketch → Grid',cat:'Sketch',def:'Off',desc:'Grid snap spacing. Set to 1 mm for fine work or 5 mm for coarse. Usually off — rely on smart dimensions for precision.'},
+  {name:'Grid Spacing',loc:'View → Show → Grid Settings',cat:'Display',def:'10 mm',desc:'Visual grid spacing for reference. Does not affect snap unless Snap to Grid is on.'},
+  {name:'Shading',loc:'View → Display → Style',cat:'Display',def:'Shaded with edges',desc:'Display mode for 3D model. Options: Wireframe, Hidden Line Removed, Shaded, Shaded with Edges, Transparent. Shaded+Edges most useful for modelling.'},
+  {name:'Part Color',loc:'View → Style → Face Style',cat:'Display',def:'Gray',desc:'Default part face colour. For assemblies: assign different colours to distinguish parts — View → Show → Component Colors.'},
+  {name:'Assembly Constraint Colors',loc:'Tools → Options → Assembly',cat:'Assembly',def:'Various',desc:'Fully constrained = grey/normal. Under-constrained = highlighted. Over-constrained = red. Check status in PathFinder icons.'},
+  {name:'Auto Balloon Numbering',loc:'Tools → Options → Drawing → BOM',cat:'Drawing',def:'Automatic',desc:'Balloon numbering method: automatic (by placement order) or from BOM item numbers. Set to BOM-linked for consistent numbering.'},
+  {name:'Section Hatch Pattern',loc:'View → Hatching',cat:'Drawing',def:'ANSI31',desc:'Default section hatch pattern. Change per material via part/face properties → Material display. Assign material-specific patterns (ANSI31=steel, ANSI37=aluminium etc.)'},
+  {name:'Text Style',loc:'Format → Text Styles',cat:'Drawing',def:'SE Standard',desc:'Text style defines font (Arial/Helvetica typical for ISO), height (2.5, 3.5, 5 mm ISO standard), bold/italic. Set in drawing template.'},
+  {name:'Dimension Style',loc:'Format → Dimension Styles',cat:'Drawing',def:'ISO',desc:'Controls dimension appearance: text height, arrowhead style (closed/open/tick), extension line offset, tolerance display. Create company-specific style in template.'},
+  {name:'Title Block Properties',loc:'File → Properties → Project',cat:'Drawing',def:'Blank',desc:'Part Number, Description, Revision, Status — auto-fill drawing title block via Property Text fields. Always complete before generating drawing.'},
+  {name:'Rendering Quality',loc:'Tools → Options → Display → Rendering',cat:'Display',def:'Normal',desc:'Controls tessellation quality for shading. Higher = smoother curves but slower. Reduce for large assemblies.'},
+  {name:'Background Sheet',loc:'Format → Sheets → Background',cat:'Drawing',def:'From template',desc:'Background sheet contains border and title block. Switch between foreground (drawing content) and background (border/title block) with right-click on sheet tab.'},
+  {name:'Revision Tracking',loc:'File → Manage → Revisions',cat:'Manage',def:'Off',desc:'Solid Edge standard revision management. Each save can increment revision. Full control via Teamcenter PLM integration.'},
+  {name:'File Naming',loc:'Tools → Options → File Locations',cat:'Manage',def:'User-defined',desc:'Set default file save locations. Recommended: separate folders for Parts, Assemblies, Drawings. Use SEEC naming convention: PROJECT-PART-###-REV.par'},
+  {name:'Support Folder',loc:'Tools → Options → File Locations → Templates',cat:'Manage',def:'SE install dir',desc:'Template folder path — point to company shared network location so all users access same templates, standards, and material tables.'},
+  {name:'View Scale Default',loc:'Tools → Options → Drawing → Scale',cat:'Drawing',def:'1:1',desc:'Default scale for new drawing views. Set to most common scale for your work (1:2, 1:5, 1:10 etc.) in drawing template.'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// DATA — WORKFLOWS
+// ══════════════════════════════════════════════════════════════
+const workflows = {
+  new_part: {
+    title:'Model a Part from Scratch — Synchronous Mode',
+    intro:'Fastest method for new geometry. No sketches required for simple shapes — direct face manipulation. For complex profiles, sketch then extrude.',
+    steps:[
+      {n:'1',title:'Create new part file',body:'File → New → select your company .par template (or ISO metric template). Opens in Part environment.'},
+      {n:'2',title:'Switch to Synchronous',body:'View → Model → Synchronous (or check it is already active — default for new parts in SE 2019+).'},
+      {n:'3',title:'Sketch the base profile',body:'Click the XY base plane → Sketch on ribbon → draw the outer profile using Line (L), Circle (C), Arc (A). Add Smart Dimensions (S) to fully constrain. Close sketch.'},
+      {n:'4',title:'Extrude the base',body:'Home → Solids → Extrude → click inside profile → drag arrow or type distance → set Finite depth → Accept. You now have a base solid.'},
+      {n:'5',title:'Direct face editing',body:'Click any flat face → blue 3D Move handle appears → drag linear axis to resize/move face → type exact value → Enter. This is the Synchronous advantage — no sketch needed for simple edits.'},
+      {n:'6',title:'Add holes',body:'Click top face → Sketch → draw circles for holes (dimension to edges) → Close sketch → Extrude (set as Cutout, Through All) → Accept.'},
+      {n:'7',title:'Add rounds',body:'Home → Solids → Round → click edges → type radius → Accept. Apply rounds last.'},
+      {n:'8',title:'Name features',body:'In PathFinder: right-click each feature → Rename → use meaningful names: BASE_EXTRUDE, BORE_MAIN, FLANGE_HOLES, ROUNDS_TOP.'},
+      {n:'9',title:'Set material',body:'Tools → Material Table → select material (e.g. S275 Steel) → Apply. Physical properties (mass, volume) now available in File → Physical Properties.'},
+      {n:'10',title:'Check physical properties',body:'File → Physical Properties → review mass, centre of gravity, moments of inertia. Verify against design spec.'},
+    ]
+  },
+  new_part_ordered: {
+    title:'Model a Part — Ordered (History-Based) Mode',
+    intro:'History-based approach with full parameter edit capability. Every feature tied to a sketch — changes propagate through history.',
+    steps:[
+      {n:'1',title:'Create ordered part',body:'File → New → select template → View → Model → Ordered (if Synchronous is default, switch here).'},
+      {n:'2',title:'Sketch on base plane',body:'Click XY base plane → Sketch → draw profile completely (all lines, arcs, constraints, dimensions) → fully constrain (all elements green) → Close Sketch.'},
+      {n:'3',title:'First extrusion (base solid)',body:'Home → Solids → Extrude → click profile → set depth → set extent type → Accept. Feature appears in PathFinder as Protrusion 1.'},
+      {n:'4',title:'Add cut features',body:'Click face for next sketch → Sketch on it → draw cut profile → Close → Extrude (set Cutout) → set Through All or depth → Accept.'},
+      {n:'5',title:'Edit feature',body:'To edit: double-click feature in PathFinder → returns to that feature step → edit sketch or parameters → Accept. All dependent features update.'},
+      {n:'6',title:'Insert feature in history',body:'Right-click in PathFinder at insertion point → Rollback to here → create new feature → it inserts at that history position.'},
+      {n:'7',title:'Add variables',body:'F4 → Variables table → right-click sketch dimension → name it → or add row → create formula: BORE_DIA = SHAFT_DIA + CLEARANCE.'},
+      {n:'8',title:'Pattern holes',body:'Home → Solids → Pattern → select Hole feature → Circular → select cylindrical axis → 360° / n holes → Accept.'},
+    ]
+  },
+  assembly: {
+    title:'Build an Assembly — Bottom-Up',
+    intro:'Standard approach: design all parts first, then assemble. Most common for mechanical assemblies.',
+    steps:[
+      {n:'1',title:'Create assembly file',body:'File → New → select assembly template (.asm) → Assembly environment opens with empty PathFinder.'},
+      {n:'2',title:'Place base component',body:'Home → Component → Place → browse to base part (.par) → click in viewport → prompted to Ground or Float → click Ground → component fixed in space.'},
+      {n:'3',title:'Place second component',body:'Home → Component → Place → browse to second part → click in viewport to place roughly → right-click Done when placed.'},
+      {n:'4',title:'Constrain with Assemble',body:'Press A (Assemble) → select Mate on toolbar → click face on part 1 → click face on part 2 → right-click Accept. Repeat with Axial Align, Planar Align until fully constrained.'},
+      {n:'5',title:'Check constraint status',body:'PathFinder shows tick (fully constrained), open circle (under-constrained), red (conflict). Target: every floating component has tick.'},
+      {n:'6',title:'Place all components',body:'Place remaining parts. Group similar parts in sub-assemblies if needed: File → New → Assembly → place group there → save → place sub-assembly in main.'},
+      {n:'7',title:'Interference detection',body:'Inspect → Clearance Analysis → Interference Detection → All Components → Calculate → review all hits.'},
+      {n:'8',title:'Explode view',body:'Home → Display → Explode → New → Auto Explode → save as EXP-MAIN. For documentation.'},
+    ]
+  },
+  assembly_topdown: {
+    title:'Top-Down Assembly Design',
+    intro:'Design parts within assembly context — critical dimensions shared between components via assembly variables.',
+    steps:[
+      {n:'1',title:'Create assembly structure first',body:'Start with assembly file → create sub-assembly placeholders → define assembly layout skeleton.'},
+      {n:'2',title:'Assembly variables',body:'F4 in assembly → define key layout dimensions: SHAFT_LENGTH, HOUSING_BORE, MOUNTING_PCD. These will drive individual part dimensions.'},
+      {n:'3',title:'In-place part creation',body:'Home → Component → Create Part In Place → name new part → new part file created linked to assembly coordinate system.'},
+      {n:'4',title:'Sketch using assembly context',body:'While editing the in-place part: sketch references assembly geometry (faces, edges, axes of other components). Include references (Ctrl+H to show assembly geometry while in part sketch).'},
+      {n:'5',title:'Link dimensions to assembly variables',body:'In part dimensions: type = then assembly variable name (=HOUSING_BORE) → part dimension tracks assembly variable.'},
+      {n:'6',title:'Update components',body:'Change assembly variable → all linked components update together → assembly intent maintained automatically.'},
+      {n:'7',title:'External references',body:'In-place created parts have external references to assembly geometry. If assembly changes, parts update. Manage via Home → External References.'},
+    ]
+  },
+  drawing_views: {
+    title:'Create an Engineering Drawing with Dimensions',
+    intro:'Full workflow from blank drawing sheet to dimensioned, annotated, ready-to-release drawing.',
+    steps:[
+      {n:'1',title:'Create drawing file',body:'File → New → Drawing template (.dft) → sheet opens. Check sheet size (A3, A1 etc.) matches requirement. Right-click tab → Sheet Setup to change.'},
+      {n:'2',title:'Set projection angle',body:'Tools → Options → Drawing → View Projection → First Angle (ISO/EU) or Third Angle (ANSI/US). Match your standard.'},
+      {n:'3',title:'Place views with View Wizard',body:'Home → View → View Wizard → browse to part/assembly → check Front, Top, Right, Isometric → set scale (e.g. 1:2) → click to place on sheet.'},
+      {n:'4',title:'Add section view',body:'Home → View → Section View → click parent view → draw section line (horizontal or vertical through key feature) → click direction arrow → place section view on sheet. Label auto-added.'},
+      {n:'5',title:'Retrieve dimensions',body:'Home → Dimension → Retrieve → click a view → all model dimensions appear → drag each to desired position. Delete unwanted dims.'},
+      {n:'6',title:'Add drawing dimensions',body:'Smart Dimension (S) → click geometry → place → type value if adding new. All dims are reference (driven by model).'},
+      {n:'7',title:'Add tolerances',body:'Right-click dimension → Properties → Tolerance tab → select type (bilateral ±, limits, ISO fit). For ISO fit: type fit code (H7, f7 etc.).'},
+      {n:'8',title:'Add GD&T annotations',body:'Home → Annotation → Feature Control Frame → leader to feature → set tolerance type and value → datum references → OK. Add Datum Feature Symbols separately.'},
+      {n:'9',title:'Centrelines and surface texture',body:'Home → Annotation → Centerline → click circle for auto-crosshair. Surface Texture → click edges → set Ra value.'},
+      {n:'10',title:'Fill title block',body:'File → Properties → Project tab → fill Part Number, Description, Revision, Material → title block auto-fills via Property Text links.'},
+    ]
+  },
+  sheetmetal: {
+    title:'Sheet Metal Part — Flange and Form',
+    intro:'Sheet metal workflow: define material, create base tab, add flanges, check flat pattern.',
+    steps:[
+      {n:'1',title:'Create Sheet Metal file',body:'File → New → Sheet Metal template (.psm) → Sheet Metal environment loads.'},
+      {n:'2',title:'Set material and thickness',body:'Tools → Material Table → select material (e.g. S235 2 mm) → set: Thickness = 2 mm, Bend Radius = 2 mm, K-Factor = 0.44. Apply.'},
+      {n:'3',title:'Create base Tab',body:'Click XY base plane → Sketch → draw flat blank outline (rectangle, closed profile) → Smart Dimensions to constrain → Close Sketch → Home → Solids → Tab → select profile → Accept.'},
+      {n:'4',title:'Add first flange',body:'Home → Solids → Flange → click an edge → set Angle = 90° → set Length = 25 mm → Material Inside → Corner Relief = Rectangular 1 mm → Accept.'},
+      {n:'5',title:'Add more flanges',body:'Repeat Flange for remaining edges. Corner miter between adjacent flanges auto-calculated. Check miter gap (default 0).'},
+      {n:'6',title:'Add holes in flanges',body:'Click flange face → Sketch → draw hole circles → Smart Dimension from edges → Extrude Cutout (Through All) → Accept.'},
+      {n:'7',title:'Check Flat Pattern',body:'Home → Flat Pattern → Flat Pattern → model unfolds. Check blank dimensions against available sheet stock. Note total blank size for material waste planning.'},
+      {n:'8',title:'Export DXF for cutting',body:'File → Export → DXF → select Flat Pattern → save. Send to laser/plasma cutting. Include sheet thickness, material, and grain direction notes.'},
+      {n:'9',title:'Create drawing',body:'New Drawing → View Wizard → select .psm file → place Formed view + Flat Pattern view. Dimension formed state. Note material, bend radius, K-factor in title block.'},
+    ]
+  },
+  pattern: {
+    title:'Feature Patterns — Linear and Circular',
+    intro:'Creating bolt circles, hole grids, and repeated feature arrays.',
+    steps:[
+      {n:'1',title:'Create the base feature',body:'Model one hole, boss, or feature completely (correct size, position, all dressup applied). Place it correctly on the model at its first position.'},
+      {n:'2',title:'Activate Pattern',body:'Home → Solids → Pattern → Pattern dropdown → select type: Linear / Circular / Curve-based.'},
+      {n:'3',title:'Circular pattern (bolt circle)',body:'Select Circular → click the Hole feature in PathFinder → click cylindrical axis or circular edge as rotation axis → Enter count (e.g. 8) → Angle span = 360° → Rotate items = Yes (to rotate each hole) → Accept.'},
+      {n:'4',title:'Linear pattern (grid)',body:'Select Linear → click feature(s) → click X-direction edge or axis → count and pitch for X direction → Enable Y direction → count and pitch for Y → Accept.'},
+      {n:'5',title:'Suppress instances',body:'After creation: click Pattern in PathFinder → Edit → in pattern dialog: click individual instance squares to suppress (for non-full grids or partial bolt circles).'},
+      {n:'6',title:'Edit pattern',body:'Double-click Pattern in PathFinder → edit count, spacing, or direction → Accept. All instances update.'},
+    ]
+  },
+  draft: {
+    title:'Add Draft Angles for Moulding',
+    intro:'Applying taper to faces so moulded or cast parts release from tooling.',
+    steps:[
+      {n:'1',title:'Identify draft direction',body:'Determine mould open direction. Create or select a reference plane perpendicular to this direction — this is the parting plane / draft plane.'},
+      {n:'2',title:'Draft analysis (before)',body:'View → Display → Draft Analysis → set draft plane and direction → colour map shows: Green = positive draft OK, Red = negative draft (undercut), Yellow = zero draft. Note problem areas.'},
+      {n:'3',title:'Activate Draft',body:'Home → Solids → Draft → select draft method: From a Parting Line or From a Plane.'},
+      {n:'4',title:'Select faces',body:'Click faces to draft. For "From Parting Line": Solid Edge auto-selects all faces above and below the parting surface.'},
+      {n:'5',title:'Set angle and direction',body:'Type draft angle (1° min plastic, 3° for textured, 5° die cast) → verify arrow direction (toward mould open direction) → Accept.'},
+      {n:'6',title:'Draft analysis (after)',body:'Run Draft Analysis again → confirm all faces show positive draft (green). Fix any remaining red/undercut areas.'},
+      {n:'7',title:'Apply shell after draft',body:'If creating a thin-wall part: apply Shell after Draft. Shell on drafted faces maintains correct wall thickness.'},
+    ]
+  },
+  variables: {
+    title:'Using Variables and Formulas for Parametric Design',
+    intro:'Drive a design from a central variable table — change one value and the whole model updates.',
+    steps:[
+      {n:'1',title:'Open Variables table',body:'Press F4 (or Tools → Variables) — table shows all dimensions currently named in the model.'},
+      {n:'2',title:'Name sketch dimensions',body:'While in Sketch: right-click a Smart Dimension → rename the variable (e.g. rename "p1" to "BORE_DIA"). The dimension is now addressable by name.'},
+      {n:'3',title:'Create standalone variables',body:'In Variables table: click Add Row → type variable name (WALL_THK) → type value (3) → Enter. Now usable in any dimension or formula.'},
+      {n:'4',title:'Use variables in dimensions',body:'When entering a dimension value: type = then variable name (=BORE_DIA) → dimension tracks variable. Change variable once → all linked dims update.'},
+      {n:'5',title:'Write formulas',body:'Examples: INNER_DIA = OUTER_DIA - 2*WALL_THK → DEPTH = LENGTH*0.6 → BOLT_PCD = FLANGE_DIA - 2*EDGE_DIST. SE evaluates the formula automatically.'},
+      {n:'6',title:'Link to Excel',body:'Tools → Variables → More → Link to Excel spreadsheet. Map variable names to cells. Change spreadsheet → update model via Variables → Update From Excel.'},
+      {n:'7',title:'Assembly variables',body:'In Assembly: F4 → create assembly-level variables → link to part dimensions via external references. Change assembly variable → all linked parts update.'},
+    ]
+  },
+  configurations: {
+    title:'Part Families (Configurations)',
+    intro:'One .par file represents multiple variants — M10, M12, M16 bolts from one model.',
+    steps:[
+      {n:'1',title:'Set up driver variables',body:'Define variables for all dimensions that change between family members: BOLT_DIA, BOLT_LENGTH, HEAD_SIZE, THREAD_PITCH. Name them clearly.'},
+      {n:'2',title:'Open Part Families',body:'Tools → Part Families → dialog opens (or called "Part Configurations" depending on SE version).'},
+      {n:'3',title:'Add rows',body:'Each row = one family member. Click Add → name the member (M10x20, M10x30 etc.) → enter variable values for that row.'},
+      {n:'4',title:'Activate a member',body:'Double-click a row → model updates to that variant. The active member is the one displayed and used in assemblies.'},
+      {n:'5',title:'Assign part numbers',body:'Each member can have a unique part number in File Properties (accessed per-member). BOM shows correct PN for each instance.'},
+      {n:'6',title:'Import from Excel',body:'Tools → Part Families → More → Import from Excel. Paste family table from your standards library spreadsheet → massive time saving for large families.'},
+      {n:'7',title:'Drawing for family',body:'Drawing views of a part family show the active member. For full family tables: create a drawing with Part Family Table → shows all variants in one table.'},
+    ]
+  },
+  import_step: {
+    title:'Import STEP / IGES and Work with Foreign Data',
+    intro:'Receiving supplier STEP files and making them design-ready in Solid Edge.',
+    steps:[
+      {n:'1',title:'Open the STEP file',body:'File → Open → change filter to *.stp or *.step → select file → Open. Translation Options dialog appears.'},
+      {n:'2',title:'Set translation options',body:'Units: verify source units (mm or inches) — wrong unit = wrong scale. Enable: Stitch Surfaces (creates solid from shell), Import Body Colors (useful for assemblies).'},
+      {n:'3',title:'Check geometry on import',body:'After opening: Inspect → Geometry Check → runs automatically → list of geometry issues: bad edges, open shells, short edges. Review list.'},
+      {n:'4',title:'Repair issues',body:'Inspect → Geometry Repair → select problem faces → Stitch (close gaps) or Delete (remove bad faces). Then re-run Geometry Check until clean.'},
+      {n:'5',title:'Edit synchronously',body:'Imported geometry opens as Synchronous body. Click any face → drag to modify dimensions. No history — direct editing only.'},
+      {n:'6',title:'Align to coordinate system',body:'If orientation is wrong: Home → Solids → Move Face or use 3D Move to reposition/reorient geometry to align with company coordinate system conventions.'},
+      {n:'7',title:'Extract 2D drawings',body:'Create new .dft → View Wizard → select imported .par → View Wizard generates standard views from imported geometry. Smart Dimension to add annotations.'},
+    ]
+  },
+  simulate: {
+    title:'Basic Simulation Setup (Solid Edge Simulation)',
+    intro:'First-order FEA within Solid Edge for structural and thermal pre-checks.',
+    steps:[
+      {n:'1',title:'Prepare the model',body:'Simplify geometry before simulation: suppress cosmetic features (small rounds, chamfers, logos). Apply correct material (Tools → Material Table — includes material properties: E, ν, ρ, σy).'},
+      {n:'2',title:'Open Simulation',body:'Switch to Simulation environment: Simulation tab on ribbon → Study → New Study → select type: Structural Linear Static, Thermal, Modal Frequency.'},
+      {n:'3',title:'Assign material',body:'In Simulation → Material → assign material to body. Must match part material. Check: Youngs Modulus, Poisson Ratio, Density, Yield Strength are populated.'},
+      {n:'4',title:'Apply constraints (fixtures)',body:'Simulation → Constraints → Fixed (locks all DOF on selected faces). Or select faces and set translation/rotation DOF individually. Minimum: 3-2-1 rule — no rigid body motion.'},
+      {n:'5',title:'Apply loads',body:'Simulation → Loads → Force (N, on face/edge/vertex, set direction and magnitude) or Pressure (N/mm², uniform on face) or Gravity or Thermal load.'},
+      {n:'6',title:'Mesh the model',body:'Simulation → Mesh → Mesh Model → set element size (fine for thin features, coarse for bulk). Review mesh quality — increase refinement at stress concentrations.'},
+      {n:'7',title:'Run and review',body:'Simulation → Run Study → solve (seconds to minutes). Results: Displacement, Von Mises Stress, Principal Stress, Factor of Safety. Check max stress vs material yield.'},
+      {n:'8',title:'Interpret results',body:'Factor of Safety < 1 → failure. High stress at sharp corners = stress concentration not real failure — fillet those. Compare multiple load cases. Document results for design review.'},
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// DATA — TIPS
+// ══════════════════════════════════════════════════════════════
+const tips = [
+  {icon:'⚡',title:'Synchronous direct editing beats history for quick changes',body:'For imported geometry or simple resizes: click a face → type the new dimension → Enter. No need to find the sketch, edit, re-constrain, and close. 10× faster for minor changes.'},
+  {icon:'🏷️',title:'Name everything in PathFinder immediately',body:'Default names (Protrusion 1, Cutout 3) are useless. After every feature: F2 in PathFinder → FLANGE_TOP, BORE_MAIN, HOLES_M10. Future you will be grateful.'},
+  {icon:'📊',title:'Variables table (F4) before dimensioning',body:'Open F4 → define LENGTH, WIDTH, HEIGHT, WALL_THK, BORE_DIA first as numbers → then use =LENGTH in sketch dimensions. One-table design change control.'},
+  {icon:'🔒',title:'Fully constrain every sketch before extruding',body:'Grey element = under-constrained. Extruding an under-constrained sketch → unpredictable geometry if model is edited later. All elements must be green.'},
+  {icon:'🧩',title:'Insert relationship is your best friend in assemblies',body:'Insert = Mate + Axial Align in one click. For bolts, pins, shafts in bores: always use Insert. Single click fully constrains 5 of 6 DOF.'},
+  {icon:'📐',title:'Retrieve Dimensions is faster than placing manually',body:'In Drawing: Retrieve → click view → all model dimensions appear. Drag to position. Delete unwanted. Infinitely faster than placing each dimension manually.'},
+  {icon:'🔍',title:'Draft Analysis before sending to mould shop',body:'View → Display → Draft Analysis every time. Undercuts found on screen are free. Undercuts found by the mould maker cost rework money.'},
+  {icon:'🖥️',title:'Right-click context menu has most frequent commands',body:'Right-click in viewport, in PathFinder, on dimensions, on features — context menu always shows the most relevant commands for what you selected. Faster than navigating ribbons.'},
+  {icon:'📋',title:'QuickPick (Spacebar) for overlapping selection',body:'When items overlap: hover over area → Spacebar → radial menu lists all entities under cursor → pick the one you want precisely.'},
+  {icon:'🔄',title:'Ctrl+Z multiple levels deep',body:'Solid Edge undo is deep — Ctrl+Z many times. If you make a mess: Ctrl+Z until back to known good state rather than trying to fix forward.'},
+  {icon:'💾',title:'Save frequently and use versioned filenames',body:'Ctrl+S often. For major changes: File → Save As → add revision suffix (PART-001-B.par) before editing. Keeps safe fallback.'},
+  {icon:'🔗',title:'Assembly in-context editing with Ctrl+H',body:'Double-click part in assembly to edit in-place → press Ctrl+H to show/hide assembly context (other parts). Design with full context visible.'},
+];
+
+const mistakes = [
+  {title:'Extruding under-constrained sketch',fix:'Before extruding: check all sketch elements are green (fully constrained). Add Smart Dimensions and relationships until nothing is grey or yellow.'},
+  {title:'Drawing on wrong plane — sketch orientation issues',fix:'Think before picking sketch plane. For top features: XZ plane (horizontal). For front features: XY. Wrong plane = feature in wrong orientation requiring move/rebuild.'},
+  {title:'Not using Variables — hardcoded dimensions',fix:'Hardcoded numbers are change-resistant. Use Variables (F4) for any dimension that might vary or drives other dimensions. 10-minute setup saves hours later.'},
+  {title:'Applying rounds before major features',fix:'Rounds and chamfers should always be the last operations. Adding a round then cutting through it causes geometric failures. Complete all form features first.'},
+  {title:'Over-constraining assembly components',fix:'Too many mates on one component causes conflict. Each component needs exactly 6 relationships to be fully constrained (3 translation + 3 rotation). Insert = 5 in one step.'},
+  {title:'Flat pattern errors — wrong K-Factor',fix:'Default K-Factor may not match your material. Get K-Factor from material supplier or run bend tests. Wrong K = wrong blank size = scrap parts.'},
+  {title:'Ignoring PathFinder feature names',fix:'Default names make models unreadable. After every session: rename all new features. Team members and future self cannot maintain a model with "Protrusion 27".'},
+  {title:'Not checking interference before release',fix:'Run Interference Detection (Inspect → Clearance Analysis) before every major release. Fix clashes on screen — they are free. Fix them in production — expensive.'},
+];
+
+// ══════════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick').includes("'"+id+"'"));
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+const catColors = {sketch:'cat-sketch',part:'cat-part',assembly:'cat-assembly',drawing:'cat-drawing',sheetmetal:'cat-sheetmetal',surface:'cat-surface',simulate:'cat-simulate',manage:'cat-manage'};
+let activeLibCat = 'all';
+let selectedCmd = null;
+
+function renderLibFilterBar() {
+  const cats = [
+    {id:'all',label:'All'},
+    {id:'sketch',label:'Sketch'},
+    {id:'part',label:'Part'},
+    {id:'assembly',label:'Assembly'},
+    {id:'drawing',label:'Drawing'},
+    {id:'sheetmetal',label:'Sheet Metal'},
+    {id:'surface',label:'Surface'},
+    {id:'manage',label:'Manage'},
+  ];
+  document.getElementById('catFilterBar').innerHTML = cats.map(c => `
+    <button class="filter-btn ${activeLibCat===c.id?'active-f':''}" onclick="setLibCat('${c.id}')">${c.label}</button>
+  `).join('');
+}
+
+function setLibCat(cat) {
+  activeLibCat = cat;
+  renderLibFilterBar();
+  renderCmdGrid();
+}
+
+function filterCommands() { renderCmdGrid(); }
+
+function renderCmdGrid() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = commands.filter(c => {
+    const matchCat = activeLibCat === 'all' || c.cat === activeLibCat;
+    const matchSearch = !search || c.cmd.toLowerCase().includes(search) || c.ribbon.toLowerCase().includes(search) || c.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('cmdGrid').innerHTML = filtered.length ? filtered.map(c => `
+    <div class="cmd-card ${selectedCmd===c.id?'selected':''}" id="cc-${c.id}" onclick="selectCmd('${c.id}')">
+      <div class="cc-check">✓</div>
+      <div class="cc-cmd">${c.cmd}</div>
+      <div class="cc-ribbon">${c.ribbon}</div>
+      <div class="cc-desc">${c.desc}</div>
+      <span class="cc-cat ${catColors[c.cat]}">${c.catLabel}</span>
+    </div>
+  `).join('') : '<p style="color:var(--text-dim);font-size:13px;padding:12px;">No commands match search.</p>';
+}
+
+function selectCmd(id) {
+  const detail = document.getElementById('cmdDetail');
+  if (selectedCmd === id) { selectedCmd = null; detail.style.display = 'none'; renderCmdGrid(); return; }
+  selectedCmd = id;
+  renderCmdGrid();
+  const c = commands.find(x => x.id === id);
+
+  const envBadges = (c.envLabels||[]).map(e => {
+    const cls = e==='Part'?'env-part':e==='Assembly'?'env-asm':e==='Drawing'?'env-drw':e==='Sketch'?'env-skt':e==='Sheet Metal'?'env-smt':'env-all';
+    return `<span class="env-badge ${cls}">${e}</span>`;
+  }).join(' ');
+
+  const stepsHtml = c.steps.map((s,i) => `
+    <div class="prompt-step">
+      <div class="step-num">${i+1}</div>
+      <div class="step-content">
+        <div class="step-label">${s.label}</div>
+        <div class="step-text">${s.action}</div>
+        ${s.input ? `<div class="step-input">${s.input}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  const optsHtml = c.options.length ? `<div class="option-row">${c.options.map(o => `<span class="opt-pill key">${o.key}</span><span class="opt-pill" style="margin-right:12px;">${o.desc}</span>`).join('')}</div>` : '<p style="font-size:12px;color:var(--text-dim);">No sub-options</p>';
+
+  document.getElementById('cmdDetailTitle').textContent = c.cmd + ' — ' + c.desc;
+  document.getElementById('cmdDetailContent').innerHTML = `
+    <div style="margin-bottom:12px;">${envBadges}</div>
+    <div class="detail-grid">
+      <div>
+        <div class="card-title" style="font-size:12px;border-color:var(--se);">📋 Step-by-Step Procedure</div>
+        <div class="tip-box">Ribbon: <strong>${c.ribbon}</strong></div>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;line-height:1.7;">${c.fullDesc}</p>
+        <div>${stepsHtml}</div>
+        <div class="card-title" style="font-size:12px;margin-top:16px;border-color:var(--accent2);">⚙️ Options</div>
+        ${optsHtml}
+      </div>
+      <div>
+        <div class="card-title" style="font-size:12px;border-color:var(--green);">💡 Tips &amp; Best Practices</div>
+        <ul style="font-size:13px;line-height:1.9;padding-left:18px;color:var(--text-dim);">
+          ${c.tips.map(t => `<li>${t}</li>`).join('')}
+        </ul>
+        <div class="card-title" style="font-size:12px;margin-top:16px;border-color:var(--accent3);">🔗 Related Commands</div>
+        <div class="option-row">
+          ${c.related.map(r => `<span class="opt-pill" style="cursor:pointer;background:#e8f4fd;color:#005EB8;border-color:#b8d8ee;" onclick="findAndSelect('${r}')">${r}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  detail.style.display = 'block';
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function findAndSelect(cmdName) {
+  const c = commands.find(x => x.cmd === cmdName || x.cmd.includes(cmdName));
+  if (!c) return;
+  activeLibCat = 'all';
+  document.getElementById('searchInput').value = '';
+  renderLibFilterBar();
+  renderCmdGrid();
+  setTimeout(() => selectCmd(c.id), 100);
+}
+
+// ── QUICK REF ──
+let activeQrefCat = 'all';
+
+function renderQrefFilterBar() {
+  const cats = [{id:'all',label:'All'},{id:'sketch',label:'Sketch'},{id:'part',label:'Part'},{id:'assembly',label:'Assembly'},{id:'drawing',label:'Drawing'},{id:'sheetmetal',label:'Sheet Metal'},{id:'surface',label:'Surface'},{id:'manage',label:'Manage'}];
+  document.getElementById('qrefFilterBar').innerHTML = cats.map(c => `
+    <button class="filter-btn ${activeQrefCat===c.id?'active-f':''}" onclick="setQrefCat('${c.id}')">${c.label}</button>
+  `).join('');
+}
+
+function setQrefCat(cat) { activeQrefCat = cat; renderQrefFilterBar(); renderQref(); }
+function filterQref() { renderQref(); }
+
+function renderQref() {
+  const search = document.getElementById('qrefSearch').value.toLowerCase();
+  const filtered = commands.filter(c => {
+    const matchCat = activeQrefCat === 'all' || c.cat === activeQrefCat;
+    const matchSearch = !search || c.cmd.toLowerCase().includes(search) || c.desc.toLowerCase().includes(search) || c.ribbon.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('qrefBody').innerHTML = filtered.map(c => {
+    const envBadges = (c.envLabels||[]).map(e => {
+      const cls = e==='Part'?'env-part':e==='Assembly'?'env-asm':e==='Drawing'?'env-drw':e==='Sketch'?'env-skt':e==='Sheet Metal'?'env-smt':'env-all';
+      return `<span class="env-badge ${cls}" style="font-size:9px;padding:1px 5px;">${e}</span>`;
+    }).join(' ');
+    const firstStep = c.steps[0];
+    return `
+      <tr>
+        <td><span class="cmd-mono">${c.cmd}</span></td>
+        <td>${envBadges}</td>
+        <td><span class="ribbon-mono">${c.ribbon}</span></td>
+        <td><span class="ribbon-mono">${firstStep?firstStep.input:''}</span></td>
+        <td><span class="cc-cat ${catColors[c.cat]}" style="display:inline-block;">${c.catLabel}</span></td>
+        <td style="font-size:12px;">${c.desc}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── WORKFLOWS ──
+function renderWorkflow() {
+  const key = document.getElementById('wfSelect').value;
+  const wf = workflows[key];
+  document.getElementById('workflowContent').innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">${wf.title}</div>
+      <p style="font-size:13px;color:var(--text-dim);">${wf.intro}</p>
+    </div>
+    ${wf.steps.map(s => `
+      <div class="wf-step">
+        <div class="wf-num">Step ${s.n}</div>
+        <div class="wf-title">${s.title}</div>
+        <div class="wf-body">${s.body}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── SETTINGS ──
+const settingsCats = ['All','Units','Drawing','Sheet Metal','Sketch','Synchronous','Display','Assembly','Manage'];
+let activeStgCat = 'All';
+
+function renderSettingsFilterBar() {
+  document.getElementById('settingsFilterBar').innerHTML = settingsCats.map(c => `
+    <button class="filter-btn ${activeStgCat===c?'active-f':''}" onclick="setStgCat('${c}')">${c}</button>
+  `).join('');
+}
+
+function setStgCat(cat) { activeStgCat = cat; renderSettingsFilterBar(); renderSettings(); }
+function filterSettings() { renderSettings(); }
+
+function renderSettings() {
+  const search = document.getElementById('settingsSearch').value.toLowerCase();
+  const filtered = settings.filter(s => {
+    const matchCat = activeStgCat === 'All' || s.cat === activeStgCat;
+    const matchSearch = !search || s.name.toLowerCase().includes(search) || s.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('settingsBody').innerHTML = filtered.map(s => `
+    <tr>
+      <td class="sv-name">${s.name}</td>
+      <td style="font-size:11px;color:var(--text-dim);">${s.loc}</td>
+      <td><span class="cc-cat cat-manage" style="display:inline-block;">${s.cat}</span></td>
+      <td class="sv-val">${s.def}</td>
+      <td style="font-size:12px;">${s.desc}</td>
+    </tr>
+  `).join('');
+}
+
+// ── TIPS ──
+function renderTips() {
+  document.getElementById('tipsContent').innerHTML = tips.map(t => `
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f0f0f0;">
+      <span style="font-size:20px;flex-shrink:0;">${t.icon}</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px;">${t.title}</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">${t.body}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('mistakesContent').innerHTML = mistakes.map(m => `
+    <div style="margin-bottom:12px;padding:10px 14px;border-radius:4px;border-left:3px solid var(--accent);background:#fff5f5;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">✗ ${m.title}</div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.7;">${m.fix}</div>
+    </div>
+  `).join('');
+}
+
+// ── INIT ──
+renderLibFilterBar();
+renderCmdGrid();
+renderQrefFilterBar();
+renderQref();
+renderWorkflow();
+renderSettingsFilterBar();
+renderSettings();
+renderTips();
+</script>
+</body>
+</html>
